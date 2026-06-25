@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knomee: Conversion Intelligence — Video Animation</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0C0720; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; }
+.stage-wrapper { width: min(100vw, 177.78vh); aspect-ratio: 16/9; position: relative; }
+.tl { opacity: 0; transition: opacity 0.5s ease; color: #fff; font-size: clamp(10px, 1.8vw, 20px); text-align: center; max-width: 80%; line-height: 1.5; text-shadow: 0 1px 6px rgba(0,0,0,0.95); margin: 0.07em 0; }
+.finp { border: 1px solid #CBD5E1; border-radius: 3px; padding: 0.28em 0.5em; font-size: 0.42em; color: #94A3B8; background: #F9FAFB; transition: border-color 0.3s, background 0.3s, color 0.3s; }
+</style>
+</head>
+<body>
+
+<div class="stage-wrapper">
+<div id="stage" style="width:100%;height:100%;position:relative;overflow:hidden;background:#0C0720;">
+
+  <!-- ===== PAGE 1: LANDING PAGE ===== -->
+  <div id="page1" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;">
+    <div style="width:78%;height:88%;background:#fff;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.7);">
+      <div style="background:#DEDEDE;padding:0.38em 0.7em;display:flex;align-items:center;gap:0.4em;flex-shrink:0;">
+        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FF5F57;"></div>
+        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FFBD2E;"></div>
+        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#28C840;"></div>
+        <div style="flex:1;background:#fff;border-radius:3px;padding:0.15em 0.6em;font-size:0.6em;color:#888;margin-left:0.5em;">wealthpartners.com</div>
+      </div>
+      <div style="background:#1A3366;padding:0.45em 1.5em;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div style="color:#fff;font-size:0.7em;font-weight:600;letter-spacing:0.1em;">WEALTH PARTNERS GROUP</div>
+        <div style="display:flex;gap:1.2em;align-items:center;">
+          <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">Services</span>
+          <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">About</span>
+          <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">Team</span>
+          <span id="cta1" style="background:#fff;color:#1A3366;font-size:0.5em;padding:0.2em 0.7em;border-radius:2px;font-weight:600;transition:background 0.15s,color 0.15s;">Get Started</span>
+        </div>
+      </div>
+      <div style="flex:1;background:#F0F4FA;display:flex;align-items:center;justify-content:space-between;padding:1em 2em;gap:1em;">
+        <div style="flex:1;">
+          <div style="font-size:1.1em;font-weight:700;color:#1A3366;line-height:1.25;margin-bottom:0.5em;">Building Wealth<br>For What Matters Most</div>
+          <div style="font-size:0.55em;color:#64748B;line-height:1.6;margin-bottom:0.8em;">Comprehensive financial planning and investment management for individuals and families ready to take the next step.</div>
+          <div style="display:flex;gap:0.5em;flex-wrap:wrap;margin-bottom:0.8em;">
+            <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.25em 0.6em;font-size:0.45em;color:#475569;">✓ Fiduciary Standard</div>
+            <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.25em 0.6em;font-size:0.45em;color:#475569;">✓ 20+ Years Experience</div>
+            <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.25em 0.6em;font-size:0.45em;color:#475569;">✓ Fee-Only</div>
+          </div>
+          <div id="cta2" style="background:#1A3366;color:#fff;display:inline-block;padding:0.32em 0.9em;border-radius:3px;font-size:0.5em;font-weight:600;transition:background 0.15s,transform 0.1s;">Schedule a Consultation →</div>
+        </div>
+        <div style="width:38%;border-radius:4px;height:7.5em;overflow:hidden;flex-shrink:0;position:relative;">
+          <img id="img01" src="assets/img01-advisor-meeting.jpg" alt="Financial advisors in meeting" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" onerror="this.style.display='none'"/>
+          <div id="img-ph" style="position:absolute;inset:0;background:#C8B89A;display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:0.45em;color:#5a3e00;text-align:center;">[ IMG_01: advisor meeting photo ]</span>
+          </div>
+        </div>
+      </div>
+      <div style="background:#1A3366;padding:0.5em 2em;display:flex;gap:2em;flex-shrink:0;">
+        <div style="text-align:center;"><div style="color:#fff;font-size:0.65em;font-weight:700;">$2.4B</div><div style="color:rgba(255,255,255,0.6);font-size:0.42em;">AUM</div></div>
+        <div style="text-align:center;"><div style="color:#fff;font-size:0.65em;font-weight:700;">1,200+</div><div style="color:rgba(255,255,255,0.6);font-size:0.42em;">Clients</div></div>
+        <div style="text-align:center;"><div style="color:#fff;font-size:0.65em;font-weight:700;">4.9★</div><div style="color:rgba(255,255,255,0.6);font-size:0.42em;">Rating</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE 2: FORM PAGE ===== -->
+  <div id="page2" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;">
+    <div id="win2" style="width:78%;height:88%;background:#fff;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.7);transform-origin:center center;">
+      <div style="background:#DEDEDE;padding:0.38em 0.7em;display:flex;align-items:center;gap:0.4em;flex-shrink:0;">
+        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FF5F57;"></div>
+        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FFBD2E;"></div>
+        <div id="xbtn" style="width:0.5em;height:0.5em;border-radius:50%;background:#28C840;transition:background 0.2s;"></div>
+        <div style="flex:1;background:#fff;border-radius:3px;padding:0.15em 0.6em;font-size:0.6em;color:#888;margin-left:0.5em;">wealthpartners.com/get-started</div>
+      </div>
+      <div style="background:#1A3366;padding:0.45em 1.5em;flex-shrink:0;">
+        <div style="color:#fff;font-size:0.7em;font-weight:600;letter-spacing:0.1em;">WEALTH PARTNERS GROUP</div>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;background:#F8F9FB;padding:0.8em;">
+        <div style="background:#fff;border-radius:5px;border:1px solid #E2E8F0;padding:1.2em 1.5em;width:52%;">
+          <div style="font-size:0.8em;font-weight:700;color:#1A3366;margin-bottom:0.2em;">Get Started</div>
+          <div style="font-size:0.47em;color:#94A3B8;margin-bottom:0.8em;">Fill out the form and an advisor will be in touch within 1 business day.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4em 0.6em;margin-bottom:0.4em;">
+            <div id="f1"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">First Name *</div><div class="finp">First name</div></div>
+            <div id="f2"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Last Name *</div><div class="finp">Last name</div></div>
+          </div>
+          <div id="f3" style="margin-bottom:0.4em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Email Address *</div><div class="finp">your@email.com</div></div>
+          <div id="f4" style="margin-bottom:0.4em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Investable Assets *</div><div class="finp">Select range ▾</div></div>
+          <div id="f5" style="margin-bottom:0.4em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Phone Number</div><div class="finp">(555) 000-0000</div></div>
+          <div id="f6" style="margin-bottom:0.75em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Primary Financial Goal</div><div class="finp" style="height:1.8em;color:#CBD5E1;">Describe your goals...</div></div>
+          <div id="subbtn" style="background:#1A3366;color:#fff;text-align:center;border-radius:3px;padding:0.38em;font-size:0.5em;font-weight:600;">Submit Application →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cursor -->
+  <svg id="cur" style="position:absolute;width:1.8%;pointer-events:none;opacity:0;left:50%;top:50%;transition:left 0.55s cubic-bezier(.4,0,.2,1),top 0.55s cubic-bezier(.4,0,.2,1);" viewBox="0 0 24 24">
+    <path d="M4 2L20 11L12 13L8 22L4 2Z" fill="white" stroke="#222" stroke-width="1.2"/>
+  </svg>
+
+  <!-- Click ripple -->
+  <div id="ripple" style="position:absolute;width:2%;aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,0.7);opacity:0;pointer-events:none;transform:translate(-50%,-50%) scale(0);transition:transform 0.35s ease-out,opacity 0.35s ease-out;"></div>
+
+  <!-- Dimmer -->
+  <div id="dim" style="position:absolute;inset:0;background:#0C0720;opacity:0;pointer-events:none;"></div>
+
+  <!-- TEXT — faded bottom zone -->
+  <div style="position:absolute;left:0;right:0;bottom:0;height:26%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6%;background:linear-gradient(to bottom,transparent 0%,rgba(12,7,32,0.75) 35%,rgba(12,7,32,0.92) 100%);pointer-events:none;">
+    <div id="t0" class="tl">Most wealth firms don't have a pipeline problem.</div>
+    <div id="t1" class="tl">They have a <span style="color:#A78BFA;font-weight:600;">conversion</span> problem.</div>
+    <div id="t2" class="tl">You're getting the meeting.</div>
+    <div id="t3" class="tl">But you're <span style="color:#F87171;">losing the client.</span></div>
+    <div id="t4" class="tl">Because you're starting with what you offer…</div>
+    <div id="t5" class="tl">before understanding what wealth actually means to them.</div>
+    <div id="t6" class="tl" style="font-weight:600;">And that's where momentum breaks.</div>
+  </div>
+
+  <!-- Progress bar -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.1);">
+    <div id="prog" style="height:100%;background:#7C3AED;width:0%;"></div>
+  </div>
+
+  <!-- Label -->
+  <div style="position:absolute;top:4%;left:4%;font-size:clamp(7px,0.85vw,10px);color:rgba(255,255,255,0.3);letter-spacing:0.1em;">PART 1 OF 13 &nbsp;·&nbsp; OPENING</div>
+
+  <!-- Controls -->
+  <div style="position:absolute;bottom:8px;right:10px;display:flex;gap:6px;align-items:center;">
+    <button id="playbtn" onclick="togglePlay()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:clamp(9px,0.9vw,12px);padding:0.3em 0.9em;border-radius:20px;cursor:pointer;">▶ Play</button>
+    <button onclick="doReset()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:clamp(9px,0.9vw,12px);padding:0.3em 0.7em;border-radius:20px;cursor:pointer;">↺</button>
+    <span id="tmr" style="font-size:clamp(8px,0.8vw,10px);color:rgba(255,255,255,0.3);min-width:2em;">0:00</span>
+  </div>
+
+</div><!-- /stage -->
+</div><!-- /stage-wrapper -->
+
+<script>
+(function(){
+const DUR = 26;
+let t = 0, playing = false, lastTs = null, raf = null, winClosed = false;
+const g = id => document.getElementById(id);
+
+// Hide image placeholder if image loads
+const img = g('img01');
+if(img) { img.onload = () => { const ph=g('img-ph'); if(ph) ph.style.display='none'; }; }
+
+function show(id, v) { const e=g(id); if(e) e.style.opacity=v?'1':'0'; }
+function setPages(p1,p2) { g('page1').style.opacity=String(p1); g('page2').style.opacity=String(p2); }
+function moveCur(lp,tp) { const c=g('cur'); c.style.left=lp+'%'; c.style.top=tp+'%'; }
+
+function rippleAt(lp,tp) {
+  const r=g('ripple');
+  r.style.left=lp+'%'; r.style.top=tp+'%';
+  r.style.transform='translate(-50%,-50%) scale(0)';
+  r.style.opacity='1';
+  requestAnimationFrame(()=>{ r.style.transform='translate(-50%,-50%) scale(3)'; r.style.opacity='0'; });
+}
+
+function hlField(id,on) {
+  const el=g(id); if(!el) return;
+  const inp=el.querySelector('.finp'); if(!inp) return;
+  inp.style.borderColor=on?'#7C3AED':'#CBD5E1';
+  inp.style.background=on?'#FAF8FF':'#F9FAFB';
+  inp.style.color=on?'#1A1A2E':'#94A3B8';
+}
+
+const cues = [
+  ['t0', 0.8,  5.0],
+  ['t1', 5.2,  8.5],
+  ['t2', 8.8,  11.0],
+  ['t3', 11.2, 14.2],
+  ['t4', 14.5, 18.5],
+  ['t5', 18.8, 22.5],
+  ['t6', 22.8, 99],
+];
+
+function frame(ts) {
+  if(!lastTs) lastTs=ts;
+  t = Math.min(DUR, t+(ts-lastTs)/1000);
+  lastTs = ts;
+
+  g('prog').style.width=Math.min(100,(t/DUR)*100)+'%';
+  g('tmr').textContent='0:'+String(Math.floor(t)).padStart(2,'0');
+
+  if(t<0.4) { setPages(0,0); }
+  else if(t<1.2) { setPages(Math.min(1,(t-0.4)/0.8),0); }
+
+  if(t>=3.0 && !winClosed) g('cur').style.opacity='1';
+  if(t>=3.0 && t<3.8) moveCur(28,50);
+  if(t>=3.8 && t<4.6) moveCur(70,12.5);
+  if(t>=4.6 && t<6.5) { g('cta1').style.background='#E8EDFF'; g('cta1').style.color='#1A3366'; }
+  if(t>=5.8 && t<5.9) { rippleAt(70.5,12.5); g('cta1').style.background='#1A3366'; g('cta1').style.color='#fff'; g('cur').style.transform='scale(0.8)'; }
+  if(t>=5.9) { g('cur').style.transform='scale(1)'; }
+
+  if(t>=6.2 && t<7.4 && !winClosed) { const p=Math.min(1,(t-6.2)/1.2); setPages(1-p,p); }
+  if(t>=7.4 && !winClosed) { setPages(0,1); }
+
+  if(t>=7.5) moveCur(54,40);
+  if(t>=8.0) { moveCur(54,42); hlField('f1',true); }
+  if(t>=8.9) { moveCur(64,42); hlField('f2',true); }
+  if(t>=9.8) { moveCur(55,50); hlField('f3',true); }
+  if(t>=10.7) { moveCur(55,57); hlField('f4',true); }
+  if(t>=11.6) { moveCur(55,63); hlField('f5',true); }
+  if(t>=13.5 && t<14.2) moveCur(60,73);
+  if(t>=14.2 && t<14.7) moveCur(60.4,73.5);
+  if(t>=14.7 && t<15.2) moveCur(59.7,72.9);
+  if(t>=15.2 && t<15.7) moveCur(60.2,73.4);
+  if(t>=15.7 && t<16.2) moveCur(59.8,73.1);
+  if(t>=16.2 && t<16.7) moveCur(60.1,73.3);
+  if(t>=16.7 && t<18.2) {
+    const p=Math.min(1,(t-16.7)/1.5);
+    moveCur(60+p*(39.5-60), 73+p*(8.2-73));
+  }
+  if(t>=18.0) g('xbtn').style.background='#FF5F57';
+  if(t>=18.3 && !winClosed) {
+    winClosed=true;
+    const w=g('win2');
+    w.style.transition='transform 0.5s cubic-bezier(.4,0,1,1),opacity 0.5s ease-in';
+    w.style.transform='scale(0.88)';
+    w.style.opacity='0';
+    g('cur').style.opacity='0';
+    setTimeout(()=>{ g('page2').style.opacity='0'; },500);
+  }
+  if(t>=19.0 && t<21.0) g('dim').style.opacity=String(Math.min(0.92,(t-19.0)/2.0));
+  if(t>=21.0) g('dim').style.opacity='0.92';
+
+  cues.forEach(([id,s,e])=>show(id,t>=s&&t<e));
+
+  if(t<DUR && playing) raf=requestAnimationFrame(frame);
+  else if(t>=DUR) { playing=false; g('playbtn').textContent='▶ Play'; }
+}
+
+function togglePlay() {
+  if(playing){ playing=false; cancelAnimationFrame(raf); g('playbtn').textContent='▶ Play'; }
+  else {
+    if(t>=DUR) doReset();
+    playing=true; lastTs=null;
+    g('playbtn').textContent='⏸ Pause';
+    raf=requestAnimationFrame(frame);
+  }
+}
+
+function doReset() {
+  playing=false; cancelAnimationFrame(raf);
+  t=0; lastTs=null; winClosed=false;
+  g('playbtn').textContent='▶ Play';
+  g('dim').style.opacity='0';
+  g('cur').style.opacity='0';
+  g('cur').style.transform='scale(1)';
+  g('prog').style.width='0%';
+  g('tmr').textContent='0:00';
+  g('xbtn').style.background='#28C840';
+  g('cta1').style.background='#fff';
+  g('cta1').style.color='#1A3366';
+  const w=g('win2');
+  w.style.transition='none';
+  w.style.transform='scale(1)';
+  w.style.opacity='1';
+  setPages(0,0);
+  ['f1','f2','f3','f4','f5'].forEach(id=>hlField(id,false));
+  cues.forEach(([id])=>show(id,false));
+}
+
+window.togglePlay=togglePlay;
+window.doReset=doReset;
+})();
+</script>
+
+</body>
+</html>

@@ -6,140 +6,285 @@
 <title>Knomee: Conversion Intelligence — Video Animation</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0C0720; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; }
-.stage-wrapper { width: min(100vw, 177.78vh); aspect-ratio: 16/9; position: relative; cursor: pointer; }
-#stage { width: 100%; height: 100%; position: relative; overflow: hidden; background: #0C0720; }
+body {
+  background: #050210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+}
 
-/* Pages sit at z-index 1 */
-.page { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; z-index: 1; }
+/* Outer 16:9 wrapper */
+.video {
+  width: min(100vw, 177.78vh);
+  height: min(100vh, 56.25vw);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  position: relative;
+  background: #0C0720;
+}
 
-/* Dimmer above pages */
-#dim { position: absolute; inset: 0; background: #0C0720; opacity: 0; pointer-events: none; z-index: 5; }
+/* Top: content area (all the animated pages) */
+#content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #0C0720;
+}
 
-/* Text zone above dimmer */
-#text-zone { position: absolute; left: 0; right: 0; bottom: 0; height: 24%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 5.5%; background: linear-gradient(to bottom, transparent 0%, rgba(12,7,32,0.8) 30%, rgba(12,7,32,0.95) 100%); pointer-events: none; z-index: 10; }
+/* Bottom: text strip — its own block, always dark, always at the bottom */
+#text-strip {
+  height: 20%;
+  background: #0C0720;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8%;
+  position: relative;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
 
-/* Cursor above text */
-#cur { position: absolute; width: 1.8%; pointer-events: none; opacity: 0; z-index: 15; transition: left 0.55s cubic-bezier(.4,0,.2,1), top 0.55s cubic-bezier(.4,0,.2,1); }
+.tl {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  color: #fff;
+  font-size: clamp(11px, 1.6vw, 18px);
+  text-align: center;
+  line-height: 1.55;
+  margin: 0.05em 0;
+}
 
-/* Ripple */
-#ripple { position: absolute; width: 2%; aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); opacity: 0; pointer-events: none; transform: translate(-50%,-50%) scale(0); transition: transform 0.35s ease-out, opacity 0.35s ease-out; z-index: 16; }
+/* Pages fill the content area */
+.page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
 
-/* Center overlay — above everything */
-#center-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2em; z-index: 25; pointer-events: none; }
-#play-center { width: 10%; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,0.18); border: 2px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: all; transition: background 0.2s, transform 0.15s; }
-#play-center:hover { background: rgba(255,255,255,0.28); transform: scale(1.06); }
-#play-center svg { width: 38%; height: 38%; margin-left: 8%; }
-#end-btns { display: none; flex-direction: row; gap: 0.8em; align-items: center; pointer-events: all; }
-#end-btns button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); color: #fff; font-size: clamp(9px,1vw,13px); padding: 0.4em 1.1em; border-radius: 20px; cursor: pointer; transition: background 0.2s; }
-#end-btns button:hover { background: rgba(255,255,255,0.28); }
+#dim {
+  position: absolute;
+  inset: 0;
+  background: #0C0720;
+  opacity: 0;
+  pointer-events: none;
+}
 
-/* Bottom bar */
-#bottom-bar { position: absolute; bottom: 6px; right: 10px; display: flex; gap: 6px; align-items: center; z-index: 20; }
-#bottom-bar button { background: rgba(255,255,255,0.1); border: none; color: #fff; font-size: clamp(8px,0.85vw,11px); padding: 0.3em 0.7em; border-radius: 20px; cursor: pointer; }
+/* Cursor */
+#cur {
+  position: absolute;
+  width: 1.8%;
+  pointer-events: none;
+  opacity: 0;
+  left: 50%; top: 50%;
+  transition: left 0.55s cubic-bezier(.4,0,.2,1), top 0.55s cubic-bezier(.4,0,.2,1);
+}
 
-/* Progress bar */
-#prog-wrap { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.1); z-index: 20; }
-#prog { height: 100%; background: #7C3AED; width: 0%; }
+#ripple {
+  position: absolute;
+  width: 2.5%; aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.7);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%,-50%) scale(0);
+  transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+}
 
-/* Part label */
-#part-label { position: absolute; top: 4%; left: 4%; font-size: clamp(7px,0.8vw,10px); color: rgba(255,255,255,0.3); letter-spacing: 0.1em; z-index: 20; pointer-events: none; }
+/* Center play button — sits in content area */
+#play-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 11%; aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.16);
+  border: 2px solid rgba(255,255,255,0.38);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  z-index: 30;
+}
+#play-center:hover { background: rgba(255,255,255,0.26); transform: translate(-50%,-50%) scale(1.06); }
+#play-center svg { width: 36%; height: 36%; margin-left: 8%; }
 
-/* Text lines */
-.tl { opacity: 0; transition: opacity 0.5s ease; color: #fff; font-size: clamp(10px, 1.9vw, 19px); text-align: center; max-width: 80%; line-height: 1.5; text-shadow: 0 1px 8px rgba(0,0,0,0.99); margin: 0.06em 0; }
+/* End state buttons */
+#end-btns {
+  position: absolute;
+  top: 55%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+  gap: 0.6em;
+  z-index: 30;
+}
+#end-btns button {
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-size: clamp(9px, 0.9vw, 12px);
+  padding: 0.4em 1.1em;
+  border-radius: 20px;
+  cursor: pointer;
+}
+#end-btns button:hover { background: rgba(255,255,255,0.26); }
 
 /* Form inputs */
-.finp { border: 1px solid #CBD5E1; border-radius: 3px; padding: 0.28em 0.5em; font-size: 0.42em; color: #94A3B8; background: #F9FAFB; transition: border-color 0.3s, background 0.3s, color 0.3s; }
+.finp {
+  border: 1px solid #CBD5E1;
+  border-radius: 3px;
+  padding: 0.28em 0.5em;
+  font-size: 0.42em;
+  color: #94A3B8;
+  background: #F9FAFB;
+  transition: border-color 0.3s, background 0.3s, color 0.3s;
+}
+
+/* Bottom controls inside text-strip */
+#bottom-right {
+  position: absolute;
+  bottom: 6px; right: 8px;
+  display: flex; gap: 5px; align-items: center;
+}
+#bottom-right button {
+  background: rgba(255,255,255,0.1);
+  border: none; color: #fff;
+  font-size: clamp(8px, 0.75vw, 10px);
+  padding: 0.28em 0.65em;
+  border-radius: 20px; cursor: pointer;
+}
+
+/* Progress bar at very bottom of the video */
+#prog-wrap {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+}
+#prog { height: 100%; background: #7C3AED; width: 0%; }
+
+#part-label {
+  position: absolute;
+  top: 6px; left: 10px;
+  font-size: clamp(7px, 0.7vw, 9px);
+  color: rgba(255,255,255,0.28);
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
-<div class="stage-wrapper" onclick="stageClick()">
-<div id="stage">
+<div class="video" onclick="stageClick()">
 
-  <!-- ===== PAGE 1: LANDING PAGE ===== -->
-  <div id="page1" class="page">
-    <div style="width:78%;height:88%;background:#fff;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.7);">
-      <!-- Browser chrome -->
-      <div style="background:#DEDEDE;padding:0.38em 0.7em;display:flex;align-items:center;gap:0.4em;flex-shrink:0;">
-        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FF5F57;"></div>
-        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FFBD2E;"></div>
-        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#28C840;"></div>
-        <div style="flex:1;background:#fff;border-radius:3px;padding:0.15em 0.6em;font-size:0.6em;color:#888;margin-left:0.5em;">wealthpartners.com</div>
-      </div>
-      <!-- Nav -->
-      <div style="background:#1A3366;padding:0.45em 1.5em;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-        <div style="color:#fff;font-size:0.7em;font-weight:600;letter-spacing:0.1em;">WEALTH PARTNERS GROUP</div>
-        <div style="display:flex;gap:1.2em;align-items:center;">
-          <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">Services</span>
-          <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">About</span>
-          <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">Team</span>
-          <span style="background:#fff;color:#1A3366;font-size:0.5em;padding:0.2em 0.7em;border-radius:2px;font-weight:600;">Get Started</span>
-        </div>
-      </div>
-      <!-- Hero -->
-      <div style="flex:1;background:#F0F4FA;display:flex;align-items:center;justify-content:space-between;padding:1em 2em;gap:1em;">
-        <div style="flex:1;">
-          <div style="font-size:1.1em;font-weight:700;color:#1A3366;line-height:1.25;margin-bottom:0.5em;">Building Wealth<br>For What Matters Most</div>
-          <div style="font-size:0.55em;color:#64748B;line-height:1.6;margin-bottom:0.7em;">Comprehensive financial planning and investment management for individuals and families ready to take the next step.</div>
-          <div style="display:flex;gap:0.5em;flex-wrap:wrap;margin-bottom:0.7em;">
-            <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.25em 0.6em;font-size:0.45em;color:#475569;">✓ Fiduciary Standard</div>
-            <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.25em 0.6em;font-size:0.45em;color:#475569;">✓ 20+ Years Experience</div>
-            <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.25em 0.6em;font-size:0.45em;color:#475569;">✓ Fee-Only</div>
-          </div>
-          <div id="sched-btn" style="background:#1A3366;color:#fff;display:inline-block;padding:0.32em 0.9em;border-radius:3px;font-size:0.5em;font-weight:600;transition:background 0.15s,box-shadow 0.15s;">Schedule a Consultation →</div>
-        </div>
-        <!-- Image -->
-        <div style="width:38%;border-radius:4px;height:7.5em;overflow:hidden;flex-shrink:0;position:relative;">
-          <img src="assets/img01-advisor-meeting.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" onerror="this.style.display='none';document.getElementById('img-ph').style.display='flex'"/>
-          <div id="img-ph" style="position:absolute;inset:0;background:#C8B49A;display:flex;align-items:center;justify-content:center;">
-            <span style="font-size:0.45em;color:#5a3e00;text-align:center;">[ IMG_01: advisor meeting ]<br><span style="font-size:0.85em;opacity:0.7;">save to assets/img01-advisor-meeting.jpg</span></span>
-          </div>
-        </div>
-      </div>
-      <!-- Stats -->
-      <div style="background:#1A3366;padding:0.5em 2em;display:flex;gap:2em;flex-shrink:0;">
-        <div style="text-align:center;"><div style="color:#fff;font-size:0.65em;font-weight:700;">$2.4B</div><div style="color:rgba(255,255,255,0.6);font-size:0.42em;">AUM</div></div>
-        <div style="text-align:center;"><div style="color:#fff;font-size:0.65em;font-weight:700;">1,200+</div><div style="color:rgba(255,255,255,0.6);font-size:0.42em;">Clients</div></div>
-        <div style="text-align:center;"><div style="color:#fff;font-size:0.65em;font-weight:700;">4.9★</div><div style="color:rgba(255,255,255,0.6);font-size:0.42em;">Rating</div></div>
-      </div>
-    </div>
-  </div>
+  <!-- ── CONTENT AREA ── -->
+  <div id="content">
 
-  <!-- ===== PAGE 2: FORM ===== -->
-  <div id="page2" class="page">
-    <div id="win2" style="width:78%;height:88%;background:#fff;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.7);transform-origin:center center;">
-      <div style="background:#DEDEDE;padding:0.38em 0.7em;display:flex;align-items:center;gap:0.4em;flex-shrink:0;">
-        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FF5F57;"></div>
-        <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FFBD2E;"></div>
-        <div id="xbtn" style="width:0.5em;height:0.5em;border-radius:50%;background:#28C840;transition:background 0.3s;"></div>
-        <div style="flex:1;background:#fff;border-radius:3px;padding:0.15em 0.6em;font-size:0.6em;color:#888;margin-left:0.5em;">wealthpartners.com/get-started</div>
-      </div>
-      <div style="background:#1A3366;padding:0.45em 1.5em;flex-shrink:0;">
-        <div style="color:#fff;font-size:0.7em;font-weight:600;letter-spacing:0.1em;">WEALTH PARTNERS GROUP</div>
-      </div>
-      <div style="flex:1;display:flex;align-items:center;justify-content:center;background:#F8F9FB;padding:0.8em;">
-        <div style="background:#fff;border-radius:5px;border:1px solid #E2E8F0;padding:1.2em 1.5em;width:52%;">
-          <div style="font-size:0.8em;font-weight:700;color:#1A3366;margin-bottom:0.2em;">Get Started</div>
-          <div style="font-size:0.47em;color:#94A3B8;margin-bottom:0.8em;">Fill out the form and an advisor will be in touch within 1 business day.</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4em 0.6em;margin-bottom:0.4em;">
-            <div id="f1"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">First Name *</div><div class="finp">First name</div></div>
-            <div id="f2"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Last Name *</div><div class="finp">Last name</div></div>
+    <!-- PAGE 1: Landing page -->
+    <div id="page1" class="page">
+      <div style="width:82%;height:90%;background:#fff;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.6);">
+        <div style="background:#DEDEDE;padding:0.38em 0.7em;display:flex;align-items:center;gap:0.4em;flex-shrink:0;">
+          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FF5F57;"></div>
+          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FFBD2E;"></div>
+          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#28C840;"></div>
+          <div style="flex:1;background:#fff;border-radius:3px;padding:0.15em 0.6em;font-size:0.6em;color:#888;margin-left:0.5em;">wealthpartners.com</div>
+        </div>
+        <div style="background:#1A3366;padding:0.45em 1.5em;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+          <div style="color:#fff;font-size:0.7em;font-weight:600;letter-spacing:0.1em;">WEALTH PARTNERS GROUP</div>
+          <div style="display:flex;gap:1.2em;align-items:center;">
+            <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">Services</span>
+            <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">About</span>
+            <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">Team</span>
+            <span style="background:#fff;color:#1A3366;font-size:0.5em;padding:0.2em 0.7em;border-radius:2px;font-weight:600;">Get Started</span>
           </div>
-          <div id="f3" style="margin-bottom:0.4em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Email Address *</div><div class="finp">your@email.com</div></div>
-          <div id="f4" style="margin-bottom:0.4em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Investable Assets *</div><div class="finp">Select range ▾</div></div>
-          <div id="f5" style="margin-bottom:0.4em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Phone Number</div><div class="finp">(555) 000-0000</div></div>
-          <div id="f6" style="margin-bottom:0.75em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.12em;">Primary Financial Goal</div><div class="finp" style="height:1.8em;color:#CBD5E1;">Describe your goals...</div></div>
-          <div style="background:#1A3366;color:#fff;text-align:center;border-radius:3px;padding:0.38em;font-size:0.5em;font-weight:600;">Submit Application →</div>
+        </div>
+        <div style="flex:1;background:#F0F4FA;display:flex;align-items:center;padding:1em 2em;gap:1.2em;">
+          <div style="flex:1;">
+            <div style="font-size:1.1em;font-weight:700;color:#1A3366;line-height:1.25;margin-bottom:0.4em;">Building Wealth<br>For What Matters Most</div>
+            <div style="font-size:0.55em;color:#64748B;line-height:1.6;margin-bottom:0.6em;">Comprehensive financial planning and investment management for individuals and families ready to take the next step.</div>
+            <div style="display:flex;gap:0.5em;flex-wrap:wrap;margin-bottom:0.7em;">
+              <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.22em 0.55em;font-size:0.44em;color:#475569;">✓ Fiduciary Standard</div>
+              <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.22em 0.55em;font-size:0.44em;color:#475569;">✓ 20+ Years Experience</div>
+              <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.22em 0.55em;font-size:0.44em;color:#475569;">✓ Fee-Only</div>
+            </div>
+            <div id="sched-btn" style="background:#1A3366;color:#fff;display:inline-block;padding:0.32em 0.9em;border-radius:3px;font-size:0.5em;font-weight:600;transition:background 0.15s,box-shadow 0.15s;">Schedule a Consultation →</div>
+          </div>
+          <div style="width:36%;border-radius:4px;height:7em;overflow:hidden;flex-shrink:0;position:relative;">
+            <img src="assets/img01-advisor-meeting.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" onerror="this.style.display='none'"/>
+            <div id="img-ph" style="position:absolute;inset:0;background:#C8B49A;display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:0.42em;color:#5a3e00;text-align:center;">[ IMG_01 ]<br><span style="font-size:0.85em;opacity:0.6;">assets/img01-advisor-meeting.jpg</span></span>
+            </div>
+          </div>
+        </div>
+        <div style="background:#1A3366;padding:0.45em 2em;display:flex;gap:2em;flex-shrink:0;">
+          <div style="text-align:center;"><div style="color:#fff;font-size:0.62em;font-weight:700;">$2.4B</div><div style="color:rgba(255,255,255,0.6);font-size:0.4em;">AUM</div></div>
+          <div style="text-align:center;"><div style="color:#fff;font-size:0.62em;font-weight:700;">1,200+</div><div style="color:rgba(255,255,255,0.6);font-size:0.4em;">Clients</div></div>
+          <div style="text-align:center;"><div style="color:#fff;font-size:0.62em;font-weight:700;">4.9★</div><div style="color:rgba(255,255,255,0.6);font-size:0.4em;">Rating</div></div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Dimmer -->
-  <div id="dim"></div>
+    <!-- PAGE 2: Form -->
+    <div id="page2" class="page">
+      <div id="win2" style="width:82%;height:90%;background:#fff;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.6);transform-origin:center center;">
+        <div style="background:#DEDEDE;padding:0.38em 0.7em;display:flex;align-items:center;gap:0.4em;flex-shrink:0;">
+          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FF5F57;"></div>
+          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FFBD2E;"></div>
+          <div id="xbtn" style="width:0.5em;height:0.5em;border-radius:50%;background:#28C840;transition:background 0.3s;"></div>
+          <div style="flex:1;background:#fff;border-radius:3px;padding:0.15em 0.6em;font-size:0.6em;color:#888;margin-left:0.5em;">wealthpartners.com/get-started</div>
+        </div>
+        <div style="background:#1A3366;padding:0.45em 1.5em;flex-shrink:0;">
+          <div style="color:#fff;font-size:0.7em;font-weight:600;letter-spacing:0.1em;">WEALTH PARTNERS GROUP</div>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;background:#F8F9FB;padding:0.8em;">
+          <div style="background:#fff;border-radius:5px;border:1px solid #E2E8F0;padding:1.2em 1.5em;width:52%;">
+            <div style="font-size:0.8em;font-weight:700;color:#1A3366;margin-bottom:0.2em;">Get Started</div>
+            <div style="font-size:0.47em;color:#94A3B8;margin-bottom:0.75em;">Fill out the form and an advisor will be in touch within 1 business day.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35em 0.55em;margin-bottom:0.35em;">
+              <div id="f1"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">First Name *</div><div class="finp">First name</div></div>
+              <div id="f2"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Last Name *</div><div class="finp">Last name</div></div>
+            </div>
+            <div id="f3" style="margin-bottom:0.35em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Email Address *</div><div class="finp">your@email.com</div></div>
+            <div id="f4" style="margin-bottom:0.35em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Investable Assets *</div><div class="finp">Select range ▾</div></div>
+            <div id="f5" style="margin-bottom:0.35em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Phone Number</div><div class="finp">(555) 000-0000</div></div>
+            <div id="f6" style="margin-bottom:0.7em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Primary Financial Goal</div><div class="finp" style="height:1.8em;color:#CBD5E1;">Describe your goals...</div></div>
+            <div style="background:#1A3366;color:#fff;text-align:center;border-radius:3px;padding:0.36em;font-size:0.5em;font-weight:600;">Submit Application →</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <!-- Text zone — always above everything -->
-  <div id="text-zone">
+    <!-- Dimmer -->
+    <div id="dim"></div>
+
+    <!-- Cursor -->
+    <svg id="cur" viewBox="0 0 24 24">
+      <path d="M4 2L20 11L12 13L8 22L4 2Z" fill="white" stroke="#222" stroke-width="1.2"/>
+    </svg>
+
+    <!-- Ripple -->
+    <div id="ripple"></div>
+
+    <!-- Center play button -->
+    <div id="play-center" onclick="centerPlay(event)">
+      <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+
+    <!-- End state buttons -->
+    <div id="end-btns">
+      <button onclick="centerPlay(event)">▶ Play again</button>
+      <button onclick="doReset(event)">↺ Restart</button>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ── TEXT STRIP ── completely separate block below content -->
+  <div id="text-strip">
+    <div id="part-label">PART 1 OF 13 &nbsp;·&nbsp; OPENING</div>
     <div id="t0" class="tl">Most wealth firms don't have a pipeline problem.</div>
     <div id="t1" class="tl">They have a <span style="color:#A78BFA;font-weight:600;">conversion</span> problem.</div>
     <div id="t2" class="tl">You're getting the meeting.</div>
@@ -147,41 +292,14 @@ body { background: #0C0720; display: flex; align-items: center; justify-content:
     <div id="t4" class="tl">Because you're starting with what you offer…</div>
     <div id="t5" class="tl">before understanding what wealth actually means to them.</div>
     <div id="t6" class="tl" style="font-weight:600;">And that's where momentum breaks.</div>
-  </div>
-
-  <!-- Cursor -->
-  <svg id="cur" style="left:50%;top:50%;" viewBox="0 0 24 24">
-    <path d="M4 2L20 11L12 13L8 22L4 2Z" fill="white" stroke="#222" stroke-width="1.2"/>
-  </svg>
-
-  <!-- Ripple -->
-  <div id="ripple"></div>
-
-  <!-- Center overlay: play button + end state -->
-  <div id="center-overlay">
-    <div id="play-center" onclick="centerPlay(event)">
-      <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+    <div id="bottom-right">
+      <button onclick="doReset(event)">↺</button>
+      <span id="tmr" style="font-size:clamp(8px,0.75vw,10px);color:rgba(255,255,255,0.3);min-width:2em;">0:00</span>
     </div>
-    <div id="end-btns">
-      <button onclick="centerPlay(event)">▶ Play again</button>
-      <button onclick="doReset(event)">↺ Restart</button>
-    </div>
+    <div id="prog-wrap"><div id="prog"></div></div>
   </div>
 
-  <!-- Part label -->
-  <div id="part-label">PART 1 OF 13 &nbsp;·&nbsp; OPENING</div>
-
-  <!-- Bottom bar: restart + timer only -->
-  <div id="bottom-bar">
-    <button onclick="doReset(event)">↺</button>
-    <span id="tmr" style="font-size:clamp(8px,0.8vw,10px);color:rgba(255,255,255,0.35);min-width:2em;">0:00</span>
-  </div>
-
-  <!-- Progress -->
-  <div id="prog-wrap"><div id="prog"></div></div>
-
-</div><!-- /stage -->
-</div><!-- /stage-wrapper -->
+</div><!-- /video -->
 
 <script>
 (function(){
@@ -189,7 +307,7 @@ const DUR = 26;
 let t = 0, playing = false, lastTs = null, raf = null, winClosed = false;
 const g = id => document.getElementById(id);
 
-function show(id, v) { const e=g(id); if(e) e.style.opacity = v ? '1' : '0'; }
+function show(id, v) { const e = g(id); if (e) e.style.opacity = v ? '1' : '0'; }
 function setPages(p1, p2) { g('page1').style.opacity = String(p1); g('page2').style.opacity = String(p2); }
 function moveCur(lp, tp) { g('cur').style.left = lp + '%'; g('cur').style.top = tp + '%'; }
 
@@ -212,12 +330,9 @@ function hlField(id, on) {
   inp.style.color       = on ? '#1A1A2E' : '#94A3B8';
 }
 
-function showPlayCenter(v) { g('play-center').style.display = v ? 'flex' : 'none'; }
-function showEndBtns(v)    { g('end-btns').style.display = v ? 'flex' : 'none'; }
-
 const cues = [
-  ['t0',  0.8, 5.0],
-  ['t1',  5.2, 8.5],
+  ['t0',  0.8,  5.0],
+  ['t1',  5.2,  8.5],
   ['t2',  8.8, 11.0],
   ['t3', 11.2, 14.2],
   ['t4', 14.5, 18.5],
@@ -237,56 +352,56 @@ function frame(ts) {
   if (t < 0.4) { setPages(0, 0); }
   else if (t < 1.3) { setPages(Math.min(1, (t - 0.4) / 0.9), 0); }
 
-  // Cursor appears at 3s
+  // Cursor appears
   if (t >= 3.0 && !winClosed) g('cur').style.opacity = '1';
 
-  // Cursor moves to "Schedule a Consultation" button
-  if (t >= 3.0 && t < 3.8) moveCur(20, 50);
-  if (t >= 3.8 && t < 4.8) moveCur(24, 62); // hero button position
+  // Cursor moves toward Schedule a Consultation button
+  if (t >= 3.0 && t < 3.8) moveCur(18, 45);
+  if (t >= 3.8 && t < 4.8) moveCur(22, 65);
 
-  // Hover — highlight button
-  if (t >= 4.8 && t < 6.2) {
+  // Hover highlight
+  if (t >= 4.8 && t < 6.0) {
     g('sched-btn').style.background = '#2A4A99';
-    g('sched-btn').style.boxShadow = '0 0 0 3px rgba(124,58,237,0.4)';
+    g('sched-btn').style.boxShadow = '0 0 0 3px rgba(124,58,237,0.35)';
   }
 
   // Click at 5.8s
   if (t >= 5.8 && t < 5.95) {
-    rippleAt(24, 62);
+    rippleAt(22, 65);
     g('cur').style.transform = 'scale(0.8)';
     g('sched-btn').style.background = '#0F2244';
   }
   if (t >= 5.95) g('cur').style.transform = 'scale(1)';
 
-  // Crossfade to page 2 (6.3–7.5s)
+  // Crossfade to page 2
   if (t >= 6.3 && t < 7.5 && !winClosed) {
     const p = Math.min(1, (t - 6.3) / 1.2);
     setPages(1 - p, p);
   }
-  if (t >= 7.5 && !winClosed) { setPages(0, 1); }
+  if (t >= 7.5 && !winClosed) setPages(0, 1);
 
   // Form filling
-  if (t >= 7.8) moveCur(54, 40);
-  if (t >= 8.2) { moveCur(54, 43); hlField('f1', true); }
-  if (t >= 9.1) { moveCur(64, 43); hlField('f2', true); }
-  if (t >= 10.0) { moveCur(55, 51); hlField('f3', true); }
-  if (t >= 10.9) { moveCur(55, 58); hlField('f4', true); }
-  if (t >= 11.8) { moveCur(55, 64); hlField('f5', true); }
+  if (t >= 7.8) moveCur(54, 38);
+  if (t >= 8.2) { moveCur(54, 41); hlField('f1', true); }
+  if (t >= 9.1) { moveCur(64, 41); hlField('f2', true); }
+  if (t >= 10.0) { moveCur(55, 50); hlField('f3', true); }
+  if (t >= 10.9) { moveCur(55, 57); hlField('f4', true); }
+  if (t >= 11.8) { moveCur(55, 63); hlField('f5', true); }
 
   // Move to submit
   if (t >= 13.5 && t < 14.3) moveCur(60, 74);
 
   // Hesitation
   if (t >= 14.3 && t < 14.8) moveCur(60.5, 74.5);
-  if (t >= 14.8 && t < 15.3) moveCur(59.7, 73.9);
-  if (t >= 15.3 && t < 15.8) moveCur(60.3, 74.3);
+  if (t >= 14.8 && t < 15.3) moveCur(59.7, 74.0);
+  if (t >= 15.3 && t < 15.8) moveCur(60.3, 74.4);
   if (t >= 15.8 && t < 16.3) moveCur(59.8, 74.1);
   if (t >= 16.3 && t < 16.8) moveCur(60.1, 74.3);
 
-  // Drift to X button
+  // Drift to X
   if (t >= 16.8 && t < 18.3) {
     const p = Math.min(1, (t - 16.8) / 1.5);
-    moveCur(60 + p * (39.5 - 60), 74 + p * (8.5 - 74));
+    moveCur(60 + p * (39 - 60), 74 + p * (8 - 74));
   }
 
   // X turns red
@@ -303,7 +418,7 @@ function frame(ts) {
     setTimeout(() => { g('page2').style.opacity = '0'; }, 450);
   }
 
-  // Dimmer
+  // Dimmer in content area
   if (t >= 19.2 && t < 21.2) g('dim').style.opacity = String(Math.min(0.92, (t - 19.2) / 2.0));
   if (t >= 21.2) g('dim').style.opacity = '0.92';
 
@@ -314,28 +429,27 @@ function frame(ts) {
     raf = requestAnimationFrame(frame);
   } else if (t >= DUR) {
     playing = false;
-    showPlayCenter(false);
-    showEndBtns(true);
+    g('play-center').style.display = 'none';
+    g('end-btns').style.display = 'flex';
   }
 }
 
 function startPlaying() {
   playing = true; lastTs = null;
-  showPlayCenter(false);
-  showEndBtns(false);
+  g('play-center').style.display = 'none';
+  g('end-btns').style.display = 'none';
   raf = requestAnimationFrame(frame);
 }
 
 function stopPlaying() {
   playing = false;
   cancelAnimationFrame(raf);
-  showPlayCenter(true);
+  g('play-center').style.display = 'flex';
 }
 
 window.stageClick = function() {
-  if (t >= DUR) return; // end state handled by end-btns
-  if (playing) stopPlaying();
-  else startPlaying();
+  if (t >= DUR) return;
+  playing ? stopPlaying() : startPlaying();
 };
 
 window.centerPlay = function(e) {
@@ -361,14 +475,13 @@ window.doReset = function(e) {
   setPages(0, 0);
   ['f1','f2','f3','f4','f5'].forEach(id => hlField(id, false));
   cues.forEach(([id]) => show(id, false));
-  showPlayCenter(true);
-  showEndBtns(false);
+  g('play-center').style.display = 'flex';
+  g('end-btns').style.display = 'none';
 };
 
-// Init state
-showPlayCenter(true);
-showEndBtns(false);
-
+// Init
+g('play-center').style.display = 'flex';
+g('end-btns').style.display = 'none';
 })();
 </script>
 </body>

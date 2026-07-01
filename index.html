@@ -192,6 +192,13 @@
   .small-btn.cancel:hover { color: var(--text); }
   .btn-danger-text { background: none; border: none; color: #c0392b; font-size: 12.5px; text-decoration: underline; padding: 4px; cursor: pointer; font-family: inherit; }
 
+  .persist-warning {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: #c0392b; color: white; font-size: 13px; font-weight: 500;
+    padding: 10px 20px; border-radius: 50px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    z-index: 100; max-width: 420px; text-align: center;
+  }
+
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-thumb { background: #d6d1de; border-radius: 8px; }
 </style>
@@ -288,9 +295,30 @@
       }
     } catch (e) { /* keep defaults */ }
   }
+  // Comments are meant to persist until the next video upload — so a
+  // failed write (storage full, private-browsing quota, etc.) must never
+  // fail silently. It would otherwise look saved in the UI for the rest
+  // of this session and then simply be gone on reload.
   function saveStore() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
-    catch (e) { console.warn('Could not persist feedback (storage full?)', e); }
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(store));
+      return true;
+    } catch (e) {
+      console.warn('Could not persist feedback (storage full?)', e);
+      showPersistWarning();
+      return false;
+    }
+  }
+
+  let persistWarningEl = null;
+  function showPersistWarning() {
+    if (persistWarningEl) return;
+    const el = document.createElement('div');
+    el.className = 'persist-warning';
+    el.textContent = "Couldn't save that change — this browser's storage is full, so it may be lost on reload.";
+    document.body.appendChild(el);
+    persistWarningEl = el;
+    setTimeout(() => { el.remove(); if (persistWarningEl === el) persistWarningEl = null; }, 7000);
   }
 
   function renderVersionBadge() {

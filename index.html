@@ -129,7 +129,7 @@
   .stage-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px; overflow: auto; background: #ece7f2; }
 
   .video-box {
-    position: relative; width: 100%; max-width: 960px; aspect-ratio: 16 / 9;
+    position: relative;
     background: #0a0a0a; border-radius: 14px; overflow: hidden;
     box-shadow: 0 10px 40px rgba(36, 4, 70, 0.25);
     flex-shrink: 0;
@@ -160,13 +160,6 @@
   }
   .capture-layer.show { display: block; }
   .capture-layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-  .close-overlay {
-    position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 50%;
-    background: rgba(0,0,0,0.55); color: white; border: none; font-size: 16px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; z-index: 5;
-  }
-  .close-overlay:hover { background: rgba(0,0,0,0.75); }
 
   .pin {
     position: absolute; width: 30px; height: 30px; margin-left: -15px; margin-top: -30px;
@@ -236,7 +229,7 @@
     <div class="stage">
       <div class="toolbar">
         <button class="transport-btn" id="transportBtn" title="Play/Pause">▶</button>
-        <div class="toolbar-hint" id="toolbarHint">Click the video to pause it, then click anywhere on the frame to comment.</div>
+        <div class="toolbar-hint" id="toolbarHint">Click the video to play it.</div>
       </div>
 
       <div class="stage-area">
@@ -248,7 +241,6 @@
 
           <div class="capture-layer" id="captureLayer">
             <img id="captureImg" alt="Paused frame">
-            <button class="close-overlay" id="closeOverlayBtn" title="Back to live video">×</button>
           </div>
         </div>
       </div>
@@ -265,7 +257,6 @@
   const liveLayer = document.getElementById('liveLayer');
   const captureLayer = document.getElementById('captureLayer');
   const captureImg = document.getElementById('captureImg');
-  const closeOverlayBtn = document.getElementById('closeOverlayBtn');
   const transportBtn = document.getElementById('transportBtn');
   const toolbarHint = document.getElementById('toolbarHint');
   const commentList = document.getElementById('commentList');
@@ -422,12 +413,21 @@
     if (!target || typeof html2canvas === 'undefined') {
       return Promise.resolve(null);
     }
+    // Pin the capture to the iframe's actual visible box (not the source
+    // document's scrollHeight, which can run taller than what's shown —
+    // html2canvas otherwise bakes in extra blank space at the bottom that
+    // then throws off the aspect ratio once displayed with object-fit).
+    const w = videoFrame.clientWidth, h = videoFrame.clientHeight;
     return html2canvas(target, {
       backgroundColor: '#0a0a0a',
       logging: false,
       useCORS: true,
       foreignObjectRendering: true,
-      scale: Math.min(1, 700 / videoFrame.clientWidth)
+      width: w,
+      height: h,
+      windowWidth: w,
+      windowHeight: h,
+      scale: Math.min(1, 700 / w)
     }).then(canvas => canvas.toDataURL('image/jpeg', 0.82)).catch(err => {
       console.warn('Screen capture failed', err);
       return null;
@@ -606,12 +606,19 @@
     transportBtn.style.display = 'flex';
     transportBtn.textContent = player.playing ? '❚❚' : '▶';
 
+    // Only arm the comment cursor once the video has actually been played
+    // and paused — the untouched opening frame (time === 0) should still
+    // show a normal pointer so clicking it starts playback, not a comment.
+    const hasStarted = player.time > 0;
     if (player.playing) {
       armedLayer.classList.remove('armed');
       toolbarHint.textContent = 'Playing — pause to leave feedback.';
-    } else {
+    } else if (hasStarted) {
       armedLayer.classList.add('armed');
       toolbarHint.textContent = 'Paused — click anywhere on the frame to comment.';
+    } else {
+      armedLayer.classList.remove('armed');
+      toolbarHint.textContent = 'Click the video to play it.';
     }
 
     renderLivePins(player.time);
@@ -652,8 +659,6 @@
     player.playing ? player.pause() : player.play();
   });
 
-  closeOverlayBtn.addEventListener('click', (e) => { e.stopPropagation(); enterLive(); });
-
   // Clicking outside an open comment (compose/view/edit) closes it.
   document.addEventListener('click', () => {
     if (mode === 'composing' || mode === 'viewing' || mode === 'editing') enterLive();
@@ -685,7 +690,27 @@
     if (e.key === 'Enter') versionTitle.blur();
   });
 
+  // ── Sizing ─────────────────────────────────────────────
+  // Compute the 16:9 box in whole pixels rather than relying on CSS
+  // aspect-ratio, which can round fractionally at some zoom/DPI levels and
+  // leave a hairline gap between the frame and the iframe's own content.
+  function sizeVideoBox() {
+    const area = videoBox.parentElement;
+    const availW = Math.min(960, area.clientWidth - 56);
+    let w = Math.max(200, availW);
+    let h = Math.round(w * 9 / 16);
+    const availH = area.clientHeight - 56;
+    if (availH > 0 && h > availH) {
+      h = Math.max(112, availH);
+      w = Math.round(h * 16 / 9);
+    }
+    videoBox.style.width = w + 'px';
+    videoBox.style.height = h + 'px';
+  }
+  window.addEventListener('resize', sizeVideoBox);
+
   // ── Init ───────────────────────────────────────────────
+  sizeVideoBox();
   loadStore();
   renderVersionBadge();
   renderSidebar();

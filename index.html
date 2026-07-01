@@ -3,485 +3,594 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Knomee: Conversion Intelligence — Video Animation</title>
+<title>Video Feedback — Knomee</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  background: #050210;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --purple:      #240446;
+    --purple-mid:  #7639A1;
+    --purple-light:#e9d9f4;
+    --teal:        #3dbdaa;
+    --teal-bg:     #b8ede6;
+    --lavender-bg: #d8cce8;
+    --border:      #e2e2e2;
+    --text:        #1a1a2e;
+    --muted:       #6b7280;
+  }
+  html, body { height: 100%; font-family: 'Poppins', sans-serif; background: #f7f5fa; color: var(--text); }
 
-/* Outer 16:9 wrapper */
-.video {
-  width: min(100vw, 177.78vh);
-  height: min(100vh, 56.25vw);
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  position: relative;
-  background: #0C0720;
-}
+  .shell { display: flex; flex-direction: column; height: 100vh; }
 
-/* Top: content area (all the animated pages) */
-#content {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  background: #0C0720;
-}
+  /* ── Header ── */
+  .header {
+    background: var(--purple); height: 56px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+    position: relative;
+  }
+  .header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--purple-mid); opacity: 0.5; }
+  .header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .header-logo { width: 22px; height: 22px; border-radius: 6px; background: var(--teal); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: var(--purple); flex-shrink: 0; }
+  .header-title { color: white; font-size: 15px; font-weight: 600; flex-shrink: 0; }
 
-/* Bottom: text strip — its own block, always dark, always at the bottom */
-#text-strip {
-  height: 20%;
-  background: #0C0720;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8%;
-  position: relative;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  flex-shrink: 0;
-}
+  .version-badge {
+    display: flex; align-items: center; gap: 8px; margin-left: 6px; padding: 4px 6px 4px 10px;
+    background: rgba(255,255,255,0.08); border-radius: 50px; min-width: 0;
+  }
+  .version-num {
+    background: var(--teal); color: var(--purple); font-size: 11px; font-weight: 700;
+    padding: 3px 9px; border-radius: 50px; flex-shrink: 0; white-space: nowrap;
+  }
+  .version-title {
+    color: rgba(255,255,255,0.85); font-size: 12.5px; font-weight: 500; background: none; border: none;
+    font-family: inherit; outline: none; padding: 3px 4px; border-radius: 5px; min-width: 60px;
+    max-width: 260px;
+  }
+  .version-title:hover, .version-title:focus { background: rgba(255,255,255,0.1); color: white; }
 
-.tl {
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  color: #fff;
-  font-size: clamp(11px, 1.6vw, 18px);
-  text-align: center;
-  line-height: 1.55;
-  margin: 0.05em 0;
-}
+  .header-right { display: flex; align-items: center; gap: 10px; }
 
-/* Pages fill the content area */
-.page {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-}
+  .file-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1.5px solid rgba(255,255,255,0.4); border-radius: 50px;
+    padding: 7px 16px; font-size: 12.5px; font-weight: 500;
+    color: white; cursor: pointer; background: transparent;
+    transition: background 0.15s; white-space: nowrap;
+  }
+  .file-btn:hover { background: rgba(255,255,255,0.1); }
+  .file-btn input { display: none; }
 
-#dim {
-  position: absolute;
-  inset: 0;
-  background: #0C0720;
-  opacity: 0;
-  pointer-events: none;
-}
+  /* ── Body layout ── */
+  .body { flex: 1; display: flex; min-height: 0; }
 
-/* Cursor */
-#cur {
-  position: absolute;
-  width: 1.8%;
-  pointer-events: none;
-  opacity: 0;
-  left: 50%; top: 50%;
-  transition: left 0.55s cubic-bezier(.4,0,.2,1), top 0.55s cubic-bezier(.4,0,.2,1);
-}
+  /* ── Sidebar (comments stack) ── */
+  .sidebar {
+    width: 340px; flex-shrink: 0; background: white; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .sidebar-head {
+    padding: 18px 20px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .sidebar-head h2 { font-size: 15px; font-weight: 700; color: var(--purple); }
+  .sidebar-head p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .comment-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 
-#ripple {
-  position: absolute;
-  width: 2.5%; aspect-ratio: 1;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.7);
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%,-50%) scale(0);
-  transition: transform 0.4s ease-out, opacity 0.4s ease-out;
-}
+  .empty-state {
+    margin: 24px 16px; padding: 20px; text-align: center; color: var(--muted);
+    font-size: 13px; line-height: 1.6; background: #faf8fc; border: 1px dashed var(--border); border-radius: 12px;
+  }
 
-/* Center play button — sits in content area */
-#play-center {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 11%; aspect-ratio: 1;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.16);
-  border: 2px solid rgba(255,255,255,0.38);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-  z-index: 30;
-}
-#play-center:hover { background: rgba(255,255,255,0.26); transform: translate(-50%,-50%) scale(1.06); }
-#play-center svg { width: 36%; height: 36%; margin-left: 8%; }
+  .c-card {
+    display: flex; gap: 10px; padding: 10px; border-radius: 12px; border: 1.5px solid var(--border);
+    background: white; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    text-align: left;
+  }
+  .c-card:hover { border-color: var(--teal); background: #f0faf8; }
+  .c-card.active { border-color: var(--purple); background: var(--purple-light); }
 
-/* End state buttons */
-#end-btns {
-  position: absolute;
-  top: 55%; left: 50%;
-  transform: translate(-50%, -50%);
-  display: none;
-  gap: 0.6em;
-  z-index: 30;
-}
-#end-btns button {
-  background: rgba(255,255,255,0.14);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: #fff;
-  font-size: clamp(9px, 0.9vw, 12px);
-  padding: 0.4em 1.1em;
-  border-radius: 20px;
-  cursor: pointer;
-}
-#end-btns button:hover { background: rgba(255,255,255,0.26); }
+  .c-thumb { position: relative; width: 78px; height: 48px; border-radius: 7px; overflow: hidden; flex-shrink: 0; background: #0a0a0a; border: 1px solid var(--border); }
+  .c-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .c-thumb-dot {
+    position: absolute; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--purple); border: 1.5px solid white; box-shadow: 0 0 0 1px var(--purple);
+    transform: translate(-50%, -50%);
+  }
 
-/* Form inputs */
-.finp {
-  border: 1px solid #CBD5E1;
-  border-radius: 3px;
-  padding: 0.28em 0.5em;
-  font-size: 0.42em;
-  color: #94A3B8;
-  background: #F9FAFB;
-  transition: border-color 0.3s, background 0.3s, color 0.3s;
-}
+  .c-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .c-meta { display: flex; align-items: center; gap: 6px; }
+  .c-num {
+    width: 16px; height: 16px; border-radius: 50%; background: var(--teal); color: white;
+    font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .c-time { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .c-text {
+    font-size: 12.5px; color: var(--text); line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
 
-/* Bottom controls inside text-strip */
-#bottom-right {
-  position: absolute;
-  bottom: 6px; right: 8px;
-  display: flex; gap: 5px; align-items: center;
-}
-#bottom-right button {
-  background: rgba(255,255,255,0.1);
-  border: none; color: #fff;
-  font-size: clamp(8px, 0.75vw, 10px);
-  padding: 0.28em 0.65em;
-  border-radius: 20px; cursor: pointer;
-}
+  /* ── Main stage ── */
+  .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
-/* Progress bar at very bottom of the video */
-#prog-wrap {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 3px;
-  background: rgba(255,255,255,0.08);
-}
-#prog { height: 100%; background: #7C3AED; width: 0%; }
+  .toolbar {
+    height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; border-bottom: 1px solid var(--border); background: white;
+  }
+  .toolbar-hint { font-size: 12.5px; color: var(--muted); }
+  .toolbar-hint b { color: var(--purple); font-weight: 600; }
 
-#part-label {
-  position: absolute;
-  top: 6px; left: 10px;
-  font-size: clamp(7px, 0.7vw, 9px);
-  color: rgba(255,255,255,0.28);
-  letter-spacing: 0.1em;
-  pointer-events: none;
-}
+  .btn {
+    font-family: inherit; border: none; border-radius: 50px; cursor: pointer;
+    font-weight: 600; transition: background 0.15s, opacity 0.15s;
+  }
+  .btn-primary { background: var(--purple); color: white; padding: 9px 20px; font-size: 13px; }
+  .btn-primary:hover { background: var(--purple-mid); }
+
+  .stage-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px; overflow: auto; background: #ece7f2; }
+
+  .video-box {
+    position: relative; width: 100%; max-width: 960px; aspect-ratio: 16 / 9;
+    background: #0a0a0a; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 10px 40px rgba(36, 4, 70, 0.25);
+    flex-shrink: 0;
+  }
+  .video-box iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  .capture-layer {
+    position: absolute; inset: 0; display: none;
+  }
+  .capture-layer.show { display: block; }
+  .capture-layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .capture-layer.placing img { cursor: crosshair; }
+
+  .placing-banner {
+    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    background: rgba(36,4,70,0.92); color: white; font-size: 12.5px; font-weight: 500;
+    padding: 8px 16px; border-radius: 50px; pointer-events: none; white-space: nowrap;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .placing-banner .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .close-overlay {
+    position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(0,0,0,0.55); color: white; border: none; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; z-index: 5;
+  }
+  .close-overlay:hover { background: rgba(0,0,0,0.75); }
+
+  .pin {
+    position: absolute; width: 30px; height: 30px; margin-left: -15px; margin-top: -30px;
+    transform-origin: bottom center; z-index: 4; pointer-events: none;
+  }
+  .pin-body {
+    width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    background: var(--purple); border: 2.5px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pin-body::after { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--teal); transform: rotate(45deg); }
+
+  .bubble {
+    position: absolute; width: 260px; background: white; border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28); border: 1px solid var(--border);
+    z-index: 6; overflow: hidden;
+  }
+  .bubble textarea {
+    width: 100%; min-height: 64px; border: none; resize: vertical; padding: 10px 12px;
+    font-family: inherit; font-size: 13px; color: var(--text); outline: none; line-height: 1.4;
+  }
+  .bubble-text { padding: 8px 12px 4px; font-size: 13px; color: var(--text); line-height: 1.45; white-space: pre-wrap; }
+  .bubble-actions { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px 12px; gap: 8px; }
+  .bubble-actions-right { display: flex; gap: 6px; align-items: center; }
+
+  .small-btn { font-family: inherit; border: none; border-radius: 50px; cursor: pointer; font-weight: 600; font-size: 12px; padding: 6px 14px; }
+  .small-btn.save { background: var(--purple); color: white; }
+  .small-btn.save:hover { background: var(--purple-mid); }
+  .small-btn.cancel { background: transparent; color: var(--muted); }
+  .small-btn.cancel:hover { color: var(--text); }
+  .btn-danger-text { background: none; border: none; color: #c0392b; font-size: 12.5px; text-decoration: underline; padding: 4px; cursor: pointer; font-family: inherit; }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d6d1de; border-radius: 8px; }
 </style>
 </head>
 <body>
-<div class="video" onclick="stageClick()">
+<div class="shell">
 
-  <!-- ── CONTENT AREA ── -->
-  <div id="content">
-
-    <!-- PAGE 1: Landing page -->
-    <div id="page1" class="page">
-      <div style="width:82%;height:90%;background:#fff;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.6);">
-        <div style="background:#DEDEDE;padding:0.38em 0.7em;display:flex;align-items:center;gap:0.4em;flex-shrink:0;">
-          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FF5F57;"></div>
-          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FFBD2E;"></div>
-          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#28C840;"></div>
-          <div style="flex:1;background:#fff;border-radius:3px;padding:0.15em 0.6em;font-size:0.6em;color:#888;margin-left:0.5em;">wealthpartners.com</div>
-        </div>
-        <div style="background:#1A3366;padding:0.45em 1.5em;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-          <div style="color:#fff;font-size:0.7em;font-weight:600;letter-spacing:0.1em;">WEALTH PARTNERS GROUP</div>
-          <div style="display:flex;gap:1.2em;align-items:center;">
-            <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">Services</span>
-            <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">About</span>
-            <span style="color:rgba(255,255,255,0.7);font-size:0.5em;">Team</span>
-            <span style="background:#fff;color:#1A3366;font-size:0.5em;padding:0.2em 0.7em;border-radius:2px;font-weight:600;">Get Started</span>
-          </div>
-        </div>
-        <div style="flex:1;background:#F0F4FA;display:flex;align-items:center;padding:1em 2em;gap:1.2em;">
-          <div style="flex:1;">
-            <div style="font-size:1.1em;font-weight:700;color:#1A3366;line-height:1.25;margin-bottom:0.4em;">Building Wealth<br>For What Matters Most</div>
-            <div style="font-size:0.55em;color:#64748B;line-height:1.6;margin-bottom:0.6em;">Comprehensive financial planning and investment management for individuals and families ready to take the next step.</div>
-            <div style="display:flex;gap:0.5em;flex-wrap:wrap;margin-bottom:0.7em;">
-              <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.22em 0.55em;font-size:0.44em;color:#475569;">✓ Fiduciary Standard</div>
-              <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.22em 0.55em;font-size:0.44em;color:#475569;">✓ 20+ Years Experience</div>
-              <div style="background:#fff;border:1px solid #CBD5E1;border-radius:3px;padding:0.22em 0.55em;font-size:0.44em;color:#475569;">✓ Fee-Only</div>
-            </div>
-            <div id="sched-btn" style="background:#1A3366;color:#fff;display:inline-block;padding:0.32em 0.9em;border-radius:3px;font-size:0.5em;font-weight:600;transition:background 0.15s,box-shadow 0.15s;">Schedule a Consultation →</div>
-          </div>
-          <div style="width:36%;border-radius:4px;height:7em;overflow:hidden;flex-shrink:0;position:relative;">
-            <img src="assets/img01-advisor-meeting.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" onerror="this.style.display='none'"/>
-            <div id="img-ph" style="position:absolute;inset:0;background:#C8B49A;display:flex;align-items:center;justify-content:center;">
-              <span style="font-size:0.42em;color:#5a3e00;text-align:center;">[ IMG_01 ]<br><span style="font-size:0.85em;opacity:0.6;">assets/img01-advisor-meeting.jpg</span></span>
-            </div>
-          </div>
-        </div>
-        <div style="background:#1A3366;padding:0.45em 2em;display:flex;gap:2em;flex-shrink:0;">
-          <div style="text-align:center;"><div style="color:#fff;font-size:0.62em;font-weight:700;">$2.4B</div><div style="color:rgba(255,255,255,0.6);font-size:0.4em;">AUM</div></div>
-          <div style="text-align:center;"><div style="color:#fff;font-size:0.62em;font-weight:700;">1,200+</div><div style="color:rgba(255,255,255,0.6);font-size:0.4em;">Clients</div></div>
-          <div style="text-align:center;"><div style="color:#fff;font-size:0.62em;font-weight:700;">4.9★</div><div style="color:rgba(255,255,255,0.6);font-size:0.4em;">Rating</div></div>
-        </div>
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">K</div>
+      <div class="header-title">Video Feedback</div>
+      <div class="version-badge">
+        <span class="version-num" id="versionNum">v1</span>
+        <input class="version-title" id="versionTitle" placeholder="Untitled version" spellcheck="false">
       </div>
     </div>
-
-    <!-- PAGE 2: Form -->
-    <div id="page2" class="page">
-      <div id="win2" style="width:82%;height:90%;background:#fff;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.6);transform-origin:center center;">
-        <div style="background:#DEDEDE;padding:0.38em 0.7em;display:flex;align-items:center;gap:0.4em;flex-shrink:0;">
-          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FF5F57;"></div>
-          <div style="width:0.5em;height:0.5em;border-radius:50%;background:#FFBD2E;"></div>
-          <div id="xbtn" style="width:0.5em;height:0.5em;border-radius:50%;background:#28C840;transition:background 0.3s;"></div>
-          <div style="flex:1;background:#fff;border-radius:3px;padding:0.15em 0.6em;font-size:0.6em;color:#888;margin-left:0.5em;">wealthpartners.com/get-started</div>
-        </div>
-        <div style="background:#1A3366;padding:0.45em 1.5em;flex-shrink:0;">
-          <div style="color:#fff;font-size:0.7em;font-weight:600;letter-spacing:0.1em;">WEALTH PARTNERS GROUP</div>
-        </div>
-        <div style="flex:1;display:flex;align-items:center;justify-content:center;background:#F8F9FB;padding:0.8em;">
-          <div style="background:#fff;border-radius:5px;border:1px solid #E2E8F0;padding:1.2em 1.5em;width:52%;">
-            <div style="font-size:0.8em;font-weight:700;color:#1A3366;margin-bottom:0.2em;">Get Started</div>
-            <div style="font-size:0.47em;color:#94A3B8;margin-bottom:0.75em;">Fill out the form and an advisor will be in touch within 1 business day.</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35em 0.55em;margin-bottom:0.35em;">
-              <div id="f1"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">First Name *</div><div class="finp">First name</div></div>
-              <div id="f2"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Last Name *</div><div class="finp">Last name</div></div>
-            </div>
-            <div id="f3" style="margin-bottom:0.35em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Email Address *</div><div class="finp">your@email.com</div></div>
-            <div id="f4" style="margin-bottom:0.35em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Investable Assets *</div><div class="finp">Select range ▾</div></div>
-            <div id="f5" style="margin-bottom:0.35em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Phone Number</div><div class="finp">(555) 000-0000</div></div>
-            <div id="f6" style="margin-bottom:0.7em;"><div style="font-size:0.42em;color:#64748B;margin-bottom:0.1em;">Primary Financial Goal</div><div class="finp" style="height:1.8em;color:#CBD5E1;">Describe your goals...</div></div>
-            <div style="background:#1A3366;color:#fff;text-align:center;border-radius:3px;padding:0.36em;font-size:0.5em;font-weight:600;">Submit Application →</div>
-          </div>
-        </div>
-      </div>
+    <div class="header-right">
+      <label class="file-btn">
+        Swap video (new version)
+        <input type="file" id="fileInput" accept=".html,text/html">
+      </label>
     </div>
-
-    <!-- Dimmer -->
-    <div id="dim"></div>
-
-    <!-- Cursor -->
-    <svg id="cur" viewBox="0 0 24 24">
-      <path d="M4 2L20 11L12 13L8 22L4 2Z" fill="white" stroke="#222" stroke-width="1.2"/>
-    </svg>
-
-    <!-- Ripple -->
-    <div id="ripple"></div>
-
-    <!-- Center play button -->
-    <div id="play-center" onclick="centerPlay(event)">
-      <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-    </div>
-
-    <!-- End state buttons -->
-    <div id="end-btns">
-      <button onclick="centerPlay(event)">▶ Play again</button>
-      <button onclick="doReset(event)">↺ Restart</button>
-    </div>
-
-  </div><!-- /content -->
-
-  <!-- ── TEXT STRIP ── completely separate block below content -->
-  <div id="text-strip">
-    <div id="part-label">PART 1 OF 13 &nbsp;·&nbsp; OPENING</div>
-    <div id="t0" class="tl">Most wealth firms don't have a pipeline problem.</div>
-    <div id="t1" class="tl">They have a <span style="color:#A78BFA;font-weight:600;">conversion</span> problem.</div>
-    <div id="t2" class="tl">You're getting the meeting.</div>
-    <div id="t3" class="tl">But you're <span style="color:#F87171;">losing the client.</span></div>
-    <div id="t4" class="tl">Because you're starting with what you offer…</div>
-    <div id="t5" class="tl">before understanding what wealth actually means to them.</div>
-    <div id="t6" class="tl" style="font-weight:600;">And that's where momentum breaks.</div>
-    <div id="bottom-right">
-      <button onclick="doReset(event)">↺</button>
-      <span id="tmr" style="font-size:clamp(8px,0.75vw,10px);color:rgba(255,255,255,0.3);min-width:2em;">0:00</span>
-    </div>
-    <div id="prog-wrap"><div id="prog"></div></div>
   </div>
 
-</div><!-- /video -->
+  <div class="body">
+
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <h2 id="commentCount">Comments (0)</h2>
+        <p>Click a card to jump to that moment</p>
+      </div>
+      <div class="comment-list" id="commentList"></div>
+    </div>
+
+    <div class="stage">
+      <div class="toolbar">
+        <div class="toolbar-hint">Pause the video below, then <b>Add Comment</b> to pin feedback to that frame.</div>
+        <button class="btn btn-primary" id="addCommentBtn">+ Add Comment</button>
+      </div>
+
+      <div class="stage-area">
+        <div class="video-box" id="videoBox">
+          <iframe id="videoFrame" src="video.html" title="Video"></iframe>
+
+          <div class="capture-layer" id="captureLayer">
+            <img id="captureImg" alt="Paused frame">
+            <div class="placing-banner" id="placingBanner" style="display:none;">
+              <span class="dot"></span> Click anywhere on the frame to drop a pin
+            </div>
+            <button class="close-overlay" id="closeOverlayBtn" title="Back to live video">×</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <script>
-(function(){
-const DUR = 26;
-let t = 0, playing = false, lastTs = null, raf = null, winClosed = false;
-const g = id => document.getElementById(id);
+(function () {
+  const videoFrame = document.getElementById('videoFrame');
+  const videoBox = document.getElementById('videoBox');
+  const captureLayer = document.getElementById('captureLayer');
+  const captureImg = document.getElementById('captureImg');
+  const placingBanner = document.getElementById('placingBanner');
+  const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+  const addCommentBtn = document.getElementById('addCommentBtn');
+  const commentList = document.getElementById('commentList');
+  const commentCount = document.getElementById('commentCount');
+  const fileInput = document.getElementById('fileInput');
+  const versionNum = document.getElementById('versionNum');
+  const versionTitle = document.getElementById('versionTitle');
 
-function show(id, v) { const e = g(id); if (e) e.style.opacity = v ? '1' : '0'; }
-function setPages(p1, p2) { g('page1').style.opacity = String(p1); g('page2').style.opacity = String(p2); }
-function moveCur(lp, tp) { g('cur').style.left = lp + '%'; g('cur').style.top = tp + '%'; }
+  const STORE_KEY = 'knomee-video-feedback';
 
-function rippleAt(lp, tp) {
-  const r = g('ripple');
-  r.style.left = lp + '%'; r.style.top = tp + '%';
-  r.style.transition = 'none';
-  r.style.transform = 'translate(-50%,-50%) scale(0)'; r.style.opacity = '1';
-  requestAnimationFrame(() => {
-    r.style.transition = 'transform 0.4s ease-out, opacity 0.4s ease-out';
-    r.style.transform = 'translate(-50%,-50%) scale(3)'; r.style.opacity = '0';
+  let store = { version: 1, title: 'video.html', comments: [] };
+  let mode = 'live';        // 'live' | 'placing' | 'composing' | 'viewing' | 'editing'
+  let pendingPin = null;     // {x, y, img} while placing
+  let activeId = null;
+  let bubbleEl = null;
+
+  function loadStore() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        store = {
+          version: parsed.version || 1,
+          title: typeof parsed.title === 'string' ? parsed.title : 'video.html',
+          comments: Array.isArray(parsed.comments) ? parsed.comments : []
+        };
+      }
+    } catch (e) { /* keep defaults */ }
+  }
+  function saveStore() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+    catch (e) { console.warn('Could not persist feedback (storage full?)', e); }
+  }
+
+  function renderVersionBadge() {
+    versionNum.textContent = 'v' + store.version;
+    versionTitle.value = store.title || '';
+  }
+
+  function relTime(ts) {
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 10) return 'Just now';
+    if (s < 60) return s + 's ago';
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // ── Rendering ──────────────────────────────────────────
+
+  function renderSidebar() {
+    const comments = store.comments;
+    commentCount.textContent = 'Comments (' + comments.length + ')';
+    commentList.innerHTML = '';
+    if (!comments.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'No comments yet on this version. Pause the video and click "Add Comment" to leave feedback pinned to a moment.';
+      commentList.appendChild(empty);
+      return;
+    }
+    const ordered = comments.slice().sort((a, b) => b.createdAt - a.createdAt);
+    ordered.forEach((c, idx) => {
+      const card = document.createElement('div');
+      card.className = 'c-card' + (c.id === activeId ? ' active' : '');
+      card.dataset.id = c.id;
+      card.innerHTML =
+        '<div class="c-thumb">' +
+          '<img src="' + c.img + '" alt="">' +
+          '<div class="c-thumb-dot" style="left:' + c.x + '%;top:' + c.y + '%;"></div>' +
+        '</div>' +
+        '<div class="c-body">' +
+          '<div class="c-meta"><span class="c-num">' + (ordered.length - idx) + '</span><span class="c-time">' + relTime(c.createdAt) + '</span></div>' +
+          '<div class="c-text">' + escapeHtml(c.text) + '</div>' +
+        '</div>';
+      card.addEventListener('click', () => viewComment(c.id));
+      commentList.appendChild(card);
+    });
+  }
+
+  function clampBubblePos(xPct, yPct) {
+    const boxW = videoBox.clientWidth, boxH = videoBox.clientHeight;
+    const bw = 260, bh = 140;
+    let left = (xPct / 100) * boxW + 18;
+    let top = (yPct / 100) * boxH - 10;
+    if (left + bw > boxW - 10) left = (xPct / 100) * boxW - bw - 18;
+    if (left < 10) left = 10;
+    if (top + bh > boxH - 10) top = boxH - bh - 10;
+    if (top < 10) top = 10;
+    return { left, top };
+  }
+
+  function placePin(xPct, yPct) {
+    const pin = document.createElement('div');
+    pin.className = 'pin';
+    pin.id = 'activePin';
+    pin.style.left = xPct + '%';
+    pin.style.top = yPct + '%';
+    pin.innerHTML = '<div class="pin-body"></div>';
+    captureLayer.appendChild(pin);
+  }
+
+  function removeActivePin() {
+    const p = document.getElementById('activePin');
+    if (p) p.remove();
+  }
+
+  function removeBubble() {
+    if (bubbleEl) { bubbleEl.remove(); bubbleEl = null; }
+  }
+
+  // ── Capture ────────────────────────────────────────────
+
+  function captureFrame() {
+    let target;
+    try { target = videoFrame.contentDocument.body; } catch (e) { target = null; }
+    if (!target || typeof html2canvas === 'undefined') {
+      return Promise.resolve(null);
+    }
+    return html2canvas(target, {
+      backgroundColor: '#0a0a0a',
+      logging: false,
+      useCORS: true,
+      foreignObjectRendering: true,
+      scale: Math.min(1, 700 / videoFrame.clientWidth)
+    }).then(canvas => canvas.toDataURL('image/jpeg', 0.82)).catch(err => {
+      console.warn('Screen capture failed', err);
+      return null;
+    });
+  }
+
+  // ── Flows ──────────────────────────────────────────────
+
+  function enterLive() {
+    mode = 'live';
+    activeId = null;
+    pendingPin = null;
+    removeBubble();
+    removeActivePin();
+    captureLayer.classList.remove('show', 'placing');
+    placingBanner.style.display = 'none';
+    addCommentBtn.disabled = false;
+    addCommentBtn.textContent = '+ Add Comment';
+    renderSidebar();
+  }
+
+  function startAddComment() {
+    addCommentBtn.disabled = true;
+    addCommentBtn.textContent = 'Capturing…';
+    captureFrame().then(dataUrl => {
+      addCommentBtn.disabled = false;
+      addCommentBtn.textContent = '+ Add Comment';
+      if (!dataUrl) {
+        alert('Could not capture the current frame. Make sure the video finished loading, then try again.');
+        return;
+      }
+      mode = 'placing';
+      pendingPin = { img: dataUrl };
+      captureImg.src = dataUrl;
+      captureLayer.classList.add('show', 'placing');
+      placingBanner.style.display = 'flex';
+    });
+  }
+
+  function onCaptureClick(e) {
+    if (mode !== 'placing') return;
+    const rect = captureImg.getBoundingClientRect();
+    const xPct = Math.min(98, Math.max(2, ((e.clientX - rect.left) / rect.width) * 100));
+    const yPct = Math.min(96, Math.max(4, ((e.clientY - rect.top) / rect.height) * 100));
+    pendingPin.x = xPct;
+    pendingPin.y = yPct;
+    placingBanner.style.display = 'none';
+    captureLayer.classList.remove('placing');
+    placePin(xPct, yPct);
+    openComposeBubble(xPct, yPct);
+    mode = 'composing';
+  }
+
+  function openComposeBubble(xPct, yPct) {
+    removeBubble();
+    const pos = clampBubblePos(xPct, yPct);
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.style.left = pos.left + 'px';
+    b.style.top = pos.top + 'px';
+    b.innerHTML =
+      '<textarea placeholder="Leave a comment on this moment…" autofocus></textarea>' +
+      '<div class="bubble-actions">' +
+        '<button class="small-btn cancel" data-act="cancel">Cancel</button>' +
+        '<button class="small-btn save" data-act="save">Save comment</button>' +
+      '</div>';
+    captureLayer.appendChild(b);
+    bubbleEl = b;
+    const ta = b.querySelector('textarea');
+    ta.focus();
+    b.querySelector('[data-act="cancel"]').addEventListener('click', () => enterLive());
+    b.querySelector('[data-act="save"]').addEventListener('click', () => {
+      const text = ta.value.trim();
+      if (!text) { ta.focus(); return; }
+      const comment = {
+        id: 'c' + Date.now() + Math.random().toString(36).slice(2, 7),
+        img: pendingPin.img,
+        x: pendingPin.x,
+        y: pendingPin.y,
+        text: text,
+        createdAt: Date.now()
+      };
+      store.comments.push(comment);
+      saveStore();
+      viewComment(comment.id);
+    });
+  }
+
+  function viewComment(id) {
+    const c = store.comments.find(c => c.id === id);
+    if (!c) return;
+    mode = 'viewing';
+    activeId = id;
+    removeBubble();
+    removeActivePin();
+    captureImg.src = c.img;
+    captureLayer.classList.add('show');
+    captureLayer.classList.remove('placing');
+    placingBanner.style.display = 'none';
+    placePin(c.x, c.y);
+
+    const pos = clampBubblePos(c.x, c.y);
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.style.left = pos.left + 'px';
+    b.style.top = pos.top + 'px';
+    b.innerHTML =
+      '<div class="bubble-text" data-role="text">' + escapeHtml(c.text) + '</div>' +
+      '<div class="bubble-actions">' +
+        '<button class="btn-danger-text" data-act="delete">Delete</button>' +
+        '<div class="bubble-actions-right">' +
+          '<button class="small-btn cancel" data-act="edit">Edit</button>' +
+        '</div>' +
+      '</div>';
+    captureLayer.appendChild(b);
+    bubbleEl = b;
+
+    b.querySelector('[data-act="delete"]').addEventListener('click', () => {
+      if (!confirm('Delete this comment?')) return;
+      store.comments = store.comments.filter(x => x.id !== id);
+      saveStore();
+      enterLive();
+    });
+    b.querySelector('[data-act="edit"]').addEventListener('click', () => editComment(id));
+
+    renderSidebar();
+  }
+
+  function editComment(id) {
+    const c = store.comments.find(c => c.id === id);
+    if (!c || !bubbleEl) return;
+    bubbleEl.innerHTML =
+      '<textarea>' + escapeHtml(c.text) + '</textarea>' +
+      '<div class="bubble-actions">' +
+        '<button class="small-btn cancel" data-act="cancel">Cancel</button>' +
+        '<button class="small-btn save" data-act="save">Save</button>' +
+      '</div>';
+    const ta = bubbleEl.querySelector('textarea');
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+    bubbleEl.querySelector('[data-act="cancel"]').addEventListener('click', () => viewComment(id));
+    bubbleEl.querySelector('[data-act="save"]').addEventListener('click', () => {
+      const text = ta.value.trim();
+      if (!text) { ta.focus(); return; }
+      c.text = text;
+      saveStore();
+      viewComment(id);
+    });
+  }
+
+  // ── Versioning ─────────────────────────────────────────
+
+  function swapVideo(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      videoFrame.removeAttribute('src');
+      videoFrame.srcdoc = reader.result;
+
+      store = {
+        version: store.version + 1,
+        title: file.name,
+        comments: []
+      };
+      saveStore();
+      renderVersionBadge();
+      enterLive();
+    };
+    reader.readAsText(file);
+  }
+
+  // ── Events ─────────────────────────────────────────────
+
+  addCommentBtn.addEventListener('click', startAddComment);
+  closeOverlayBtn.addEventListener('click', enterLive);
+  captureImg.addEventListener('click', onCaptureClick);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mode !== 'live') enterLive();
   });
-}
 
-function hlField(id, on) {
-  const el = g(id); if (!el) return;
-  const inp = el.querySelector('.finp'); if (!inp) return;
-  inp.style.borderColor = on ? '#7C3AED' : '#CBD5E1';
-  inp.style.background  = on ? '#FAF8FF' : '#F9FAFB';
-  inp.style.color       = on ? '#1A1A2E' : '#94A3B8';
-}
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    if (store.comments.length && !confirm('Loading a new video starts version ' + (store.version + 1) + ' and deletes all ' + store.comments.length + ' comment(s) on the current version. Continue?')) {
+      fileInput.value = '';
+      return;
+    }
+    swapVideo(file);
+    fileInput.value = '';
+  });
 
-const cues = [
-  ['t0',  0.8,  5.0],
-  ['t1',  5.2,  8.5],
-  ['t2',  8.8, 11.0],
-  ['t3', 11.2, 14.2],
-  ['t4', 14.5, 18.5],
-  ['t5', 18.8, 22.5],
-  ['t6', 22.8, 99],
-];
+  versionTitle.addEventListener('change', () => {
+    store.title = versionTitle.value.trim() || ('v' + store.version);
+    saveStore();
+  });
+  versionTitle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') versionTitle.blur();
+  });
 
-function frame(ts) {
-  if (!lastTs) lastTs = ts;
-  t = Math.min(DUR, t + (ts - lastTs) / 1000);
-  lastTs = ts;
-
-  g('prog').style.width = Math.min(100, (t / DUR) * 100) + '%';
-  g('tmr').textContent = '0:' + String(Math.floor(t)).padStart(2, '0');
-
-  // Page 1 fade in
-  if (t < 0.4) { setPages(0, 0); }
-  else if (t < 1.3) { setPages(Math.min(1, (t - 0.4) / 0.9), 0); }
-
-  // Cursor appears
-  if (t >= 3.0 && !winClosed) g('cur').style.opacity = '1';
-
-  // Cursor moves toward Schedule a Consultation button
-  if (t >= 3.0 && t < 3.8) moveCur(18, 45);
-  if (t >= 3.8 && t < 4.8) moveCur(22, 65);
-
-  // Hover highlight
-  if (t >= 4.8 && t < 6.0) {
-    g('sched-btn').style.background = '#2A4A99';
-    g('sched-btn').style.boxShadow = '0 0 0 3px rgba(124,58,237,0.35)';
-  }
-
-  // Click at 5.8s
-  if (t >= 5.8 && t < 5.95) {
-    rippleAt(22, 65);
-    g('cur').style.transform = 'scale(0.8)';
-    g('sched-btn').style.background = '#0F2244';
-  }
-  if (t >= 5.95) g('cur').style.transform = 'scale(1)';
-
-  // Crossfade to page 2
-  if (t >= 6.3 && t < 7.5 && !winClosed) {
-    const p = Math.min(1, (t - 6.3) / 1.2);
-    setPages(1 - p, p);
-  }
-  if (t >= 7.5 && !winClosed) setPages(0, 1);
-
-  // Form filling
-  if (t >= 7.8) moveCur(54, 38);
-  if (t >= 8.2) { moveCur(54, 41); hlField('f1', true); }
-  if (t >= 9.1) { moveCur(64, 41); hlField('f2', true); }
-  if (t >= 10.0) { moveCur(55, 50); hlField('f3', true); }
-  if (t >= 10.9) { moveCur(55, 57); hlField('f4', true); }
-  if (t >= 11.8) { moveCur(55, 63); hlField('f5', true); }
-
-  // Move to submit
-  if (t >= 13.5 && t < 14.3) moveCur(60, 74);
-
-  // Hesitation
-  if (t >= 14.3 && t < 14.8) moveCur(60.5, 74.5);
-  if (t >= 14.8 && t < 15.3) moveCur(59.7, 74.0);
-  if (t >= 15.3 && t < 15.8) moveCur(60.3, 74.4);
-  if (t >= 15.8 && t < 16.3) moveCur(59.8, 74.1);
-  if (t >= 16.3 && t < 16.8) moveCur(60.1, 74.3);
-
-  // Drift to X
-  if (t >= 16.8 && t < 18.3) {
-    const p = Math.min(1, (t - 16.8) / 1.5);
-    moveCur(60 + p * (39 - 60), 74 + p * (8 - 74));
-  }
-
-  // X turns red
-  if (t >= 18.1) g('xbtn').style.background = '#FF5F57';
-
-  // Window closes
-  if (t >= 18.4 && !winClosed) {
-    winClosed = true;
-    const w = g('win2');
-    w.style.transition = 'transform 0.45s cubic-bezier(.4,0,1,1), opacity 0.45s ease-in';
-    w.style.transform = 'scale(0.88)';
-    w.style.opacity = '0';
-    g('cur').style.opacity = '0';
-    setTimeout(() => { g('page2').style.opacity = '0'; }, 450);
-  }
-
-  // Dimmer in content area
-  if (t >= 19.2 && t < 21.2) g('dim').style.opacity = String(Math.min(0.92, (t - 19.2) / 2.0));
-  if (t >= 21.2) g('dim').style.opacity = '0.92';
-
-  // Text cues
-  cues.forEach(([id, s, e]) => show(id, t >= s && t < e));
-
-  if (t < DUR && playing) {
-    raf = requestAnimationFrame(frame);
-  } else if (t >= DUR) {
-    playing = false;
-    g('play-center').style.display = 'none';
-    g('end-btns').style.display = 'flex';
-  }
-}
-
-function startPlaying() {
-  playing = true; lastTs = null;
-  g('play-center').style.display = 'none';
-  g('end-btns').style.display = 'none';
-  raf = requestAnimationFrame(frame);
-}
-
-function stopPlaying() {
-  playing = false;
-  cancelAnimationFrame(raf);
-  g('play-center').style.display = 'flex';
-}
-
-window.stageClick = function() {
-  if (t >= DUR) return;
-  playing ? stopPlaying() : startPlaying();
-};
-
-window.centerPlay = function(e) {
-  e.stopPropagation();
-  if (t >= DUR) doReset(e);
-  startPlaying();
-};
-
-window.doReset = function(e) {
-  if (e) e.stopPropagation();
-  playing = false; cancelAnimationFrame(raf);
-  t = 0; lastTs = null; winClosed = false;
-  g('dim').style.opacity = '0';
-  g('cur').style.opacity = '0';
-  g('cur').style.transform = 'scale(1)';
-  g('prog').style.width = '0%';
-  g('tmr').textContent = '0:00';
-  g('xbtn').style.background = '#28C840';
-  g('sched-btn').style.background = '#1A3366';
-  g('sched-btn').style.boxShadow = 'none';
-  const w = g('win2');
-  w.style.transition = 'none'; w.style.transform = 'scale(1)'; w.style.opacity = '1';
-  setPages(0, 0);
-  ['f1','f2','f3','f4','f5'].forEach(id => hlField(id, false));
-  cues.forEach(([id]) => show(id, false));
-  g('play-center').style.display = 'flex';
-  g('end-btns').style.display = 'none';
-};
-
-// Init
-g('play-center').style.display = 'flex';
-g('end-btns').style.display = 'none';
+  // ── Init ───────────────────────────────────────────────
+  loadStore();
+  renderVersionBadge();
+  renderSidebar();
 })();
 </script>
 </body>

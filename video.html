@@ -6,19 +6,21 @@
 <title>Knomee: Conversion Intelligence — Video Animation</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
 body {
   background: #050210;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
 }
 
-/* Outer 16:9 wrapper */
+/* Outer wrapper — fills whatever frame it's embedded in exactly (the host
+   page is responsible for giving that frame a 16:9 box) so there's never
+   letterboxing or a scrollbar inside the iframe itself. */
 .video {
-  width: min(100vw, 177.78vh);
-  height: min(100vh, 56.25vw);
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -482,6 +484,16 @@ window.doReset = function(e) {
 // Init
 g('play-center').style.display = 'flex';
 g('end-btns').style.display = 'none';
+
+// Bridge for a host page to read/drive playback state (used by the
+// feedback tool this video is embedded in — same-origin iframe access).
+window.__player = {
+  get playing() { return playing; },
+  get time() { return t; },
+  get duration() { return DUR; },
+  play: function () { if (t >= DUR) window.doReset(); if (!playing) startPlaying(); },
+  pause: function () { if (playing) stopPlaying(); }
+};
 })();
 </script>
 </body>

@@ -103,6 +103,7 @@
     width: 16px; height: 16px; border-radius: 50%; background: var(--teal); color: white;
     font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
+  .c-tag { font-size: 10.5px; color: var(--purple-mid); font-weight: 700; background: var(--purple-light); padding: 1px 6px; border-radius: 4px; }
   .c-time { font-size: 11px; color: var(--muted); font-weight: 500; }
   .c-text {
     font-size: 12.5px; color: var(--text); line-height: 1.4;
@@ -113,18 +114,17 @@
   .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
   .toolbar {
-    height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+    height: 44px; flex-shrink: 0; display: flex; align-items: center; gap: 10px;
     padding: 0 24px; border-bottom: 1px solid var(--border); background: white;
   }
+  .transport-btn {
+    width: 26px; height: 26px; border-radius: 50%; border: none; background: var(--purple); color: white;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .transport-btn:hover { background: var(--purple-mid); }
   .toolbar-hint { font-size: 12.5px; color: var(--muted); }
   .toolbar-hint b { color: var(--purple); font-weight: 600; }
-
-  .btn {
-    font-family: inherit; border: none; border-radius: 50px; cursor: pointer;
-    font-weight: 600; transition: background 0.15s, opacity 0.15s;
-  }
-  .btn-primary { background: var(--purple); color: white; padding: 9px 20px; font-size: 13px; }
-  .btn-primary:hover { background: var(--purple-mid); }
 
   .stage-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px; overflow: auto; background: #ece7f2; }
 
@@ -136,21 +136,30 @@
   }
   .video-box iframe { width: 100%; height: 100%; border: none; display: block; }
 
+  /* Sits on top of the iframe. Only intercepts clicks (and shows the
+     comment cursor) while the video is paused and no comment is open. */
+  .armed-layer {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  }
+  .armed-layer.armed {
+    pointer-events: auto;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cpath d='M4 5h22a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H12l-6 5v-5H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z' fill='%23240446' stroke='white' stroke-width='1.5'/%3E%3Ccircle cx='10' cy='13' r='1.6' fill='%233dbdaa'/%3E%3Ccircle cx='15' cy='13' r='1.6' fill='%233dbdaa'/%3E%3Ccircle cx='20' cy='13' r='1.6' fill='%233dbdaa'/%3E%3C/svg%3E") 6 28, pointer;
+  }
+
+  /* Live pins: shown ±1s around a comment's timetag while playing/paused. */
+  .live-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+  .live-pin {
+    position: absolute; width: 26px; height: 26px; margin-left: -13px; margin-top: -26px;
+    pointer-events: auto; cursor: pointer; animation: pin-in 0.15s ease-out;
+  }
+  @keyframes pin-in { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .live-pin .pin-body { width: 26px; height: 26px; box-shadow: 0 2px 10px rgba(0,0,0,0.45); }
+
   .capture-layer {
-    position: absolute; inset: 0; display: none;
+    position: absolute; inset: 0; z-index: 10; display: none;
   }
   .capture-layer.show { display: block; }
   .capture-layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .capture-layer.placing img { cursor: crosshair; }
-
-  .placing-banner {
-    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-    background: rgba(36,4,70,0.92); color: white; font-size: 12.5px; font-weight: 500;
-    padding: 8px 16px; border-radius: 50px; pointer-events: none; white-space: nowrap;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .placing-banner .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); animation: pulse 1.2s infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
   .close-overlay {
     position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 50%;
@@ -226,19 +235,19 @@
 
     <div class="stage">
       <div class="toolbar">
-        <div class="toolbar-hint">Pause the video below, then <b>Add Comment</b> to pin feedback to that frame.</div>
-        <button class="btn btn-primary" id="addCommentBtn">+ Add Comment</button>
+        <button class="transport-btn" id="transportBtn" title="Play/Pause">▶</button>
+        <div class="toolbar-hint" id="toolbarHint">Click the video to pause it, then click anywhere on the frame to comment.</div>
       </div>
 
       <div class="stage-area">
         <div class="video-box" id="videoBox">
           <iframe id="videoFrame" src="video.html" title="Video"></iframe>
 
+          <div class="live-layer" id="liveLayer"></div>
+          <div class="armed-layer" id="armedLayer"></div>
+
           <div class="capture-layer" id="captureLayer">
             <img id="captureImg" alt="Paused frame">
-            <div class="placing-banner" id="placingBanner" style="display:none;">
-              <span class="dot"></span> Click anywhere on the frame to drop a pin
-            </div>
             <button class="close-overlay" id="closeOverlayBtn" title="Back to live video">×</button>
           </div>
         </div>
@@ -252,11 +261,13 @@
 (function () {
   const videoFrame = document.getElementById('videoFrame');
   const videoBox = document.getElementById('videoBox');
+  const armedLayer = document.getElementById('armedLayer');
+  const liveLayer = document.getElementById('liveLayer');
   const captureLayer = document.getElementById('captureLayer');
   const captureImg = document.getElementById('captureImg');
-  const placingBanner = document.getElementById('placingBanner');
   const closeOverlayBtn = document.getElementById('closeOverlayBtn');
-  const addCommentBtn = document.getElementById('addCommentBtn');
+  const transportBtn = document.getElementById('transportBtn');
+  const toolbarHint = document.getElementById('toolbarHint');
   const commentList = document.getElementById('commentList');
   const commentCount = document.getElementById('commentCount');
   const fileInput = document.getElementById('fileInput');
@@ -264,10 +275,11 @@
   const versionTitle = document.getElementById('versionTitle');
 
   const STORE_KEY = 'knomee-video-feedback';
+  const PIN_WINDOW = 1; // seconds before/after a comment's timetag it stays clickable
 
   let store = { version: 1, title: 'video.html', comments: [] };
   let mode = 'live';        // 'live' | 'placing' | 'composing' | 'viewing' | 'editing'
-  let pendingPin = null;     // {x, y, img} while placing
+  let pendingPin = null;     // {x, y, img, time} while placing
   let activeId = null;
   let bubbleEl = null;
 
@@ -305,10 +317,33 @@
     return Math.floor(h / 24) + 'd ago';
   }
 
+  function fmtTime(t) {
+    if (typeof t !== 'number' || isNaN(t)) return null;
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
   function escapeHtml(str) {
     const d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
+  }
+
+  // ── Player bridge ──────────────────────────────────────
+  // video.html exposes window.__player (playing/time/duration + play()/pause()).
+  // If a swapped-in video doesn't implement it, we fall back to "always armed"
+  // so commenting still works, just without live-timed pins.
+
+  function getPlayer() {
+    try {
+      const w = videoFrame.contentWindow;
+      return w && w.__player ? w.__player : null;
+    } catch (e) { return null; }
+  }
+
+  function pausePlayer() {
+    const p = getPlayer();
+    if (p && typeof p.pause === 'function') p.pause();
   }
 
   // ── Rendering ──────────────────────────────────────────
@@ -320,7 +355,7 @@
     if (!comments.length) {
       const empty = document.createElement('div');
       empty.className = 'empty-state';
-      empty.textContent = 'No comments yet on this version. Pause the video and click "Add Comment" to leave feedback pinned to a moment.';
+      empty.textContent = 'No comments yet on this version. Pause the video, then click anywhere on the frame to leave feedback.';
       commentList.appendChild(empty);
       return;
     }
@@ -329,16 +364,21 @@
       const card = document.createElement('div');
       card.className = 'c-card' + (c.id === activeId ? ' active' : '');
       card.dataset.id = c.id;
+      const tag = fmtTime(c.time);
       card.innerHTML =
         '<div class="c-thumb">' +
           '<img src="' + c.img + '" alt="">' +
           '<div class="c-thumb-dot" style="left:' + c.x + '%;top:' + c.y + '%;"></div>' +
         '</div>' +
         '<div class="c-body">' +
-          '<div class="c-meta"><span class="c-num">' + (ordered.length - idx) + '</span><span class="c-time">' + relTime(c.createdAt) + '</span></div>' +
+          '<div class="c-meta">' +
+            '<span class="c-num">' + (ordered.length - idx) + '</span>' +
+            (tag ? '<span class="c-tag">' + tag + '</span>' : '') +
+            '<span class="c-time">' + relTime(c.createdAt) + '</span>' +
+          '</div>' +
           '<div class="c-text">' + escapeHtml(c.text) + '</div>' +
         '</div>';
-      card.addEventListener('click', () => viewComment(c.id));
+      card.addEventListener('click', (e) => { e.stopPropagation(); viewComment(c.id); });
       commentList.appendChild(card);
     });
   }
@@ -402,43 +442,30 @@
     pendingPin = null;
     removeBubble();
     removeActivePin();
-    captureLayer.classList.remove('show', 'placing');
-    placingBanner.style.display = 'none';
-    addCommentBtn.disabled = false;
-    addCommentBtn.textContent = '+ Add Comment';
+    captureLayer.classList.remove('show');
     renderSidebar();
   }
 
-  function startAddComment() {
-    addCommentBtn.disabled = true;
-    addCommentBtn.textContent = 'Capturing…';
+  function beginCommentAt(clientX, clientY) {
+    const player = getPlayer();
+    const time = player ? player.time : null;
     captureFrame().then(dataUrl => {
-      addCommentBtn.disabled = false;
-      addCommentBtn.textContent = '+ Add Comment';
-      if (!dataUrl) {
-        alert('Could not capture the current frame. Make sure the video finished loading, then try again.');
-        return;
-      }
+      if (!dataUrl) return; // silently ignore — video likely still loading
       mode = 'placing';
-      pendingPin = { img: dataUrl };
-      captureImg.src = dataUrl;
-      captureLayer.classList.add('show', 'placing');
-      placingBanner.style.display = 'flex';
-    });
-  }
+      pendingPin = { img: dataUrl, time: time };
 
-  function onCaptureClick(e) {
-    if (mode !== 'placing') return;
-    const rect = captureImg.getBoundingClientRect();
-    const xPct = Math.min(98, Math.max(2, ((e.clientX - rect.left) / rect.width) * 100));
-    const yPct = Math.min(96, Math.max(4, ((e.clientY - rect.top) / rect.height) * 100));
-    pendingPin.x = xPct;
-    pendingPin.y = yPct;
-    placingBanner.style.display = 'none';
-    captureLayer.classList.remove('placing');
-    placePin(xPct, yPct);
-    openComposeBubble(xPct, yPct);
-    mode = 'composing';
+      const rect = videoBox.getBoundingClientRect();
+      const xPct = Math.min(98, Math.max(2, ((clientX - rect.left) / rect.width) * 100));
+      const yPct = Math.min(96, Math.max(4, ((clientY - rect.top) / rect.height) * 100));
+      pendingPin.x = xPct;
+      pendingPin.y = yPct;
+
+      captureImg.src = dataUrl;
+      captureLayer.classList.add('show');
+      placePin(xPct, yPct);
+      openComposeBubble(xPct, yPct);
+      mode = 'composing';
+    });
   }
 
   function openComposeBubble(xPct, yPct) {
@@ -458,8 +485,9 @@
     bubbleEl = b;
     const ta = b.querySelector('textarea');
     ta.focus();
-    b.querySelector('[data-act="cancel"]').addEventListener('click', () => enterLive());
-    b.querySelector('[data-act="save"]').addEventListener('click', () => {
+    b.querySelector('[data-act="cancel"]').addEventListener('click', (e) => { e.stopPropagation(); enterLive(); });
+    b.querySelector('[data-act="save"]').addEventListener('click', (e) => {
+      e.stopPropagation();
       const text = ta.value.trim();
       if (!text) { ta.focus(); return; }
       const comment = {
@@ -467,6 +495,7 @@
         img: pendingPin.img,
         x: pendingPin.x,
         y: pendingPin.y,
+        time: pendingPin.time,
         text: text,
         createdAt: Date.now()
       };
@@ -474,19 +503,21 @@
       saveStore();
       viewComment(comment.id);
     });
+    // Stop clicks inside the textarea/buttons from bubbling to the
+    // document-level "click outside closes it" handler.
+    b.addEventListener('click', (e) => e.stopPropagation());
   }
 
   function viewComment(id) {
     const c = store.comments.find(c => c.id === id);
     if (!c) return;
+    pausePlayer();
     mode = 'viewing';
     activeId = id;
     removeBubble();
     removeActivePin();
     captureImg.src = c.img;
     captureLayer.classList.add('show');
-    captureLayer.classList.remove('placing');
-    placingBanner.style.display = 'none';
     placePin(c.x, c.y);
 
     const pos = clampBubblePos(c.x, c.y);
@@ -504,6 +535,7 @@
       '</div>';
     captureLayer.appendChild(b);
     bubbleEl = b;
+    b.addEventListener('click', (e) => e.stopPropagation());
 
     b.querySelector('[data-act="delete"]').addEventListener('click', () => {
       if (!confirm('Delete this comment?')) return;
@@ -519,6 +551,7 @@
   function editComment(id) {
     const c = store.comments.find(c => c.id === id);
     if (!c || !bubbleEl) return;
+    mode = 'editing';
     bubbleEl.innerHTML =
       '<textarea>' + escapeHtml(c.text) + '</textarea>' +
       '<div class="bubble-actions">' +
@@ -536,6 +569,52 @@
       saveStore();
       viewComment(id);
     });
+  }
+
+  // ── Live playback: armed cursor + timed pins ────────────
+
+  function renderLivePins(time) {
+    liveLayer.innerHTML = '';
+    if (time == null) return;
+    store.comments.forEach(c => {
+      if (typeof c.time !== 'number') return;
+      if (Math.abs(time - c.time) > PIN_WINDOW) return;
+      const pin = document.createElement('div');
+      pin.className = 'live-pin';
+      pin.style.left = c.x + '%';
+      pin.style.top = c.y + '%';
+      pin.innerHTML = '<div class="pin-body"></div>';
+      pin.addEventListener('click', (e) => { e.stopPropagation(); viewComment(c.id); });
+      liveLayer.appendChild(pin);
+    });
+  }
+
+  function pollPlayer() {
+    if (mode !== 'live') return;
+    const player = getPlayer();
+
+    if (!player) {
+      // Unknown video implementation — keep commenting available, but
+      // there's no time source so timed pins can't be shown.
+      armedLayer.classList.add('armed');
+      transportBtn.style.display = 'none';
+      toolbarHint.textContent = 'Click anywhere on the frame to leave feedback.';
+      liveLayer.innerHTML = '';
+      return;
+    }
+
+    transportBtn.style.display = 'flex';
+    transportBtn.textContent = player.playing ? '❚❚' : '▶';
+
+    if (player.playing) {
+      armedLayer.classList.remove('armed');
+      toolbarHint.textContent = 'Playing — pause to leave feedback.';
+    } else {
+      armedLayer.classList.add('armed');
+      toolbarHint.textContent = 'Paused — click anywhere on the frame to comment.';
+    }
+
+    renderLivePins(player.time);
   }
 
   // ── Versioning ─────────────────────────────────────────
@@ -560,13 +639,31 @@
 
   // ── Events ─────────────────────────────────────────────
 
-  addCommentBtn.addEventListener('click', startAddComment);
-  closeOverlayBtn.addEventListener('click', enterLive);
-  captureImg.addEventListener('click', onCaptureClick);
+  armedLayer.addEventListener('click', (e) => {
+    if (mode !== 'live') return;
+    e.stopPropagation();
+    beginCommentAt(e.clientX, e.clientY);
+  });
+
+  transportBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const player = getPlayer();
+    if (!player) return;
+    player.playing ? player.pause() : player.play();
+  });
+
+  closeOverlayBtn.addEventListener('click', (e) => { e.stopPropagation(); enterLive(); });
+
+  // Clicking outside an open comment (compose/view/edit) closes it.
+  document.addEventListener('click', () => {
+    if (mode === 'composing' || mode === 'viewing' || mode === 'editing') enterLive();
+  });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && mode !== 'live') enterLive();
   });
+
+  setInterval(pollPlayer, 150);
 
   fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
@@ -579,6 +676,7 @@
     fileInput.value = '';
   });
 
+  versionTitle.addEventListener('click', (e) => e.stopPropagation());
   versionTitle.addEventListener('change', () => {
     store.title = versionTitle.value.trim() || ('v' + store.version);
     saveStore();

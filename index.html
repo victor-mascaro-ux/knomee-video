@@ -273,6 +273,7 @@
   let pendingPin = null;     // {x, y, img, time} while placing
   let activeId = null;
   let bubbleEl = null;
+  let livePinEls = new Map(); // comment id -> pin element currently shown on the live layer
 
   function loadStore() {
     try {
@@ -437,6 +438,11 @@
   // ── Flows ──────────────────────────────────────────────
 
   function enterLive() {
+    // A comment bubble only ever opens after we paused the video for it
+    // (either the user paused it themselves before commenting, or
+    // viewComment() paused it for them) — so dismissing that bubble
+    // should hand playback back.
+    const wasOpen = mode === 'composing' || mode === 'viewing' || mode === 'editing';
     mode = 'live';
     activeId = null;
     pendingPin = null;
@@ -444,6 +450,10 @@
     removeActivePin();
     captureLayer.classList.remove('show');
     renderSidebar();
+    if (wasOpen) {
+      const player = getPlayer();
+      if (player && typeof player.play === 'function') player.play();
+    }
   }
 
   function beginCommentAt(clientX, clientY) {
@@ -573,12 +583,23 @@
 
   // ── Live playback: armed cursor + timed pins ────────────
 
+  function clearLivePins() {
+    livePinEls.forEach(el => el.remove());
+    livePinEls.clear();
+  }
+
+  // Adds/removes pin elements as comments enter/exit the ±PIN_WINDOW range,
+  // but leaves already-visible pins untouched — recreating them every poll
+  // tick (every 150ms) restarted their entrance animation and made them
+  // look like they were blinking the whole time they were on screen.
   function renderLivePins(time) {
-    liveLayer.innerHTML = '';
-    if (time == null) return;
+    if (time == null) { clearLivePins(); return; }
+    const visible = new Set();
     store.comments.forEach(c => {
       if (typeof c.time !== 'number') return;
       if (Math.abs(time - c.time) > PIN_WINDOW) return;
+      visible.add(c.id);
+      if (livePinEls.has(c.id)) return;
       const pin = document.createElement('div');
       pin.className = 'live-pin';
       pin.style.left = c.x + '%';
@@ -586,6 +607,10 @@
       pin.innerHTML = '<div class="pin-body"></div>';
       pin.addEventListener('click', (e) => { e.stopPropagation(); viewComment(c.id); });
       liveLayer.appendChild(pin);
+      livePinEls.set(c.id, pin);
+    });
+    livePinEls.forEach((el, id) => {
+      if (!visible.has(id)) { el.remove(); livePinEls.delete(id); }
     });
   }
 
@@ -599,7 +624,7 @@
       armedLayer.classList.add('armed');
       transportBtn.style.display = 'none';
       toolbarHint.textContent = 'Click anywhere on the frame to leave feedback.';
-      liveLayer.innerHTML = '';
+      clearLivePins();
       return;
     }
 
@@ -639,6 +664,7 @@
       };
       saveStore();
       renderVersionBadge();
+      clearLivePins();
       enterLive();
     };
     reader.readAsText(file);

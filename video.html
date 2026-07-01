@@ -51,6 +51,14 @@ body {
 }
 
 .tl {
+  /* Absolutely positioned and stacked so only the currently-visible cue
+     affects layout — as plain flex children, all seven lines stayed
+     present (just invisible) and their combined height threw off the
+     strip's vertical centering, leaving a lopsided gap under whichever
+     line was actually showing. */
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  transform: translateY(-50%);
   opacity: 0;
   transition: opacity 0.5s ease;
   color: #fff;

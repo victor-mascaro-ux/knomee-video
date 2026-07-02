@@ -6,6 +6,8 @@
 <title>Video Feedback — Knomee</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -282,7 +284,28 @@
   let bubbleEl = null;
   let livePinEls = new Map(); // comment id -> pin element currently shown on the live layer
 
-  function loadStore() {
+  // ── Shared storage (Firestore) ──────────────────────────
+  // Comments live in the same Firebase project as the activation playbook,
+  // in their own collection. Each comment is its own document — the
+  // playbook already hit Firestore's 1MiB-per-document limit once from
+  // bundling everything into one doc, so this avoids repeating that.
+  const firebaseConfig = {
+    apiKey: "AIzaSyBqmxrO__M6mGypXsxQ_HgCu81qs8mXe90",
+    authDomain: "knomee-playbook.firebaseapp.com",
+    projectId: "knomee-playbook",
+    storageBucket: "knomee-playbook.firebasestorage.app",
+    messagingSenderId: "956493019959",
+    appId: "1:956493019959:web:13f099b4ea42ef948d78b2"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const stateRef = db.collection('video-feedback').doc('state');
+  const commentsRef = stateRef.collection('comments');
+
+  // localStorage is kept only as a fast-paint seed (so reload isn't a blank
+  // slate while Firestore responds) and a same-browser fallback if the
+  // shared server is unreachable — Firestore is the source of truth.
+  function loadLocalFallback() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) {
@@ -295,27 +318,78 @@
       }
     } catch (e) { /* keep defaults */ }
   }
+  function cacheLocally() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+    catch (e) { /* best-effort only */ }
+  }
+
+  function initSync() {
+    stateRef.onSnapshot(snap => {
+      const data = snap.data();
+      if (data) {
+        store.version = data.version || 1;
+        store.title = typeof data.title === 'string' ? data.title : store.title;
+      }
+      renderVersionBadge();
+      cacheLocally();
+    }, err => {
+      console.warn('Firestore state sync error', err);
+      showPersistWarning("Can't reach the shared comment server — showing your last saved copy.");
+    });
+
+    commentsRef.orderBy('createdAt').onSnapshot(snap => {
+      store.comments = snap.docs.map(d => d.data());
+      cacheLocally();
+      renderSidebar();
+    }, err => {
+      console.warn('Firestore comments sync error', err);
+      showPersistWarning("Can't reach the shared comment server — showing your last saved copy.");
+    });
+  }
+
   // Comments are meant to persist until the next video upload — so a
-  // failed write (storage full, private-browsing quota, etc.) must never
-  // fail silently. It would otherwise look saved in the UI for the rest
-  // of this session and then simply be gone on reload.
-  function saveStore() {
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(store));
-      return true;
-    } catch (e) {
-      console.warn('Could not persist feedback (storage full?)', e);
+  // failed write (offline, permission error, storage full, etc.) must
+  // never fail silently. It would otherwise look saved in the UI for the
+  // rest of this session and then simply be gone on reload.
+  function persistComment(comment) {
+    commentsRef.doc(comment.id).set(comment).then(cacheLocally).catch(err => {
+      console.warn('Could not save comment', err);
       showPersistWarning();
-      return false;
-    }
+    });
+  }
+  function persistDelete(id) {
+    commentsRef.doc(id).delete().then(cacheLocally).catch(err => {
+      console.warn('Could not delete comment', err);
+      showPersistWarning();
+    });
+  }
+  function persistTitle() {
+    stateRef.set({ version: store.version, title: store.title }, { merge: true })
+      .then(cacheLocally).catch(err => {
+        console.warn('Could not save title', err);
+        showPersistWarning();
+      });
+  }
+  function persistVersionSwap(version, title) {
+    commentsRef.get().then(snap => {
+      const batch = db.batch();
+      snap.docs.forEach(d => batch.delete(d.ref));
+      return batch.commit();
+    }).then(() => stateRef.set({ version, title }))
+      .then(cacheLocally)
+      .catch(err => {
+        console.warn('Could not sync new version', err);
+        showPersistWarning("Couldn't sync the new version to the shared server — others may still see the old comments.");
+      });
   }
 
   let persistWarningEl = null;
-  function showPersistWarning() {
-    if (persistWarningEl) return;
+  function showPersistWarning(message) {
+    const text = message || "Couldn't save that change — this browser's storage is full, so it may be lost on reload.";
+    if (persistWarningEl) { persistWarningEl.textContent = text; return; }
     const el = document.createElement('div');
     el.className = 'persist-warning';
-    el.textContent = "Couldn't save that change — this browser's storage is full, so it may be lost on reload.";
+    el.textContent = text;
     document.body.appendChild(el);
     persistWarningEl = el;
     setTimeout(() => { el.remove(); if (persistWarningEl === el) persistWarningEl = null; }, 7000);
@@ -538,7 +612,7 @@
         createdAt: Date.now()
       };
       store.comments.push(comment);
-      saveStore();
+      persistComment(comment);
       viewComment(comment.id);
     });
     // Stop clicks inside the textarea/buttons from bubbling to the
@@ -578,7 +652,7 @@
     b.querySelector('[data-act="delete"]').addEventListener('click', () => {
       if (!confirm('Delete this comment?')) return;
       store.comments = store.comments.filter(x => x.id !== id);
-      saveStore();
+      persistDelete(id);
       enterLive();
     });
     b.querySelector('[data-act="edit"]').addEventListener('click', () => editComment(id));
@@ -604,7 +678,7 @@
       const text = ta.value.trim();
       if (!text) { ta.focus(); return; }
       c.text = text;
-      saveStore();
+      persistComment(c);
       viewComment(id);
     });
   }
@@ -690,10 +764,11 @@
         title: file.name,
         comments: []
       };
-      saveStore();
+      cacheLocally();
       renderVersionBadge();
       clearLivePins();
       enterLive();
+      persistVersionSwap(store.version, store.title);
     };
     reader.readAsText(file);
   }
@@ -738,7 +813,7 @@
   versionTitle.addEventListener('click', (e) => e.stopPropagation());
   versionTitle.addEventListener('change', () => {
     store.title = versionTitle.value.trim() || ('v' + store.version);
-    saveStore();
+    persistTitle();
   });
   versionTitle.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') versionTitle.blur();
@@ -765,9 +840,10 @@
 
   // ── Init ───────────────────────────────────────────────
   sizeVideoBox();
-  loadStore();
+  loadLocalFallback();
   renderVersionBadge();
   renderSidebar();
+  initSync();
 })();
 </script>
 </body>

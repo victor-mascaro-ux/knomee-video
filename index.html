@@ -427,14 +427,30 @@
   }
 
   // ── Player bridge ──────────────────────────────────────
-  // video.html exposes window.__player (playing/time/duration + play()/pause()).
-  // If a swapped-in video doesn't implement it, we fall back to "always armed"
-  // so commenting still works, just without live-timed pins.
+  // Our own hand-built video.html exposes window.__player. Videos exported
+  // by the Knomee video tool (the React/Stage bundles) instead expose a
+  // documented, version-stable window.KnomeePlayer — different shape, so
+  // it's adapted to the same {playing, time, duration, play(), pause()}
+  // interface here rather than special-casing it at every call site.
+  // If a swapped-in video implements neither, we fall back to "always
+  // armed" so commenting still works, just without live-timed pins.
 
   function getPlayer() {
     try {
       const w = videoFrame.contentWindow;
-      return w && w.__player ? w.__player : null;
+      if (!w) return null;
+      if (w.__player) return w.__player;
+      if (w.KnomeePlayer) {
+        const kp = w.KnomeePlayer;
+        return {
+          get playing() { return kp.getState().playing; },
+          get time() { return kp.getState().time; },
+          get duration() { return kp.getState().duration; },
+          play: () => kp.play(),
+          pause: () => kp.pause()
+        };
+      }
+      return null;
     } catch (e) { return null; }
   }
 
@@ -733,7 +749,18 @@
     try {
       const doc = videoFrame.contentDocument;
       const strip = doc && doc.getElementById('text-strip');
-      if (strip) stripH = strip.getBoundingClientRect().height;
+      if (strip) {
+        stripH = strip.getBoundingClientRect().height;
+      } else {
+        // Knomee-tool exports don't have a #text-strip, but their control
+        // bar's play/pause button carries a stable title attribute — use
+        // its row position to work out how much to leave uncovered.
+        const playBtn = doc && doc.querySelector('button[title*="Play/pause" i]');
+        if (playBtn) {
+          const btnTop = playBtn.getBoundingClientRect().top;
+          stripH = Math.max(0, videoFrame.clientHeight - btnTop + 8);
+        }
+      }
     } catch (e) { /* cross-origin or not ready yet — leave full coverage */ }
     armedLayer.style.bottom = stripH + 'px';
   }

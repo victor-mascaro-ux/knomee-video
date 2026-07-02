@@ -760,9 +760,16 @@
     // and paused — the untouched opening frame (time === 0) should still
     // show a normal pointer so clicking it starts playback, not a comment.
     const hasStarted = player.time > 0;
+    // At the end, the video swaps in its own "Play again" / "Restart"
+    // buttons over the content area — leave those clickable instead of
+    // the armed overlay swallowing the click meant for them.
+    const hasEnded = typeof player.duration === 'number' && player.time >= player.duration;
     if (player.playing) {
       armedLayer.classList.remove('armed');
       toolbarHint.textContent = 'Playing — pause to leave feedback.';
+    } else if (hasEnded) {
+      armedLayer.classList.remove('armed');
+      toolbarHint.textContent = 'Video ended — click Play Again or Restart.';
     } else if (hasStarted) {
       armedLayer.classList.add('armed');
       toolbarHint.textContent = 'Paused — click anywhere on the frame to comment, or press Esc to resume.';

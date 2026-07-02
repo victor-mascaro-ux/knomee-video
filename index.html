@@ -139,9 +139,12 @@
   .video-box iframe { width: 100%; height: 100%; border: none; display: block; }
 
   /* Sits on top of the iframe. Only intercepts clicks (and shows the
-     comment cursor) while the video is paused and no comment is open. */
+     comment cursor) while the video is paused and no comment is open.
+     Bottom is set via JS to stop above the video's own control strip
+     (progress bar, play/pause, etc.) so those stay clickable/scrubbable
+     even while armed for commenting. */
   .armed-layer {
-    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; pointer-events: none;
   }
   .armed-layer.armed {
     pointer-events: auto;
@@ -186,6 +189,10 @@
   .bubble-text { padding: 8px 12px 4px; font-size: 13px; color: var(--text); line-height: 1.45; white-space: pre-wrap; }
   .bubble-actions { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px 12px; gap: 8px; }
   .bubble-actions-right { display: flex; gap: 6px; align-items: center; }
+  .bubble-hint {
+    font-size: 10.5px; color: var(--muted); text-align: center;
+    padding: 0 12px 9px; border-top: 1px solid var(--border); padding-top: 7px;
+  }
 
   .small-btn { font-family: inherit; border: none; border-radius: 50px; cursor: pointer; font-weight: 600; font-size: 12px; padding: 6px 14px; }
   .small-btn.save { background: var(--purple); color: white; }
@@ -592,7 +599,8 @@
       '<div class="bubble-actions">' +
         '<button class="small-btn cancel" data-act="cancel">Cancel</button>' +
         '<button class="small-btn save" data-act="save">Save comment</button>' +
-      '</div>';
+      '</div>' +
+      '<div class="bubble-hint">Esc or click outside to close &amp; resume</div>';
     captureLayer.appendChild(b);
     bubbleEl = b;
     const ta = b.querySelector('textarea');
@@ -644,7 +652,8 @@
         '<div class="bubble-actions-right">' +
           '<button class="small-btn cancel" data-act="edit">Edit</button>' +
         '</div>' +
-      '</div>';
+      '</div>' +
+      '<div class="bubble-hint">Esc or click outside to close &amp; resume</div>';
     captureLayer.appendChild(b);
     bubbleEl = b;
     b.addEventListener('click', (e) => e.stopPropagation());
@@ -669,7 +678,8 @@
       '<div class="bubble-actions">' +
         '<button class="small-btn cancel" data-act="cancel">Cancel</button>' +
         '<button class="small-btn save" data-act="save">Save</button>' +
-      '</div>';
+      '</div>' +
+      '<div class="bubble-hint">Esc or click outside to close &amp; resume</div>';
     const ta = bubbleEl.querySelector('textarea');
     ta.focus();
     ta.setSelectionRange(ta.value.length, ta.value.length);
@@ -716,8 +726,26 @@
     });
   }
 
+  // Keeps the comment-armed overlay off the video's own control strip
+  // (voiceover captions + play/pause/scrubber) so it stays navigable —
+  // e.g. dragging the scrubber, clicking restart — even while paused and
+  // armed for commenting, instead of every click there dropping a pin.
+  // Measured live rather than hardcoded so it tracks whatever height that
+  // strip actually renders at (and gracefully no-ops for a swapped-in
+  // video that doesn't have one).
+  function updateArmedLayerBounds() {
+    let stripH = 0;
+    try {
+      const doc = videoFrame.contentDocument;
+      const strip = doc && doc.getElementById('text-strip');
+      if (strip) stripH = strip.getBoundingClientRect().height;
+    } catch (e) { /* cross-origin or not ready yet — leave full coverage */ }
+    armedLayer.style.bottom = stripH + 'px';
+  }
+
   function pollPlayer() {
     if (mode !== 'live') return;
+    updateArmedLayerBounds();
     const player = getPlayer();
 
     if (!player) {

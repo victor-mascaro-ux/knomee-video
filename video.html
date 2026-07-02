@@ -55,17 +55,17 @@ body {
      affects layout — as plain flex children, all seven lines stayed
      present (just invisible) and their combined height threw off the
      strip's vertical centering, leaving a lopsided gap under whichever
-     line was actually showing. */
+     line was actually showing. Centered in the space above the control
+     bar (bottom: 32px), not the full strip, so it never overlaps it. */
   position: absolute;
-  left: 0; right: 0; top: 50%;
-  transform: translateY(-50%);
+  left: 0; right: 0; top: 0; bottom: 32px;
+  display: flex; align-items: center; justify-content: center;
   opacity: 0;
   transition: opacity 0.5s ease;
   color: #fff;
   font-size: clamp(11px, 1.6vw, 18px);
   text-align: center;
   line-height: 1.55;
-  margin: 0.05em 0;
 }
 
 /* Pages fill the content area */
@@ -155,28 +155,43 @@ body {
   transition: border-color 0.3s, background 0.3s, color 0.3s;
 }
 
-/* Bottom controls inside text-strip */
-#bottom-right {
+/* Control bar: restart, play/pause, current time, scrubber, total time */
+#controls {
   position: absolute;
-  bottom: 6px; right: 8px;
-  display: flex; gap: 5px; align-items: center;
+  left: 0; right: 0; bottom: 0; height: 30px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 10px;
+  background: rgba(0,0,0,0.22);
 }
-#bottom-right button {
-  background: rgba(255,255,255,0.1);
-  border: none; color: #fff;
-  font-size: clamp(8px, 0.75vw, 10px);
-  padding: 0.28em 0.65em;
-  border-radius: 20px; cursor: pointer;
+.ctrl-btn {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.15s;
+  font-size: 10px; line-height: 1;
 }
+.ctrl-btn:hover { background: rgba(255,255,255,0.24); }
+.ctrl-time {
+  font-size: clamp(8px, 0.75vw, 10px); color: rgba(255,255,255,0.45);
+  flex-shrink: 0; min-width: 2.8em; font-variant-numeric: tabular-nums;
+}
+.ctrl-time.cur { color: rgba(255,255,255,0.85); text-align: right; }
 
-/* Progress bar at very bottom of the video */
-#prog-wrap {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 3px;
-  background: rgba(255,255,255,0.08);
+#scrubber {
+  flex: 1; height: 3px; margin: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background: rgba(255,255,255,0.15); border-radius: 2px; outline: none;
 }
-#prog { height: 100%; background: #7C3AED; width: 0%; }
+#scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #fff; border: 2px solid #7C3AED; cursor: pointer;
+}
+#scrubber::-moz-range-thumb {
+  width: 10px; height: 10px; border-radius: 50%; border: 2px solid #7C3AED;
+  background: #fff; cursor: pointer;
+}
+#scrubber::-moz-range-track { height: 3px; border-radius: 2px; background: transparent; }
 
 #part-label {
   position: absolute;
@@ -302,11 +317,16 @@ body {
     <div id="t4" class="tl">Because you're starting with what you offer…</div>
     <div id="t5" class="tl">before understanding what wealth actually means to them.</div>
     <div id="t6" class="tl" style="font-weight:600;">And that's where momentum breaks.</div>
-    <div id="bottom-right">
-      <button onclick="doReset(event)">↺</button>
-      <span id="tmr" style="font-size:clamp(8px,0.75vw,10px);color:rgba(255,255,255,0.3);min-width:2em;">0:00</span>
+    <div id="controls" onclick="event.stopPropagation()">
+      <button class="ctrl-btn" title="Restart" onclick="doReset(event)">↺</button>
+      <button class="ctrl-btn" title="Play/Pause" onclick="togglePlay(event)">
+        <svg id="playIcon" viewBox="0 0 24 24" width="9" height="9" fill="white"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="pauseIcon" viewBox="0 0 24 24" width="9" height="9" fill="white" style="display:none;"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      </button>
+      <span id="curTime" class="ctrl-time cur">0:00.00</span>
+      <input type="range" id="scrubber" min="0" step="0.01" value="0">
+      <span id="totTime" class="ctrl-time">0:00.00</span>
     </div>
-    <div id="prog-wrap"><div id="prog"></div></div>
   </div>
 
 </div><!-- /video -->
@@ -350,13 +370,28 @@ const cues = [
   ['t6', 22.8, 99],
 ];
 
-function frame(ts) {
-  if (!lastTs) lastTs = ts;
-  t = Math.min(DUR, t + (ts - lastTs) / 1000);
-  lastTs = ts;
+function fmtT(sec) {
+  sec = Math.max(0, sec);
+  const m = Math.floor(sec / 60);
+  const s = (sec - m * 60).toFixed(2).padStart(5, '0');
+  return m + ':' + s;
+}
 
-  g('prog').style.width = Math.min(100, (t / DUR) * 100) + '%';
-  g('tmr').textContent = '0:' + String(Math.floor(t)).padStart(2, '0');
+let scrubbing = false;
+function updateControlsUI() {
+  g('curTime').textContent = fmtT(t);
+  g('playIcon').style.display = playing ? 'none' : '';
+  g('pauseIcon').style.display = playing ? '' : 'none';
+  if (!scrubbing) {
+    const s = g('scrubber');
+    s.value = t;
+    const pct = Math.min(100, (t / DUR) * 100);
+    s.style.background = 'linear-gradient(to right, #7C3AED ' + pct + '%, rgba(255,255,255,0.15) ' + pct + '%)';
+  }
+}
+
+function renderAtTime() {
+  updateControlsUI();
 
   // Page 1 fade in
   if (t < 0.4) { setPages(0, 0); }
@@ -434,6 +469,14 @@ function frame(ts) {
 
   // Text cues
   cues.forEach(([id, s, e]) => show(id, t >= s && t < e));
+}
+
+function frame(ts) {
+  if (!lastTs) lastTs = ts;
+  t = Math.min(DUR, t + (ts - lastTs) / 1000);
+  lastTs = ts;
+
+  renderAtTime();
 
   if (t < DUR && playing) {
     raf = requestAnimationFrame(frame);
@@ -442,6 +485,28 @@ function frame(ts) {
     g('play-center').style.display = 'none';
     g('end-btns').style.display = 'flex';
   }
+}
+
+// Hard-reconstructs the full visual state for an arbitrary point in time —
+// used when the user drags the scrubber. Every cue above is a simple
+// `t >= threshold` check, so resetting to defaults and then running
+// renderAtTime() once at the target time reliably reproduces any moment,
+// including ones a plain forward-only frame() would never revisit (e.g.
+// scrubbing backward past the one-shot window-close animation, which
+// would otherwise stay stuck closed).
+function hardSeekTo(target) {
+  const w = g('win2');
+  w.style.transition = 'none';
+  doReset();
+  t = Math.max(0, Math.min(DUR, target));
+  renderAtTime();
+  if (t >= DUR) {
+    g('play-center').style.display = 'none';
+    g('end-btns').style.display = 'flex';
+  }
+  requestAnimationFrame(() => {
+    w.style.transition = 'transform 0.45s cubic-bezier(.4,0,1,1), opacity 0.45s ease-in';
+  });
 }
 
 function startPlaying() {
@@ -468,6 +533,12 @@ window.centerPlay = function(e) {
   startPlaying();
 };
 
+window.togglePlay = function(e) {
+  if (e) e.stopPropagation();
+  if (t >= DUR) { doReset(e); startPlaying(); return; }
+  playing ? stopPlaying() : startPlaying();
+};
+
 window.doReset = function(e) {
   if (e) e.stopPropagation();
   playing = false; cancelAnimationFrame(raf);
@@ -475,8 +546,6 @@ window.doReset = function(e) {
   g('dim').style.opacity = '0';
   g('cur').style.opacity = '0';
   g('cur').style.transform = 'scale(1)';
-  g('prog').style.width = '0%';
-  g('tmr').textContent = '0:00';
   g('xbtn').style.background = '#28C840';
   g('sched-btn').style.background = '#1A3366';
   g('sched-btn').style.boxShadow = 'none';
@@ -487,11 +556,25 @@ window.doReset = function(e) {
   cues.forEach(([id]) => show(id, false));
   g('play-center').style.display = 'flex';
   g('end-btns').style.display = 'none';
+  updateControlsUI();
 };
 
 // Init
 g('play-center').style.display = 'flex';
 g('end-btns').style.display = 'none';
+g('totTime').textContent = fmtT(DUR);
+const scrubberEl = g('scrubber');
+scrubberEl.max = DUR;
+let wasPlayingBeforeScrub = false;
+scrubberEl.addEventListener('mousedown', () => { scrubbing = true; wasPlayingBeforeScrub = playing; if (playing) stopPlaying(); });
+scrubberEl.addEventListener('touchstart', () => { scrubbing = true; wasPlayingBeforeScrub = playing; if (playing) stopPlaying(); });
+scrubberEl.addEventListener('input', () => { hardSeekTo(parseFloat(scrubberEl.value)); });
+scrubberEl.addEventListener('change', () => {
+  scrubbing = false;
+  if (wasPlayingBeforeScrub && t < DUR) startPlaying();
+});
+scrubberEl.addEventListener('click', (e) => e.stopPropagation());
+updateControlsUI();
 
 // Bridge for a host page to read/drive playback state (used by the
 // feedback tool this video is embedded in — same-origin iframe access).

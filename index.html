@@ -243,7 +243,19 @@
     .cc-stage[data-cc-theme="smoke-tray"] .cc-popover { background-color: rgba(22,18,30,0.96); }
   }
   .cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 0 14px; }
+  .cc-pop-head-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .cc-pop-time { font-size: 11.5px; color: var(--cc-faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  /* Video timestamp chip — the moment in the clip a comment was left on.
+     Shown in the rail card and the thread popover; absent for non-video
+     prototypes (no player = no timestamp). */
+  .cc-stamp {
+    font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.4;
+    color: var(--cc-ink); background: rgba(20,10,40,0.08);
+    padding: 1px 7px; border-radius: 999px; flex: none;
+  }
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-stamp { background: rgba(255,255,255,0.14); color: #fff; }
+  .cc-stage[data-cc-theme="branded-frost"] .cc-stamp { background: rgba(74,28,114,0.12); color: var(--cc-purple); }
   .cc-pop-actions { display: flex; }
   .cc-icon-btn {
     width: 40px; height: 40px; border: 0; background: transparent; border-radius: 10px;
@@ -445,6 +457,16 @@
   let popoverEl = null;
   let commentMode = false;
   let currentScreen = 'default';
+  let pinEls = new Map();      // thread id -> pin element currently on the frame
+
+  // ── Video timeline ───────────────────────────────────────
+  // When the host prototype is a Knomee video (exposes window.KnomeePlayer)
+  // or our hand-built player (window.__player), each comment carries the
+  // video timestamp it was left at, and its pin only surfaces on the frame
+  // while the playhead is within PIN_WINDOW of that moment — so the frame
+  // isn't buried under every pin at once. Prototypes with no player keep the
+  // base-template behavior: every pin always visible.
+  const PIN_WINDOW = 1.5;      // seconds on either side of a comment's timestamp
 
   // ── Shared storage (Firestore) ──────────────────────────
   // Deliberate deviation from the design spec's localStorage-only
@@ -479,6 +501,7 @@
       img: raw.img || null,
       createdAt: raw.createdAt || Date.now(),
       resolved: !!raw.resolved,
+      time: (typeof raw.time === 'number') ? raw.time : null,
       messages: Array.isArray(raw.messages) ? raw.messages
         : (raw.text ? [{ text: raw.text, createdAt: raw.createdAt || Date.now() }] : [])
     };
@@ -592,6 +615,37 @@
     }
   }, 400);
 
+  // ── Video timeline poll ──────────────────────────────────
+  // Keeps the click-catcher clear of the video's own control bar (so it stays
+  // scrubbable in comment mode) and refreshes the timed pins as the playhead
+  // moves. No-ops gracefully for a static prototype: no player -> pins render
+  // once via renderAll and this only maintains the (zero-height) catcher inset.
+  function updateCatcherBounds() {
+    let stripH = 0;
+    try {
+      const doc = proto.contentDocument;
+      // Knomee video exports don't have a #text-strip, but the control bar's
+      // play/pause button carries a stable title — use its row position to
+      // work out how much of the bottom to leave uncovered.
+      const strip = doc && doc.getElementById('text-strip');
+      if (strip) {
+        stripH = strip.getBoundingClientRect().height;
+      } else {
+        const playBtn = doc && doc.querySelector('button[title*="Play/pause" i]');
+        if (playBtn) {
+          const top = playBtn.getBoundingClientRect().top;
+          stripH = Math.max(0, proto.clientHeight - top + 8);
+        }
+      }
+    } catch (e) { /* cross-origin or not ready yet */ }
+    catcher.style.bottom = stripH + 'px';
+  }
+
+  setInterval(() => {
+    updateCatcherBounds();
+    if (getPlayer()) renderPins();
+  }, 150);
+
   // ── Helpers ──────────────────────────────────────────────
   function relTime(ts) {
     const s = Math.floor((Date.now() - ts) / 1000);
@@ -607,6 +661,37 @@
   function findThread(id) {
     if (draft && draft.id === id) return draft;
     return store.threads.find(t => t.id === id) || null;
+  }
+
+  // ── Player bridge ────────────────────────────────────────
+  // Our hand-built videos expose window.__player; Knomee-tool exports expose
+  // window.KnomeePlayer (getState()/seekTo()/…). Both are adapted to one
+  // {playing, time, duration, play, pause, seekTo} shape. Returns null for a
+  // static prototype, in which case the timeline features simply don't engage.
+  function getPlayer() {
+    try {
+      const w = proto.contentWindow;
+      if (!w) return null;
+      if (w.__player) return w.__player;
+      if (w.KnomeePlayer) {
+        const kp = w.KnomeePlayer;
+        return {
+          get playing() { return kp.getState().playing; },
+          get time() { return kp.getState().time; },
+          get duration() { return kp.getState().duration; },
+          play: () => kp.play(),
+          pause: () => kp.pause(),
+          seekTo: (t) => { if (typeof kp.seekTo === 'function') kp.seekTo(t); }
+        };
+      }
+    } catch (e) { /* cross-origin or not ready yet */ }
+    return null;
+  }
+
+  function fmtTime(t) {
+    if (typeof t !== 'number' || isNaN(t)) return null;
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    return m + ':' + String(s).padStart(2, '0');
   }
 
   // Unresolved threads on the current screen (legacy null-screen threads
@@ -635,17 +720,49 @@
   // ── Rendering ────────────────────────────────────────────
   function renderAll() { renderPins(); renderRail(); }
 
+  // Which visible threads currently show a pin on the frame. With a video
+  // player present a pin only surfaces while the playhead is within
+  // PIN_WINDOW of the comment's timestamp (a comment with no timestamp always
+  // shows); without a player every visible thread shows, as in the base
+  // template.
+  function pinVisibleSet(list, player) {
+    const set = new Set();
+    if (!player) { list.forEach(t => set.add(t.id)); return set; }
+    const now = player.time;
+    list.forEach(t => {
+      if (typeof t.time !== 'number' || Math.abs(now - t.time) <= PIN_WINDOW) set.add(t.id);
+    });
+    return set;
+  }
+
+  // Diff-based (keyed by thread id) so the 150ms timeline poll can call it
+  // without tearing down pins that are staying put — a full rebuild would
+  // drop hover/active state and thrash the DOM every tick.
   function renderPins() {
-    pinLayer.innerHTML = '';
-    visibleThreads().forEach((t, i) => {
-      const wrap = document.createElement('button');
+    const list = visibleThreads();
+    const numbers = new Map(list.map((t, i) => [t.id, i + 1]));
+    const shown = pinVisibleSet(list, getPlayer());
+
+    pinEls.forEach((el, id) => {
+      if (!shown.has(id) || !numbers.has(id)) { el.remove(); pinEls.delete(id); }
+    });
+
+    list.forEach(t => {
+      if (!shown.has(t.id)) return;
+      let wrap = pinEls.get(t.id);
+      if (!wrap) {
+        wrap = document.createElement('button');
+        wrap.innerHTML = '<div class="cc-pin"><span></span></div>';
+        wrap.addEventListener('click', (e) => { e.stopPropagation(); openThread(t.id); });
+        pinLayer.appendChild(wrap);
+        pinEls.set(t.id, wrap);
+      }
       wrap.className = 'cc-pin-wrap' + (t.id === activeId ? ' cc-active' : '');
       wrap.style.left = t.x + '%';
       wrap.style.top = t.y + '%';
-      wrap.setAttribute('aria-label', 'Comment ' + (i + 1));
-      wrap.innerHTML = '<div class="cc-pin"><span>' + (i + 1) + '</span></div>';
-      wrap.addEventListener('click', (e) => { e.stopPropagation(); openThread(t.id); });
-      pinLayer.appendChild(wrap);
+      const n = numbers.get(t.id);
+      wrap.setAttribute('aria-label', 'Comment ' + n);
+      wrap.querySelector('span').textContent = n;
     });
   }
 
@@ -692,6 +809,13 @@
       const meta = document.createElement('div');
       meta.className = 'cc-card-meta';
       meta.innerHTML = '<div class="cc-token"><span>' + (numbers.get(t.id) || '') + '</span></div>';
+      const stampTxt = fmtTime(t.time);
+      if (stampTxt) {
+        const stamp = document.createElement('span');
+        stamp.className = 'cc-stamp';
+        stamp.textContent = stampTxt;
+        meta.appendChild(stamp);
+      }
       const time = document.createElement('span');
       time.className = 'cc-time';
       time.textContent = relTime(t.createdAt);
@@ -768,13 +892,37 @@
     activeId = id;
     removePopover();
 
+    // Jump the video to the moment this comment was left on (existing threads
+    // only — a fresh draft is already at the current frame) and pause so it
+    // can be annotated on a still. Seeking there also brings the pin back into
+    // its PIN_WINDOW so it reappears on the frame.
+    if (t !== draft && typeof t.time === 'number') {
+      const player = getPlayer();
+      if (player) {
+        if (typeof player.pause === 'function') player.pause();
+        if (typeof player.seekTo === 'function' && Math.abs((player.time || 0) - t.time) > 0.3) {
+          player.seekTo(t.time);
+        }
+        renderPins();
+      }
+    }
+
     const pop = document.createElement('div');
     pop.className = 'cc-popover cc-chrome';
     pop.addEventListener('click', (e) => e.stopPropagation());
 
-    // head: timestamp + delete — no identity chrome
+    // head: video timestamp + relative time + delete — no identity chrome
     const head = document.createElement('div');
     head.className = 'cc-pop-head';
+    const headLeft = document.createElement('div');
+    headLeft.className = 'cc-pop-head-left';
+    const stampTxt = fmtTime(t.time);
+    if (stampTxt) {
+      const stamp = document.createElement('span');
+      stamp.className = 'cc-stamp';
+      stamp.textContent = stampTxt;
+      headLeft.appendChild(stamp);
+    }
     const time = document.createElement('span');
     time.className = 'cc-pop-time';
     time.textContent = t.messages.length ? relTime(t.createdAt) : 'New comment';
@@ -796,7 +944,8 @@
       closeThread();   // an empty draft simply discards
     });
     actions.appendChild(del);
-    head.appendChild(time);
+    headLeft.appendChild(time);
+    head.appendChild(headLeft);
     head.appendChild(actions);
     pop.appendChild(head);
 
@@ -874,7 +1023,11 @@
   function setMode(on) {
     commentMode = on;
     stage.classList.toggle('cc-mode', on);
-    if (!on) closeThread();
+    // Entering comment mode pauses the video so you annotate a still frame
+    // (the video's own controls stay reachable — the catcher is kept clear of
+    // its control bar — so you can still scrub to another moment).
+    if (on) { const p = getPlayer(); if (p && typeof p.pause === 'function') p.pause(); }
+    else closeThread();
   }
 
   fab.addEventListener('click', (e) => { e.stopPropagation(); setMode(!commentMode); });
@@ -898,6 +1051,7 @@
     const rect = catcher.getBoundingClientRect();
     const xPct = Math.min(98, Math.max(2, ((e.clientX - rect.left) / rect.width) * 100));
     const yPct = Math.min(96, Math.max(4, ((e.clientY - rect.top) / rect.height) * 100));
+    const player = getPlayer();
     const t = {
       id: 'c' + Date.now() + Math.random().toString(36).slice(2, 7),
       screen: currentScreen,
@@ -905,6 +1059,7 @@
       img: null,
       createdAt: Date.now(),
       resolved: false,
+      time: player ? player.time : null,
       messages: []
     };
     draft = t;

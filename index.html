@@ -1088,6 +1088,9 @@
   // sits (reply input, a pin, the body). One Esc is a full retreat: it
   // dismisses any open card, exits comment mode, AND tucks the persistent
   // menu back to its slim tab — the prototype is left clean in one press.
+  // For a video prototype it also resumes playback, since the video was
+  // paused on the way in (comment mode / opening a comment); Esc hands
+  // playback back so you're watching again, not stuck on a still.
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     const menuOpen = !rail.classList.contains('cc-collapsed');
@@ -1097,6 +1100,8 @@
     if (commentMode) setMode(false);   // setMode(false) also closes the open thread
     else closeThread();                // a card opened from the rail, mode off
     setRailCollapsed(true);            // full retreat: back to the slim tab
+    const player = getPlayer();        // resume the video (no-op for static prototypes)
+    if (player && typeof player.play === 'function') player.play();
   }, true);
 
   // ── Clear all ────────────────────────────────────────────

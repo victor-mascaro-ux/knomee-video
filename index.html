@@ -4,294 +4,479 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Video Feedback — Knomee</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --purple:      #240446;
-    --purple-mid:  #7639A1;
-    --purple-light:#e9d9f4;
-    --teal:        #3dbdaa;
-    --teal-bg:     #b8ede6;
-    --lavender-bg: #d8cce8;
-    --border:      #e2e2e2;
-    --text:        #1a1a2e;
-    --muted:       #6b7280;
-  }
-  html, body { height: 100%; font-family: 'Poppins', sans-serif; background: #f7f5fa; color: var(--text); }
+  /* ════════════════════════════════════════════════════════
+     Knomee comments overlay — "Neutral Frost"
+     Every rule is scoped under .cc-stage / a .cc- prefix so
+     nothing leaks into (or out of) the host prototype, which
+     additionally lives in its own iframe.
+     ════════════════════════════════════════════════════════ */
 
-  .shell { display: flex; flex-direction: column; height: 100vh; }
+  .cc-stage {
+    /* ── design tokens (Neutral Frost defaults) ── */
+    --cc-ink:          #1E1A28;
+    --cc-text:         #37323F;
+    --cc-muted:        #6E6880;
+    --cc-faint:        #9A94A6;
+    --cc-glass:        rgba(255,255,255,0.62);
+    --cc-glass-strong: rgba(255,255,255,0.72);
+    --cc-hairline:     rgba(20,10,40,0.08);
+    --cc-card:         rgba(255,255,255,0.55);
+    --cc-card-active:  rgba(255,255,255,0.85);
+    --cc-purple:       #4A1C72;
+    --cc-purple-deep:  #240446;
+    --cc-knomee-teal:  #2DD2B0;
+    --cc-knomee-teal-ink: #06403A;
+    --cc-blur:   24px;
+    --cc-radius: 16px;
+    --cc-ring:   var(--cc-ink);      /* focus rings — ink, not brand */
+    --cc-pin-ring: var(--cc-ink);    /* active pin outer ring */
+    --cc-pin:      #FFD84D;          /* sticky-note yellow — pin fill */
+    --cc-pin-ink:  #4A3B00;          /* dark amber — the digit on the pin */
+    --cc-input-bg: rgba(255,255,255,0.6);
+    --cc-panel-wash: none;           /* branded-frost adds a purple wash */
 
-  /* ── Header ── */
-  .header {
-    background: var(--purple); height: 56px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
-    position: relative;
+    position: relative; width: 100%; height: 100vh; overflow: hidden;
+    background: #0a0a0a;
   }
-  .header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--purple-mid); opacity: 0.5; }
-  .header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .header-logo { width: 22px; height: 22px; border-radius: 6px; background: var(--teal); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: var(--purple); flex-shrink: 0; }
-  .header-title { color: white; font-size: 15px; font-weight: 600; flex-shrink: 0; }
+  .cc-stage *, .cc-stage *::before, .cc-stage *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .version-badge {
-    display: flex; align-items: center; gap: 8px; margin-left: 6px; padding: 4px 6px 4px 10px;
-    background: rgba(255,255,255,0.08); border-radius: 50px; min-width: 0;
-  }
-  .version-num {
-    background: var(--teal); color: var(--purple); font-size: 11px; font-weight: 700;
-    padding: 3px 9px; border-radius: 50px; flex-shrink: 0; white-space: nowrap;
-  }
-  .version-title {
-    color: rgba(255,255,255,0.85); font-size: 12.5px; font-weight: 500; background: none; border: none;
-    font-family: inherit; outline: none; padding: 3px 4px; border-radius: 5px; min-width: 60px;
-    max-width: 260px;
-  }
-  .version-title:hover, .version-title:focus { background: rgba(255,255,255,0.1); color: white; }
+  /* chrome type register: deliberately NOT the prototype's font */
+  .cc-chrome, .cc-chrome * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
 
-  .header-right { display: flex; align-items: center; gap: 10px; }
+  /* ── the prototype frame ── */
+  .cc-frame { position: absolute; inset: 0; background: #fff; overflow: hidden; }
+  .cc-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
 
-  .file-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    border: 1.5px solid rgba(255,255,255,0.4); border-radius: 50px;
-    padding: 7px 16px; font-size: 12.5px; font-weight: 500;
-    color: white; cursor: pointer; background: transparent;
-    transition: background 0.15s; white-space: nowrap;
+  /* ── shared frosted surface ── */
+  .cc-frost {
+    background: var(--cc-glass);
+    background-image: var(--cc-panel-wash);
+    -webkit-backdrop-filter: blur(var(--cc-blur));
+    backdrop-filter: blur(var(--cc-blur));
+    border: 1px solid var(--cc-hairline);
   }
-  .file-btn:hover { background: rgba(255,255,255,0.1); }
-  .file-btn input { display: none; }
-
-  /* ── Body layout ── */
-  .body { flex: 1; display: flex; min-height: 0; }
-
-  /* ── Sidebar (comments stack) ── */
-  .sidebar {
-    width: 340px; flex-shrink: 0; background: white; border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; min-height: 0;
-  }
-  .sidebar-head {
-    padding: 18px 20px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-  }
-  .sidebar-head h2 { font-size: 15px; font-weight: 700; color: var(--purple); }
-  .sidebar-head p { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .comment-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-
-  .empty-state {
-    margin: 24px 16px; padding: 20px; text-align: center; color: var(--muted);
-    font-size: 13px; line-height: 1.6; background: #faf8fc; border: 1px dashed var(--border); border-radius: 12px;
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .cc-frost { background-color: rgba(255,255,255,0.94); }
+    .cc-stage[data-cc-theme="smoke-tray"] .cc-frost { background-color: rgba(22,18,30,0.94); }
   }
 
-  .c-card {
-    display: flex; gap: 10px; padding: 10px; border-radius: 12px; border: 1.5px solid var(--border);
-    background: white; cursor: pointer; transition: border-color 0.15s, background 0.15s;
-    text-align: left;
+  /* ── focus rings (a11y) ── */
+  .cc-stage :is(button, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--cc-ring); outline-offset: 2px;
   }
-  .c-card:hover { border-color: var(--teal); background: #f0faf8; }
-  .c-card.active { border-color: var(--purple); background: var(--purple-light); }
 
-  .c-thumb { position: relative; width: 78px; height: 48px; border-radius: 7px; overflow: hidden; flex-shrink: 0; background: #0a0a0a; border: 1px solid var(--border); }
-  .c-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .c-thumb-dot {
-    position: absolute; width: 9px; height: 9px; border-radius: 50%;
-    background: var(--purple); border: 1.5px solid white; box-shadow: 0 0 0 1px var(--purple);
+  /* Shared bits (K chip lives in the rail header; ghost btn = exit ×). */
+  .cc-kchip {
+    width: 26px; height: 26px; border-radius: 8px; flex: none;
+    background: var(--cc-knomee-teal); color: var(--cc-knomee-teal-ink);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800;
+  }
+  .cc-ghost-btn {
+    width: 34px; height: 34px; border-radius: 10px; border: 0; background: transparent;
+    color: var(--cc-muted); font-size: 18px; cursor: pointer; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .cc-ghost-btn:hover { background: var(--cc-hairline); color: var(--cc-text); }
+  /* The "exit comment mode" × only means something while comment mode is on;
+     the collapse chevron is what tucks the persistent menu away. */
+  #ccCloseMode { display: none; }
+  .cc-stage.cc-mode #ccCloseMode { display: flex; }
+
+  /* ════════ Comments rail ════════
+     A persistent, collapsible left menu — always present (independent of
+     comment mode) so existing comment cards are reachable at all times.
+     Full height, in front of the prototype (incl. the prototype's own
+     header). There is deliberately NO full-width overlay top bar — that
+     used to sit over the prototype's header and tint it. The rail is the
+     only left-edge chrome, so the rest of the prototype header keeps its
+     real color. It defaults to the slim collapsed tab (see init) so it
+     never covers the prototype until you expand it. */
+  .cc-rail {
+    position: absolute; top: 0; left: 0; bottom: 0; width: 322px; z-index: 55;
+    display: flex; flex-direction: column; overflow: hidden;
+    border-top: 0; border-left: 0; border-bottom: 0;
+    transition: width 0.18s ease;
+  }
+  .cc-rail-head { padding: 14px 12px 12px 16px; border-bottom: 1px solid var(--cc-hairline); flex: none; }
+  .cc-rail-head-row { display: flex; align-items: center; gap: 9px; }
+  .cc-rail-head-row h2 { font-size: 14px; font-weight: 800; color: var(--cc-text); white-space: nowrap; }
+  .cc-count {
+    min-width: 22px; height: 22px; border-radius: 999px; padding: 0 7px;
+    background: rgba(20,10,40,0.08); color: var(--cc-text);
+    font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .cc-rail-spacer { flex: 1; }
+  .cc-collapse-btn { font-size: 15px; }
+  .cc-collapse-btn svg { transition: transform 0.18s ease; }
+  .cc-rail-subrow { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 6px; padding-left: 2px; white-space: nowrap; }
+  .cc-rail-sub { font-size: 12px; color: var(--cc-faint); }
+  .cc-clear-btn {
+    background: none; border: 0; color: var(--cc-muted); font-size: 12px; font-weight: 600;
+    text-decoration: underline; cursor: pointer; padding: 2px; flex: none;
+  }
+  .cc-clear-btn:hover { color: var(--cc-ink); }
+  .cc-clear-btn:disabled { opacity: 0.4; cursor: default; text-decoration: none; }
+
+  .cc-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .cc-list::-webkit-scrollbar { width: 8px; }
+  .cc-list::-webkit-scrollbar-thumb { background: rgba(20,10,40,0.15); border-radius: 8px; }
+
+  /* ── Collapsed rail: a slim tab showing just the K chip, count and the
+     expand chevron. Lets you tuck the column away to see more of the
+     prototype while staying in comment mode (pins stay live). ── */
+  .cc-rail.cc-collapsed { width: 50px; }
+  .cc-rail.cc-collapsed .cc-rail-head { padding: 12px 6px; }
+  .cc-rail.cc-collapsed .cc-rail-head-row { flex-direction: column; gap: 12px; }
+  .cc-rail.cc-collapsed .cc-rail-head-row h2,
+  .cc-rail.cc-collapsed .cc-rail-spacer,
+  .cc-rail.cc-collapsed #ccCloseMode,
+  .cc-rail.cc-collapsed .cc-rail-subrow,
+  .cc-rail.cc-collapsed .cc-list { display: none; }
+  .cc-rail.cc-collapsed .cc-collapse-btn svg { transform: rotate(180deg); }
+
+  .cc-card {
+    position: relative; display: flex; gap: 10px; padding: 10px; border-radius: 12px;
+    background: var(--cc-card); border: 1px solid var(--cc-hairline);
+    cursor: pointer; text-align: left; width: 100%;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .cc-card:hover { background: var(--cc-card-active); }
+  .cc-card.cc-active {
+    background: var(--cc-card-active); border-color: rgba(20,10,40,0.18);
+    box-shadow: 0 10px 30px -12px rgba(20,10,40,0.35);
+  }
+  .cc-thumb {
+    position: relative; width: 64px; height: 40px; border-radius: 7px; overflow: hidden;
+    flex: none; background: rgba(20,10,40,0.08); border: 1px solid var(--cc-hairline);
+  }
+  .cc-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cc-thumb-dot {
+    position: absolute; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--cc-pin); border: 1.5px solid #fff; box-shadow: 0 0 0 1px var(--cc-ink);
     transform: translate(-50%, -50%);
   }
-
-  .c-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-  .c-meta { display: flex; align-items: center; gap: 6px; }
-  .c-num {
-    width: 16px; height: 16px; border-radius: 50%; background: var(--teal); color: white;
-    font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .c-tag { font-size: 10.5px; color: var(--purple-mid); font-weight: 700; background: var(--purple-light); padding: 1px 6px; border-radius: 4px; }
-  .c-time { font-size: 11px; color: var(--muted); font-weight: 500; }
-  .c-text {
-    font-size: 12.5px; color: var(--text); line-height: 1.4;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  .cc-card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; justify-content: center; }
+  .cc-card-meta { display: flex; align-items: center; gap: 7px; }
+  .cc-time { font-size: 11px; color: var(--cc-faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .cc-snippet {
+    font-size: 12.5px; color: var(--cc-text); line-height: 1.4;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
-  /* ── Main stage ── */
-  .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  /* ── empty state ── */
+  .cc-empty {
+    margin: 24px 14px; padding: 28px 18px; text-align: center;
+    border: 1.5px dashed rgba(20,10,40,0.18); border-radius: 14px; color: var(--cc-muted);
+  }
+  .cc-empty svg { display: block; margin: 0 auto 12px; opacity: 0.55; }
+  .cc-empty-title { font-size: 13px; font-weight: 700; color: var(--cc-text); margin-bottom: 4px; }
+  .cc-empty-sub { font-size: 12px; line-height: 1.55; }
 
-  .toolbar {
-    height: 44px; flex-shrink: 0; display: flex; align-items: center; gap: 10px;
-    padding: 0 24px; border-bottom: 1px solid var(--border); background: white;
+  /* ════════ 3. Pins ════════
+     Teardrop map pins: ink fill, white number, white halo + shadow so they
+     read on any prototype background, light or dark. The tip anchors on the
+     exact clicked coordinate (wrapper bottom-center = the point). */
+  .cc-pin-layer { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
+  .cc-pin-wrap {
+    position: absolute; width: 40px; height: 40px;         /* ≥40px hit target */
+    margin-left: -20px; margin-top: -40px;
+    pointer-events: auto; cursor: pointer; background: none; border: 0; padding: 0;
   }
-  .transport-btn {
-    width: 26px; height: 26px; border-radius: 50%; border: none; background: var(--purple); color: white;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0;
-    transition: background 0.15s;
-  }
-  .transport-btn:hover { background: var(--purple-mid); }
-  .toolbar-hint { font-size: 12.5px; color: var(--muted); }
-  .toolbar-hint b { color: var(--purple); font-weight: 600; }
-
-  .stage-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px; overflow: auto; background: #ece7f2; }
-
-  .video-box {
-    position: relative;
-    background: #0a0a0a; border-radius: 14px; overflow: hidden;
-    box-shadow: 0 10px 40px rgba(36, 4, 70, 0.25);
-    flex-shrink: 0;
-  }
-  .video-box iframe { width: 100%; height: 100%; border: none; display: block; }
-
-  /* Sits on top of the iframe. Only intercepts clicks (and shows the
-     comment cursor) while the video is paused and no comment is open.
-     Bottom is set via JS to stop above the video's own control strip
-     (progress bar, play/pause, etc.) so those stay clickable/scrubbable
-     even while armed for commenting. */
-  .armed-layer {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; pointer-events: none;
-  }
-  .armed-layer.armed {
-    pointer-events: auto;
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='30' viewBox='0 0 14 15'%3E%3Cg transform='translate(14,0) scale(-1,1)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.75 10.75L9.75 13.75V10.75H10.75C11.855 10.75 12.75 9.855 12.75 8.75V2.75C12.75 1.645 11.855 0.75 10.75 0.75H2.75C1.645 0.75 0.75 1.645 0.75 2.75V8.75C0.75 9.855 1.645 10.75 2.75 10.75H5.75Z' fill='white' stroke='%23240446' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='2.75' y1='4.25' x2='10.75' y2='4.25' stroke='%23240446'/%3E%3Cline x1='2.75' y1='7.25' x2='10.75' y2='7.25' stroke='%23240446'/%3E%3C/g%3E%3C/svg%3E") 9 28, pointer;
-  }
-
-  /* Live pins: shown ±1s around a comment's timetag while playing/paused. */
-  .live-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-  .live-pin {
-    position: absolute; width: 26px; height: 26px; margin-left: -13px; margin-top: -26px;
-    pointer-events: auto; cursor: pointer; animation: pin-in 0.15s ease-out;
-  }
-  @keyframes pin-in { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  .live-pin .pin-body { width: 26px; height: 26px; box-shadow: 0 2px 10px rgba(0,0,0,0.45); }
-
-  .capture-layer {
-    position: absolute; inset: 0; z-index: 10; display: none;
-  }
-  .capture-layer.show { display: block; }
-  .capture-layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-  .pin {
-    position: absolute; width: 30px; height: 30px; margin-left: -15px; margin-top: -30px;
-    transform-origin: bottom center; z-index: 4; pointer-events: none;
-  }
-  .pin-body {
-    width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
-    background: var(--purple); border: 2.5px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  .cc-pin {
+    position: absolute; left: 6px; top: 6px; width: 28px; height: 28px;
+    background: var(--cc-pin);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);                             /* sharp corner -> tip */
+    box-shadow: 0 0 0 2px #fff, 0 4px 10px rgba(20,10,40,0.4);
     display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .pin-body::after { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--teal); transform: rotate(45deg); }
-
-  .bubble {
-    position: absolute; width: 260px; background: white; border-radius: 12px;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.28); border: 1px solid var(--border);
-    z-index: 6; overflow: hidden;
+  .cc-pin > span {
+    transform: rotate(45deg);                              /* digit upright */
+    color: var(--cc-pin-ink); font-weight: 800; font-size: 12px; font-variant-numeric: tabular-nums;
   }
-  .bubble textarea {
-    width: 100%; min-height: 64px; border: none; resize: vertical; padding: 10px 12px;
-    font-family: inherit; font-size: 13px; color: var(--text); outline: none; line-height: 1.4;
+  .cc-pin-wrap:hover .cc-pin { transform: rotate(-45deg) scale(1.08); }
+  .cc-pin-wrap.cc-active .cc-pin {
+    transform: rotate(-45deg) scale(1.12);
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4.5px var(--cc-pin-ring), 0 6px 14px rgba(20,10,40,0.45);
   }
-  .bubble-text { padding: 8px 12px 4px; font-size: 13px; color: var(--text); line-height: 1.45; white-space: pre-wrap; }
-  .bubble-actions { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px 12px; gap: 8px; }
-  .bubble-actions-right { display: flex; gap: 6px; align-items: center; }
 
-  .small-btn { font-family: inherit; border: none; border-radius: 50px; cursor: pointer; font-weight: 600; font-size: 12px; padding: 6px 14px; }
-  .small-btn.save { background: var(--purple); color: white; }
-  .small-btn.save:hover { background: var(--purple-mid); }
-  .small-btn.cancel { background: transparent; color: var(--muted); }
-  .small-btn.cancel:hover { color: var(--text); }
-  .btn-danger-text { background: none; border: none; color: #c0392b; font-size: 12.5px; text-decoration: underline; padding: 4px; cursor: pointer; font-family: inherit; }
+  /* mini pin token used in rail cards */
+  .cc-token {
+    width: 20px; height: 20px; flex: none;
+    background: var(--cc-pin); border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 1.5px #fff;
+  }
+  .cc-token > span { transform: rotate(45deg); color: var(--cc-pin-ink); font-size: 10px; font-weight: 800; }
 
-  .persist-warning {
+  /* ── click-catcher (comment mode only) ── */
+  .cc-catcher {
+    position: absolute; inset: 0; z-index: 30; display: none;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'%3E%3Cpath d='M5 4H19C20.1046 4 21 4.89543 21 6V15C21 16.1046 20.1046 17 19 17H9.41421L5.70711 20.7071C5.42111 20.9931 5 20.7889 5 20.3839V17C3.89543 17 3 16.1046 3 15V6C3 4.89543 3.89543 4 5 4Z' fill='none' stroke='%231E1A28' stroke-width='3.2' stroke-linejoin='round' stroke-opacity='0.9'/%3E%3Cpath d='M5 4H19C20.1046 4 21 4.89543 21 6V15C21 16.1046 20.1046 17 19 17H9.41421L5.70711 20.7071C5.42111 20.9931 5 20.7889 5 20.3839V17C3.89543 17 3 16.1046 3 15V6C3 4.89543 3.89543 4 5 4Z' fill='%23FFD84D' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E") 6 22, crosshair;
+  }
+  .cc-stage.cc-mode .cc-catcher { display: block; }
+
+  /* ════════ Thread popover ════════
+     No avatars, no author names — timestamp + delete only. */
+  .cc-popover {
+    position: absolute; width: 300px; z-index: 70;
+    border-radius: var(--cc-radius);
+    background: var(--cc-glass-strong);
+    background-image: var(--cc-panel-wash);
+    -webkit-backdrop-filter: blur(var(--cc-blur));
+    backdrop-filter: blur(var(--cc-blur));
+    border: 1px solid var(--cc-hairline);
+    box-shadow: 0 24px 60px -18px rgba(20,10,40,0.4);
+    overflow: hidden;
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .cc-popover { background-color: rgba(255,255,255,0.96); }
+    .cc-stage[data-cc-theme="smoke-tray"] .cc-popover { background-color: rgba(22,18,30,0.96); }
+  }
+  .cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 0 14px; }
+  .cc-pop-head-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .cc-pop-time { font-size: 11.5px; color: var(--cc-faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  /* Video timestamp chip — the moment in the clip a comment was left on.
+     Shown in the rail card and the thread popover; absent for non-video
+     prototypes (no player = no timestamp). */
+  .cc-stamp {
+    font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.4;
+    color: var(--cc-ink); background: rgba(20,10,40,0.08);
+    padding: 1px 7px; border-radius: 999px; flex: none;
+  }
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-stamp { background: rgba(255,255,255,0.14); color: #fff; }
+  .cc-stage[data-cc-theme="branded-frost"] .cc-stamp { background: rgba(74,28,114,0.12); color: var(--cc-purple); }
+  .cc-pop-actions { display: flex; }
+  .cc-icon-btn {
+    width: 40px; height: 40px; border: 0; background: transparent; border-radius: 10px;
+    color: var(--cc-muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .cc-icon-btn:hover { background: var(--cc-hairline); color: var(--cc-ink); }
+  .cc-msgs { padding: 2px 14px 6px; display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; }
+  .cc-msg + .cc-msg { border-top: 1px solid var(--cc-hairline); padding-top: 10px; }
+  .cc-msg-time { font-size: 11px; color: var(--cc-faint); font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+  .cc-msg-text { font-size: 13px; color: var(--cc-text); line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; }
+  .cc-pop-foot { display: flex; gap: 8px; padding: 8px 12px 12px; align-items: flex-end; }
+  .cc-reply {
+    flex: 1; resize: none; min-height: 40px; max-height: 140px; overflow-y: auto;
+    border-radius: 12px; border: 1px solid var(--cc-hairline); background: var(--cc-input-bg);
+    padding: 10px 12px; font-size: 13px; line-height: 1.4; color: var(--cc-text); outline: none;
+  }
+  .cc-reply::placeholder { color: var(--cc-faint); }
+  .cc-send {
+    width: 40px; height: 40px; border-radius: 12px; border: 0; flex: none;
+    background: var(--cc-ink); color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.15s;
+  }
+  .cc-send:hover { opacity: 0.85; }
+
+  /* ════════ 5. FAB ════════ */
+  .cc-fab {
+    position: absolute; right: 20px; bottom: 20px; width: 52px; height: 52px;
+    border-radius: 50%; z-index: 65; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cc-ink);
+    box-shadow: 0 12px 30px -8px rgba(20,10,40,0.45);
+    transition: transform 0.15s, background 0.15s, color 0.15s;
+  }
+  .cc-fab:hover { transform: translateY(-2px); }
+  /* Soft shadow on the bubble glyph itself (on top of the button's own
+     shadow) so the yellow reads on a light frosted circle too. */
+  .cc-fab svg { filter: drop-shadow(0 1.5px 1.5px rgba(20,10,40,0.45)); }
+  .cc-stage.cc-mode .cc-fab { background: var(--cc-ink); color: #fff; border-color: transparent; }
+
+  /* ════════ 6. Esc pill ════════ */
+  .cc-esc {
+    position: absolute; left: 16px; bottom: 24px; z-index: 60; display: none;
+    background: rgba(20,14,30,0.72); color: rgba(255,255,255,0.92);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    font-size: 11.5px; font-weight: 500; padding: 7px 12px; border-radius: 999px;
+    pointer-events: none; white-space: nowrap;
+  }
+  .cc-esc b { color: #fff; font-weight: 800; }
+  .cc-stage.cc-mode .cc-esc { display: block; }
+
+  /* ── error toast (persist failures / namespace conflicts) ── */
+  .cc-warning {
     position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
     background: #c0392b; color: white; font-size: 13px; font-weight: 500;
-    padding: 10px 20px; border-radius: 50px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-    z-index: 100; max-width: 420px; text-align: center;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    padding: 10px 20px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    z-index: 100; max-width: 460px; text-align: center;
   }
 
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-thumb { background: #d6d1de; border-radius: 8px; }
+  /* ════════════════════════════════════════════════════════
+     Theme preset: 1B "Smoke Tray" — dark translucent chrome,
+     floating detached rail + pill top bar. Pins unchanged.
+     ════════════════════════════════════════════════════════ */
+  .cc-stage[data-cc-theme="smoke-tray"] {
+    --cc-text:  #ffffff;
+    --cc-muted: rgba(255,255,255,0.6);
+    --cc-faint: rgba(255,255,255,0.42);
+    --cc-glass:        rgba(22,18,30,0.56);
+    --cc-glass-strong: rgba(22,18,30,0.62);
+    --cc-hairline:     rgba(255,255,255,0.12);
+    --cc-card:         rgba(255,255,255,0.06);
+    --cc-card-active:  rgba(255,255,255,0.14);
+    --cc-input-bg:     rgba(255,255,255,0.08);
+    --cc-ring: #fff;
+  }
+  /* Rail detaches and floats (inset, rounded) — the "unmistakably the tool"
+     read. With no separate top bar, it simply floats from the top edge. */
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-rail {
+    top: 16px; left: 16px; bottom: 16px; border-radius: 20px; border: 1px solid var(--cc-hairline);
+    overflow: hidden;
+  }
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-count { background: rgba(255,255,255,0.12); }
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-ghost-btn:hover,
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-icon-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-send { background: #fff; color: var(--cc-ink); }
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-empty { border-color: rgba(255,255,255,0.22); }
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-fab:not(.cc-mode *) { color: #fff; }
+  .cc-stage[data-cc-theme="smoke-tray"] .cc-clear-btn:hover { color: #fff; }
+
+  /* ════════════════════════════════════════════════════════
+     Theme preset: 1C "Branded Frost" — Neutral Frost plus a faint
+     purple wash, purple accents, compact single-line rail rows.
+     ════════════════════════════════════════════════════════ */
+  .cc-stage[data-cc-theme="branded-frost"] {
+    --cc-panel-wash: linear-gradient(rgba(74,28,114,0.07), rgba(74,28,114,0.03));
+    --cc-pin-ring: var(--cc-purple);
+  }
+  .cc-stage[data-cc-theme="branded-frost"] .cc-count { background: rgba(74,28,114,0.12); color: var(--cc-purple); }
+  .cc-stage[data-cc-theme="branded-frost"] .cc-card { padding: 8px 10px; }
+  .cc-stage[data-cc-theme="branded-frost"] .cc-thumb { display: none; }
+  .cc-stage[data-cc-theme="branded-frost"] .cc-card.cc-active::before {
+    content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+    background: var(--cc-purple); border-radius: 3px;
+  }
+  .cc-stage[data-cc-theme="branded-frost"] .cc-fab { color: var(--cc-purple); }
+  .cc-stage[data-cc-theme="branded-frost"].cc-mode .cc-fab { background: var(--cc-purple-deep); color: #fff; }
 </style>
 </head>
-<body>
-<div class="shell">
+<body style="margin:0">
 
-  <div class="header">
-    <div class="header-left">
-      <div class="header-logo">K</div>
-      <div class="header-title">Video Feedback</div>
-      <div class="version-badge">
-        <span class="version-num" id="versionNum">v1</span>
-        <input class="version-title" id="versionTitle" placeholder="Untitled version" spellcheck="false">
-      </div>
-    </div>
-    <div class="header-right">
-      <label class="file-btn">
-        Swap video (new version)
-        <input type="file" id="fileInput" accept=".html,text/html">
-      </label>
-    </div>
+<div class="cc-stage" id="ccStage" data-cc-theme="neutral-frost">
+
+  <!-- the prototype under review -->
+  <div class="cc-frame" id="ccFrame">
+    <iframe id="ccProto" src="video.html" title="Video"></iframe>
+    <div class="cc-catcher" id="ccCatcher"></div>
+    <div class="cc-pin-layer" id="ccPinLayer"></div>
+    <!-- thread popover appended here -->
   </div>
 
-  <div class="body">
-
-    <div class="sidebar">
-      <div class="sidebar-head">
-        <h2 id="commentCount">Comments (0)</h2>
-        <p>Click a card to jump to that moment</p>
+  <!-- comments rail (full height, in front of the prototype's own header) -->
+  <aside class="cc-rail cc-frost cc-chrome" id="ccRail">
+    <div class="cc-rail-head">
+      <div class="cc-rail-head-row">
+        <div class="cc-kchip">K</div>
+        <h2>Comments</h2>
+        <span class="cc-count" id="ccCount">0</span>
+        <span class="cc-rail-spacer"></span>
+        <button class="cc-ghost-btn cc-collapse-btn" id="ccCollapse" title="Collapse comments" aria-label="Collapse comments">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="cc-ghost-btn" id="ccCloseMode" title="Exit comment mode" aria-label="Exit comment mode">×</button>
       </div>
-      <div class="comment-list" id="commentList"></div>
-    </div>
-
-    <div class="stage">
-      <div class="toolbar">
-        <button class="transport-btn" id="transportBtn" title="Play/Pause">▶</button>
-        <div class="toolbar-hint" id="toolbarHint">Click the video to play it.</div>
-      </div>
-
-      <div class="stage-area">
-        <div class="video-box" id="videoBox">
-          <iframe id="videoFrame" src="video.html" title="Video"></iframe>
-
-          <div class="live-layer" id="liveLayer"></div>
-          <div class="armed-layer" id="armedLayer"></div>
-
-          <div class="capture-layer" id="captureLayer">
-            <img id="captureImg" alt="Paused frame">
-          </div>
-        </div>
+      <div class="cc-rail-subrow">
+        <span class="cc-rail-sub">Click a card to open it.</span>
+        <button class="cc-clear-btn" id="ccClearAll" disabled>Clear all</button>
       </div>
     </div>
+    <div class="cc-list" id="ccList"></div>
+  </aside>
 
-  </div>
+  <!-- 5. FAB -->
+  <button class="cc-fab cc-frost cc-chrome" id="ccFab" title="Toggle comment mode" aria-label="Toggle comment mode">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M5 4H19C20.1046 4 21 4.89543 21 6V15C21 16.1046 20.1046 17 19 17H9.41421L5.70711 20.7071C5.42111 20.9931 5 20.7889 5 20.3839V17C3.89543 17 3 16.1046 3 15V6C3 4.89543 3.89543 4 5 4Z" fill="none" stroke="#1E1A28" stroke-width="3.2" stroke-linejoin="round" stroke-opacity="0.9"/>
+      <path d="M5 4H19C20.1046 4 21 4.89543 21 6V15C21 16.1046 20.1046 17 19 17H9.41421L5.70711 20.7071C5.42111 20.9931 5 20.7889 5 20.3839V17C3.89543 17 3 16.1046 3 15V6C3 4.89543 3.89543 4 5 4Z" style="fill:var(--cc-pin);stroke:#fff;stroke-width:1.5;stroke-linejoin:round"/>
+    </svg>
+  </button>
+
+  <!-- 6. esc pill -->
+  <div class="cc-esc cc-chrome">Press <b>Esc</b> to exit comment mode</div>
+
 </div>
 
 <script>
 (function () {
-  const videoFrame = document.getElementById('videoFrame');
-  const videoBox = document.getElementById('videoBox');
-  const armedLayer = document.getElementById('armedLayer');
-  const liveLayer = document.getElementById('liveLayer');
-  const captureLayer = document.getElementById('captureLayer');
-  const captureImg = document.getElementById('captureImg');
-  const transportBtn = document.getElementById('transportBtn');
-  const toolbarHint = document.getElementById('toolbarHint');
-  const commentList = document.getElementById('commentList');
-  const commentCount = document.getElementById('commentCount');
-  const fileInput = document.getElementById('fileInput');
-  const versionNum = document.getElementById('versionNum');
-  const versionTitle = document.getElementById('versionTitle');
+  'use strict';
 
-  const STORE_KEY = 'knomee-video-feedback';
-  const PIN_WINDOW = 1.5; // seconds before/after a comment's timetag it stays clickable
+  // ────────────────────────────────────────────────────────
+  // Config. PROJECT_ID must be unique per deployed prototype —
+  // comments are namespaced by it in the shared Firestore project, so
+  // two repos left on "change-me" would share one comment thread.
+  // Never use "state" (the video-feedback tool's own doc ID).
+  // THEME: 'neutral-frost' | 'smoke-tray' | 'branded-frost'
+  // SEED_DEMO: true = local demo mode — no Firestore/localStorage,
+  //            seeds 3 comments and opens one thread. For previewing
+  //            the overlay itself; leave false in real projects.
+  // ────────────────────────────────────────────────────────
+  const PROJECT_ID  = 'knomee-video';
+  const THEME       = 'neutral-frost';
+  const SEED_DEMO   = false;
+  // ────────────────────────────────────────────────────────
 
-  let store = { version: 1, title: 'video.html', comments: [] };
-  let mode = 'live';        // 'live' | 'placing' | 'composing' | 'viewing' | 'editing'
-  let pendingPin = null;     // {x, y, img, time} while placing
+  const stage    = document.getElementById('ccStage');
+  const frame    = document.getElementById('ccFrame');
+  const proto    = document.getElementById('ccProto');
+  const catcher  = document.getElementById('ccCatcher');
+  const pinLayer = document.getElementById('ccPinLayer');
+  const fab      = document.getElementById('ccFab');
+  const closeModeBtn = document.getElementById('ccCloseMode');
+  const listEl   = document.getElementById('ccList');
+  const countEl  = document.getElementById('ccCount');
+  const clearBtn = document.getElementById('ccClearAll');
+  const rail     = document.getElementById('ccRail');
+  const collapseBtn = document.getElementById('ccCollapse');
+  const RAIL_COLLAPSED_KEY = 'knomee-cc-rail-collapsed';
+
+  stage.dataset.ccTheme = THEME;
+
+  const STORE_KEY = 'knomee-prototype-feedback::' + PROJECT_ID;
+
+  let store = { threads: [] };
+  let draft = null;            // unpersisted thread while composing the first note
   let activeId = null;
-  let bubbleEl = null;
-  let livePinEls = new Map(); // comment id -> pin element currently shown on the live layer
+  let popoverEl = null;
+  let commentMode = false;
+  let currentScreen = 'default';
+  let pinEls = new Map();      // thread id -> pin element currently on the frame
+
+  // ── Video timeline ───────────────────────────────────────
+  // When the host prototype is a Knomee video (exposes window.KnomeePlayer)
+  // or our hand-built player (window.__player), each comment carries the
+  // video timestamp it was left at, and its pin only surfaces on the frame
+  // while the playhead is within PIN_WINDOW of that moment — so the frame
+  // isn't buried under every pin at once. Prototypes with no player keep the
+  // base-template behavior: every pin always visible.
+  const PIN_WINDOW = 1.5;      // seconds on either side of a comment's timestamp
 
   // ── Shared storage (Firestore) ──────────────────────────
-  // Comments live in the same Firebase project as the activation playbook,
-  // in their own collection. Each comment is its own document — the
-  // playbook already hit Firestore's 1MiB-per-document limit once from
-  // bundling everything into one doc, so this avoids repeating that.
+  // Deliberate deviation from the design spec's localStorage-only
+  // persistence: comments must be shared across reviewers/devices (same
+  // behavior as the knomee-video feedback tool), so Firestore is the
+  // source of truth and localStorage is only a fast-paint seed and
+  // offline fallback. Same Firebase project AND same top-level
+  // collection ("video-feedback") as the video tool — the project's
+  // security rules only allow that one collection name — namespaced
+  // by PROJECT_ID as the doc ID.
   const firebaseConfig = {
     apiKey: "AIzaSyBqmxrO__M6mGypXsxQ_HgCu81qs8mXe90",
     authDomain: "knomee-playbook.firebaseapp.com",
@@ -302,107 +487,166 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  const stateRef = db.collection('video-feedback').doc('state');
-  const commentsRef = stateRef.collection('comments');
+  const stateRef = db.collection('video-feedback').doc(PROJECT_ID);
+  const threadsRef = stateRef.collection('comments');
 
-  // localStorage is kept only as a fast-paint seed (so reload isn't a blank
-  // slate while Firestore responds) and a same-browser fallback if the
-  // shared server is unreachable — Firestore is the source of truth.
+  // Accepts both the current schema and legacy single-text comments
+  // (pre-threads) so old data keeps rendering. Legacy comments have no
+  // screen — screen:null is treated as "show on every screen".
+  function normalize(raw) {
+    return {
+      id: raw.id,
+      screen: (typeof raw.screen === 'string') ? raw.screen : null,
+      x: raw.x, y: raw.y,
+      img: raw.img || null,
+      createdAt: raw.createdAt || Date.now(),
+      resolved: !!raw.resolved,
+      time: (typeof raw.time === 'number') ? raw.time : null,
+      messages: Array.isArray(raw.messages) ? raw.messages
+        : (raw.text ? [{ text: raw.text, createdAt: raw.createdAt || Date.now() }] : [])
+    };
+  }
+
   function loadLocalFallback() {
+    if (SEED_DEMO) return;
     try {
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        store = {
-          version: parsed.version || 1,
-          title: typeof parsed.title === 'string' ? parsed.title : 'video.html',
-          comments: Array.isArray(parsed.comments) ? parsed.comments : []
-        };
+        const items = Array.isArray(parsed.threads) ? parsed.threads
+          : (Array.isArray(parsed.comments) ? parsed.comments : []);
+        store.threads = items.map(normalize);
       }
     } catch (e) { /* keep defaults */ }
   }
   function cacheLocally() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+    if (SEED_DEMO) return;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify({ threads: store.threads })); }
     catch (e) { /* best-effort only */ }
   }
 
   function initSync() {
-    stateRef.onSnapshot(snap => {
-      const data = snap.data();
-      if (data) {
-        store.version = data.version || 1;
-        store.title = typeof data.title === 'string' ? data.title : store.title;
-      }
-      renderVersionBadge();
+    if (SEED_DEMO) return;
+    threadsRef.orderBy('createdAt').onSnapshot(snap => {
+      store.threads = snap.docs.map(d => normalize(d.data()));
       cacheLocally();
+      renderAll();
+      refreshOpenThread();
     }, err => {
-      console.warn('Firestore state sync error', err);
-      showPersistWarning("Can't reach the shared comment server — showing your last saved copy.");
-    });
-
-    commentsRef.orderBy('createdAt').onSnapshot(snap => {
-      store.comments = snap.docs.map(d => d.data());
-      cacheLocally();
-      renderSidebar();
-    }, err => {
-      console.warn('Firestore comments sync error', err);
-      showPersistWarning("Can't reach the shared comment server — showing your last saved copy.");
+      console.warn('Firestore sync error', err);
+      showWarning("Can't reach the shared comment server — showing your last saved copy.");
     });
   }
 
-  // Comments are meant to persist until the next video upload — so a
-  // failed write (offline, permission error, storage full, etc.) must
-  // never fail silently. It would otherwise look saved in the UI for the
-  // rest of this session and then simply be gone on reload.
-  function persistComment(comment) {
-    commentsRef.doc(comment.id).set(comment).then(cacheLocally).catch(err => {
+  function persistThread(t) {
+    cacheLocally();
+    if (SEED_DEMO) return;
+    threadsRef.doc(t.id).set(t).catch(err => {
       console.warn('Could not save comment', err);
-      showPersistWarning();
+      showWarning();
     });
   }
   function persistDelete(id) {
-    commentsRef.doc(id).delete().then(cacheLocally).catch(err => {
+    cacheLocally();
+    if (SEED_DEMO) return;
+    threadsRef.doc(id).delete().catch(err => {
       console.warn('Could not delete comment', err);
-      showPersistWarning();
+      showWarning();
     });
   }
-  function persistTitle() {
-    stateRef.set({ version: store.version, title: store.title }, { merge: true })
-      .then(cacheLocally).catch(err => {
-        console.warn('Could not save title', err);
-        showPersistWarning();
-      });
-  }
-  function persistVersionSwap(version, title) {
-    commentsRef.get().then(snap => {
-      const batch = db.batch();
-      snap.docs.forEach(d => batch.delete(d.ref));
-      return batch.commit();
-    }).then(() => stateRef.set({ version, title }))
-      .then(cacheLocally)
-      .catch(err => {
-        console.warn('Could not sync new version', err);
-        showPersistWarning("Couldn't sync the new version to the shared server — others may still see the old comments.");
-      });
-  }
 
-  let persistWarningEl = null;
-  function showPersistWarning(message) {
-    const text = message || "Couldn't save that change — this browser's storage is full, so it may be lost on reload.";
-    if (persistWarningEl) { persistWarningEl.textContent = text; return; }
+  let warningEl = null;
+  function showWarning(message, sticky) {
+    const text = message || "Couldn't save that change — it may be lost on reload.";
+    if (warningEl) { warningEl.textContent = text; return; }
     const el = document.createElement('div');
-    el.className = 'persist-warning';
+    el.className = 'cc-warning';
     el.textContent = text;
     document.body.appendChild(el);
-    persistWarningEl = el;
-    setTimeout(() => { el.remove(); if (persistWarningEl === el) persistWarningEl = null; }, 7000);
+    warningEl = el;
+    if (sticky) {
+      el.style.cursor = 'pointer';
+      el.title = 'Dismiss';
+      el.addEventListener('click', () => { el.remove(); if (warningEl === el) warningEl = null; });
+    } else {
+      setTimeout(() => { el.remove(); if (warningEl === el) warningEl = null; }, 7000);
+    }
   }
 
-  function renderVersionBadge() {
-    versionNum.textContent = 'v' + store.version;
-    versionTitle.value = store.title || '';
+  // ── Namespace conflict detection ─────────────────────────
+  // Warns if and only if a different deployment is actually using this
+  // PROJECT_ID. Each deployed site stamps the state doc with its URL;
+  // finding someone else's stamp means two sites share one thread.
+  // localhost/file:// is skipped so local dev never trips it.
+  const SITE_ID = location.host + location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
+  const IS_LOCAL_DEV = ['localhost', '127.0.0.1', ''].includes(location.hostname);
+  function checkNamespaceConflict() {
+    if (IS_LOCAL_DEV || SEED_DEMO) return;
+    stateRef.get().then(snap => {
+      const claimedBy = snap.exists ? snap.data().claimedBy : null;
+      if (claimedBy && claimedBy !== SITE_ID) {
+        showWarning('Another prototype (' + claimedBy + ') uses the same PROJECT_ID — you are seeing and overwriting each other\'s comments. Change PROJECT_ID in index.html. (Click to dismiss)', true);
+      }
+      return stateRef.set({ claimedBy: SITE_ID }, { merge: true });
+    }).catch(err => console.warn('Namespace conflict check failed', err));
   }
 
+  // ── Screens ──────────────────────────────────────────────
+  // Pins belong to a screen. The overlay reads the prototype's current
+  // screen id without requiring integration: a prototype can expose
+  // window.__ccScreenId, or use the .screen.active convention (like the
+  // dummy). Falls back to a single 'default' screen.
+  function getScreenId() {
+    try {
+      const w = proto.contentWindow;
+      if (w && w.__ccScreenId) return String(w.__ccScreenId);
+      const d = proto.contentDocument;
+      const el = d && d.querySelector('.screen.active');
+      if (el && el.id) return el.id;
+    } catch (e) { /* cross-origin or not ready */ }
+    return 'default';
+  }
+  setInterval(() => {
+    const s = getScreenId();
+    if (s !== currentScreen) {
+      currentScreen = s;
+      closeThread();
+      renderAll();
+    }
+  }, 400);
+
+  // ── Video timeline poll ──────────────────────────────────
+  // Keeps the click-catcher clear of the video's own control bar (so it stays
+  // scrubbable in comment mode) and refreshes the timed pins as the playhead
+  // moves. No-ops gracefully for a static prototype: no player -> pins render
+  // once via renderAll and this only maintains the (zero-height) catcher inset.
+  function updateCatcherBounds() {
+    let stripH = 0;
+    try {
+      const doc = proto.contentDocument;
+      // Knomee video exports don't have a #text-strip, but the control bar's
+      // play/pause button carries a stable title — use its row position to
+      // work out how much of the bottom to leave uncovered.
+      const strip = doc && doc.getElementById('text-strip');
+      if (strip) {
+        stripH = strip.getBoundingClientRect().height;
+      } else {
+        const playBtn = doc && doc.querySelector('button[title*="Play/pause" i]');
+        if (playBtn) {
+          const top = playBtn.getBoundingClientRect().top;
+          stripH = Math.max(0, proto.clientHeight - top + 8);
+        }
+      }
+    } catch (e) { /* cross-origin or not ready yet */ }
+    catcher.style.bottom = stripH + 'px';
+  }
+
+  setInterval(() => {
+    updateCatcherBounds();
+    if (getPlayer()) renderPins();
+  }, 150);
+
+  // ── Helpers ──────────────────────────────────────────────
   function relTime(ts) {
     const s = Math.floor((Date.now() - ts) / 1000);
     if (s < 10) return 'Just now';
@@ -414,30 +658,19 @@
     return Math.floor(h / 24) + 'd ago';
   }
 
-  function fmtTime(t) {
-    if (typeof t !== 'number' || isNaN(t)) return null;
-    const m = Math.floor(t / 60), s = Math.floor(t % 60);
-    return m + ':' + String(s).padStart(2, '0');
+  function findThread(id) {
+    if (draft && draft.id === id) return draft;
+    return store.threads.find(t => t.id === id) || null;
   }
 
-  function escapeHtml(str) {
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-  }
-
-  // ── Player bridge ──────────────────────────────────────
-  // Our own hand-built video.html exposes window.__player. Videos exported
-  // by the Knomee video tool (the React/Stage bundles) instead expose a
-  // documented, version-stable window.KnomeePlayer — different shape, so
-  // it's adapted to the same {playing, time, duration, play(), pause()}
-  // interface here rather than special-casing it at every call site.
-  // If a swapped-in video implements neither, we fall back to "always
-  // armed" so commenting still works, just without live-timed pins.
-
+  // ── Player bridge ────────────────────────────────────────
+  // Our hand-built videos expose window.__player; Knomee-tool exports expose
+  // window.KnomeePlayer (getState()/seekTo()/…). Both are adapted to one
+  // {playing, time, duration, play, pause, seekTo} shape. Returns null for a
+  // static prototype, in which case the timeline features simply don't engage.
   function getPlayer() {
     try {
-      const w = videoFrame.contentWindow;
+      const w = proto.contentWindow;
       if (!w) return null;
       if (w.__player) return w.__player;
       if (w.KnomeePlayer) {
@@ -447,467 +680,476 @@
           get time() { return kp.getState().time; },
           get duration() { return kp.getState().duration; },
           play: () => kp.play(),
-          pause: () => kp.pause()
+          pause: () => kp.pause(),
+          seekTo: (t) => { if (typeof kp.seekTo === 'function') kp.seekTo(t); }
         };
       }
-      return null;
-    } catch (e) { return null; }
+    } catch (e) { /* cross-origin or not ready yet */ }
+    return null;
   }
 
-  function pausePlayer() {
-    const p = getPlayer();
-    if (p && typeof p.pause === 'function') p.pause();
+  function fmtTime(t) {
+    if (typeof t !== 'number' || isNaN(t)) return null;
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    return m + ':' + String(s).padStart(2, '0');
   }
 
-  // ── Rendering ──────────────────────────────────────────
-
-  function renderSidebar() {
-    const comments = store.comments;
-    commentCount.textContent = 'Comments (' + comments.length + ')';
-    commentList.innerHTML = '';
-    if (!comments.length) {
-      const empty = document.createElement('div');
-      empty.className = 'empty-state';
-      empty.textContent = 'No comments yet on this version. Pause the video, then click anywhere on the frame to leave feedback.';
-      commentList.appendChild(empty);
-      return;
-    }
-    const ordered = comments.slice().sort((a, b) => b.createdAt - a.createdAt);
-    ordered.forEach((c, idx) => {
-      const card = document.createElement('div');
-      card.className = 'c-card' + (c.id === activeId ? ' active' : '');
-      card.dataset.id = c.id;
-      const tag = fmtTime(c.time);
-      card.innerHTML =
-        '<div class="c-thumb">' +
-          '<img src="' + c.img + '" alt="">' +
-          '<div class="c-thumb-dot" style="left:' + c.x + '%;top:' + c.y + '%;"></div>' +
-        '</div>' +
-        '<div class="c-body">' +
-          '<div class="c-meta">' +
-            '<span class="c-num">' + (ordered.length - idx) + '</span>' +
-            (tag ? '<span class="c-tag">' + tag + '</span>' : '') +
-            '<span class="c-time">' + relTime(c.createdAt) + '</span>' +
-          '</div>' +
-          '<div class="c-text">' + escapeHtml(c.text) + '</div>' +
-        '</div>';
-      card.addEventListener('click', (e) => { e.stopPropagation(); viewComment(c.id); });
-      commentList.appendChild(card);
-    });
+  // Unresolved threads on the current screen (legacy null-screen threads
+  // show everywhere), in creation order — their index is the pin number.
+  function visibleThreads() {
+    const list = store.threads.filter(t =>
+      !t.resolved && (t.screen === null || t.screen === currentScreen));
+    if (draft) list.push(draft);
+    return list.sort((a, b) => a.createdAt - b.createdAt);
   }
 
-  function clampBubblePos(xPct, yPct) {
-    const boxW = videoBox.clientWidth, boxH = videoBox.clientHeight;
-    const bw = 260, bh = 140;
-    let left = (xPct / 100) * boxW + 18;
-    let top = (yPct / 100) * boxH - 10;
-    if (left + bw > boxW - 10) left = (xPct / 100) * boxW - bw - 18;
-    if (left < 10) left = 10;
-    if (top + bh > boxH - 10) top = boxH - bh - 10;
-    if (top < 10) top = 10;
-    return { left, top };
-  }
-
-  function placePin(xPct, yPct) {
-    const pin = document.createElement('div');
-    pin.className = 'pin';
-    pin.id = 'activePin';
-    pin.style.left = xPct + '%';
-    pin.style.top = yPct + '%';
-    pin.innerHTML = '<div class="pin-body"></div>';
-    captureLayer.appendChild(pin);
-  }
-
-  function removeActivePin() {
-    const p = document.getElementById('activePin');
-    if (p) p.remove();
-  }
-
-  function removeBubble() {
-    if (bubbleEl) { bubbleEl.remove(); bubbleEl = null; }
-  }
-
-  // ── Capture ────────────────────────────────────────────
-
+  // ── Capture (rail thumbnails) ────────────────────────────
   function captureFrame() {
     let target;
-    try { target = videoFrame.contentDocument.body; } catch (e) { target = null; }
-    if (!target || typeof html2canvas === 'undefined') {
-      return Promise.resolve(null);
-    }
-    // Pin the capture to the iframe's actual visible box (not the source
-    // document's scrollHeight, which can run taller than what's shown —
-    // html2canvas otherwise bakes in extra blank space at the bottom that
-    // then throws off the aspect ratio once displayed with object-fit).
-    const w = videoFrame.clientWidth, h = videoFrame.clientHeight;
+    try { target = proto.contentDocument.body; } catch (e) { target = null; }
+    if (!target || typeof html2canvas === 'undefined') return Promise.resolve(null);
+    const w = proto.clientWidth, h = proto.clientHeight;
     return html2canvas(target, {
-      backgroundColor: '#0a0a0a',
-      logging: false,
-      useCORS: true,
+      backgroundColor: '#ffffff', logging: false, useCORS: true,
       foreignObjectRendering: true,
-      width: w,
-      height: h,
-      windowWidth: w,
-      windowHeight: h,
-      scale: Math.min(1, 700 / w)
-    }).then(canvas => canvas.toDataURL('image/jpeg', 0.82)).catch(err => {
-      console.warn('Screen capture failed', err);
-      return null;
+      width: w, height: h, windowWidth: w, windowHeight: h,
+      scale: Math.min(1, 900 / w)
+    }).then(c => c.toDataURL('image/jpeg', 0.8)).catch(() => null);
+  }
+
+  // ── Rendering ────────────────────────────────────────────
+  function renderAll() { renderPins(); renderRail(); }
+
+  // Which visible threads currently show a pin on the frame. With a video
+  // player present a pin only surfaces while the playhead is within
+  // PIN_WINDOW of the comment's timestamp (a comment with no timestamp always
+  // shows); without a player every visible thread shows, as in the base
+  // template.
+  function pinVisibleSet(list, player) {
+    const set = new Set();
+    if (!player) { list.forEach(t => set.add(t.id)); return set; }
+    const now = player.time;
+    list.forEach(t => {
+      if (typeof t.time !== 'number' || Math.abs(now - t.time) <= PIN_WINDOW) set.add(t.id);
     });
+    return set;
   }
 
-  // ── Flows ──────────────────────────────────────────────
+  // Diff-based (keyed by thread id) so the 150ms timeline poll can call it
+  // without tearing down pins that are staying put — a full rebuild would
+  // drop hover/active state and thrash the DOM every tick.
+  function renderPins() {
+    const list = visibleThreads();
+    const numbers = new Map(list.map((t, i) => [t.id, i + 1]));
+    const shown = pinVisibleSet(list, getPlayer());
 
-  function enterLive() {
-    // A comment bubble only ever opens after we paused the video for it
-    // (either the user paused it themselves before commenting, or
-    // viewComment() paused it for them) — so dismissing that bubble
-    // should hand playback back.
-    const wasOpen = mode === 'composing' || mode === 'viewing' || mode === 'editing';
-    mode = 'live';
-    activeId = null;
-    pendingPin = null;
-    removeBubble();
-    removeActivePin();
-    captureLayer.classList.remove('show');
-    renderSidebar();
-    if (wasOpen) {
-      const player = getPlayer();
-      if (player && typeof player.play === 'function') player.play();
-    }
-  }
-
-  function beginCommentAt(clientX, clientY) {
-    const player = getPlayer();
-    const time = player ? player.time : null;
-    captureFrame().then(dataUrl => {
-      if (!dataUrl) return; // silently ignore — video likely still loading
-      mode = 'placing';
-      pendingPin = { img: dataUrl, time: time };
-
-      const rect = videoBox.getBoundingClientRect();
-      const xPct = Math.min(98, Math.max(2, ((clientX - rect.left) / rect.width) * 100));
-      const yPct = Math.min(96, Math.max(4, ((clientY - rect.top) / rect.height) * 100));
-      pendingPin.x = xPct;
-      pendingPin.y = yPct;
-
-      captureImg.src = dataUrl;
-      captureLayer.classList.add('show');
-      placePin(xPct, yPct);
-      openComposeBubble(xPct, yPct);
-      mode = 'composing';
+    pinEls.forEach((el, id) => {
+      if (!shown.has(id) || !numbers.has(id)) { el.remove(); pinEls.delete(id); }
     });
-  }
 
-  function openComposeBubble(xPct, yPct) {
-    removeBubble();
-    toolbarHint.textContent = 'Esc or click outside to close & resume.';
-    const pos = clampBubblePos(xPct, yPct);
-    const b = document.createElement('div');
-    b.className = 'bubble';
-    b.style.left = pos.left + 'px';
-    b.style.top = pos.top + 'px';
-    b.innerHTML =
-      '<textarea placeholder="Leave a comment on this moment…" autofocus></textarea>' +
-      '<div class="bubble-actions">' +
-        '<button class="small-btn cancel" data-act="cancel">Cancel</button>' +
-        '<button class="small-btn save" data-act="save">Save comment</button>' +
-      '</div>';
-    captureLayer.appendChild(b);
-    bubbleEl = b;
-    const ta = b.querySelector('textarea');
-    ta.focus();
-    b.querySelector('[data-act="cancel"]').addEventListener('click', (e) => { e.stopPropagation(); enterLive(); });
-    b.querySelector('[data-act="save"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const text = ta.value.trim();
-      if (!text) { ta.focus(); return; }
-      const comment = {
-        id: 'c' + Date.now() + Math.random().toString(36).slice(2, 7),
-        img: pendingPin.img,
-        x: pendingPin.x,
-        y: pendingPin.y,
-        time: pendingPin.time,
-        text: text,
-        createdAt: Date.now()
-      };
-      store.comments.push(comment);
-      persistComment(comment);
-      viewComment(comment.id);
-    });
-    // Stop clicks inside the textarea/buttons from bubbling to the
-    // document-level "click outside closes it" handler.
-    b.addEventListener('click', (e) => e.stopPropagation());
-  }
-
-  function viewComment(id) {
-    const c = store.comments.find(c => c.id === id);
-    if (!c) return;
-    pausePlayer();
-    mode = 'viewing';
-    activeId = id;
-    toolbarHint.textContent = 'Esc or click outside to close & resume.';
-    removeBubble();
-    removeActivePin();
-    captureImg.src = c.img;
-    captureLayer.classList.add('show');
-    placePin(c.x, c.y);
-
-    const pos = clampBubblePos(c.x, c.y);
-    const b = document.createElement('div');
-    b.className = 'bubble';
-    b.style.left = pos.left + 'px';
-    b.style.top = pos.top + 'px';
-    b.innerHTML =
-      '<div class="bubble-text" data-role="text">' + escapeHtml(c.text) + '</div>' +
-      '<div class="bubble-actions">' +
-        '<button class="btn-danger-text" data-act="delete">Delete</button>' +
-        '<div class="bubble-actions-right">' +
-          '<button class="small-btn cancel" data-act="edit">Edit</button>' +
-        '</div>' +
-      '</div>';
-    captureLayer.appendChild(b);
-    bubbleEl = b;
-    b.addEventListener('click', (e) => e.stopPropagation());
-
-    b.querySelector('[data-act="delete"]').addEventListener('click', () => {
-      if (!confirm('Delete this comment?')) return;
-      store.comments = store.comments.filter(x => x.id !== id);
-      persistDelete(id);
-      enterLive();
-    });
-    b.querySelector('[data-act="edit"]').addEventListener('click', () => editComment(id));
-
-    renderSidebar();
-  }
-
-  function editComment(id) {
-    const c = store.comments.find(c => c.id === id);
-    if (!c || !bubbleEl) return;
-    mode = 'editing';
-    bubbleEl.innerHTML =
-      '<textarea>' + escapeHtml(c.text) + '</textarea>' +
-      '<div class="bubble-actions">' +
-        '<button class="small-btn cancel" data-act="cancel">Cancel</button>' +
-        '<button class="small-btn save" data-act="save">Save</button>' +
-      '</div>';
-    const ta = bubbleEl.querySelector('textarea');
-    ta.focus();
-    ta.setSelectionRange(ta.value.length, ta.value.length);
-    bubbleEl.querySelector('[data-act="cancel"]').addEventListener('click', () => viewComment(id));
-    bubbleEl.querySelector('[data-act="save"]').addEventListener('click', () => {
-      const text = ta.value.trim();
-      if (!text) { ta.focus(); return; }
-      c.text = text;
-      persistComment(c);
-      viewComment(id);
-    });
-  }
-
-  // ── Live playback: armed cursor + timed pins ────────────
-
-  function clearLivePins() {
-    livePinEls.forEach(el => el.remove());
-    livePinEls.clear();
-  }
-
-  // Adds/removes pin elements as comments enter/exit the ±PIN_WINDOW range,
-  // but leaves already-visible pins untouched — recreating them every poll
-  // tick (every 150ms) restarted their entrance animation and made them
-  // look like they were blinking the whole time they were on screen.
-  function renderLivePins(time) {
-    if (time == null) { clearLivePins(); return; }
-    const visible = new Set();
-    store.comments.forEach(c => {
-      if (typeof c.time !== 'number') return;
-      if (Math.abs(time - c.time) > PIN_WINDOW) return;
-      visible.add(c.id);
-      if (livePinEls.has(c.id)) return;
-      const pin = document.createElement('div');
-      pin.className = 'live-pin';
-      pin.style.left = c.x + '%';
-      pin.style.top = c.y + '%';
-      pin.innerHTML = '<div class="pin-body"></div>';
-      pin.addEventListener('click', (e) => { e.stopPropagation(); viewComment(c.id); });
-      liveLayer.appendChild(pin);
-      livePinEls.set(c.id, pin);
-    });
-    livePinEls.forEach((el, id) => {
-      if (!visible.has(id)) { el.remove(); livePinEls.delete(id); }
-    });
-  }
-
-  // Keeps the comment-armed overlay off the video's own control strip
-  // (voiceover captions + play/pause/scrubber) so it stays navigable —
-  // e.g. dragging the scrubber, clicking restart — even while paused and
-  // armed for commenting, instead of every click there dropping a pin.
-  // Measured live rather than hardcoded so it tracks whatever height that
-  // strip actually renders at (and gracefully no-ops for a swapped-in
-  // video that doesn't have one).
-  function updateArmedLayerBounds() {
-    let stripH = 0;
-    try {
-      const doc = videoFrame.contentDocument;
-      const strip = doc && doc.getElementById('text-strip');
-      if (strip) {
-        stripH = strip.getBoundingClientRect().height;
-      } else {
-        // Knomee-tool exports don't have a #text-strip, but their control
-        // bar's play/pause button carries a stable title attribute — use
-        // its row position to work out how much to leave uncovered.
-        const playBtn = doc && doc.querySelector('button[title*="Play/pause" i]');
-        if (playBtn) {
-          const btnTop = playBtn.getBoundingClientRect().top;
-          stripH = Math.max(0, videoFrame.clientHeight - btnTop + 8);
-        }
+    list.forEach(t => {
+      if (!shown.has(t.id)) return;
+      let wrap = pinEls.get(t.id);
+      if (!wrap) {
+        wrap = document.createElement('button');
+        wrap.innerHTML = '<div class="cc-pin"><span></span></div>';
+        wrap.addEventListener('click', (e) => { e.stopPropagation(); openThread(t.id); });
+        pinLayer.appendChild(wrap);
+        pinEls.set(t.id, wrap);
       }
-    } catch (e) { /* cross-origin or not ready yet — leave full coverage */ }
-    armedLayer.style.bottom = stripH + 'px';
+      wrap.className = 'cc-pin-wrap' + (t.id === activeId ? ' cc-active' : '');
+      wrap.style.left = t.x + '%';
+      wrap.style.top = t.y + '%';
+      const n = numbers.get(t.id);
+      wrap.setAttribute('aria-label', 'Comment ' + n);
+      wrap.querySelector('span').textContent = n;
+    });
   }
 
-  function pollPlayer() {
-    if (mode !== 'live') return;
-    updateArmedLayerBounds();
-    const player = getPlayer();
+  function renderRail() {
+    const visible = visibleThreads().filter(t => t !== draft);
+    const numbers = new Map(visibleThreads().map((t, i) => [t.id, i + 1]));
+    countEl.textContent = String(visible.length);
+    clearBtn.disabled = store.threads.length === 0;
+    listEl.innerHTML = '';
 
-    if (!player) {
-      // Unknown video implementation — keep commenting available, but
-      // there's no time source so timed pins can't be shown.
-      armedLayer.classList.add('armed');
-      transportBtn.style.display = 'none';
-      toolbarHint.textContent = 'Click anywhere on the frame to leave feedback.';
-      clearLivePins();
+    if (!visible.length) {
+      const empty = document.createElement('div');
+      empty.className = 'cc-empty';
+      empty.innerHTML =
+        '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3" stroke-linejoin="round"/>' +
+          '<circle cx="12" cy="10" r="2.4" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2.5 2.5"/>' +
+        '</svg>' +
+        '<div class="cc-empty-title">No comments yet</div>' +
+        '<div class="cc-empty-sub">Click anywhere on the frame to drop a pin and leave the first note.</div>';
+      listEl.appendChild(empty);
       return;
     }
 
-    transportBtn.style.display = 'flex';
-    transportBtn.textContent = player.playing ? '❚❚' : '▶';
+    // newest first
+    visible.slice().sort((a, b) => b.createdAt - a.createdAt).forEach(t => {
+      const card = document.createElement('button');
+      card.className = 'cc-card' + (t.id === activeId ? ' cc-active' : '');
 
-    // Only arm the comment cursor once the video has actually been played
-    // and paused — the untouched opening frame (time === 0) should still
-    // show a normal pointer so clicking it starts playback, not a comment.
-    const hasStarted = player.time > 0;
-    // At the end, the video swaps in its own "Play again" / "Restart"
-    // buttons over the content area — leave those clickable instead of
-    // the armed overlay swallowing the click meant for them.
-    const hasEnded = typeof player.duration === 'number' && player.time >= player.duration;
-    if (player.playing) {
-      armedLayer.classList.remove('armed');
-      toolbarHint.textContent = 'Playing — pause to leave feedback.';
-    } else if (hasEnded) {
-      armedLayer.classList.remove('armed');
-      toolbarHint.textContent = 'Video ended — click Play Again or Restart.';
-    } else if (hasStarted) {
-      armedLayer.classList.add('armed');
-      toolbarHint.textContent = 'Paused — click anywhere on the frame to comment, or press Esc to resume.';
-    } else {
-      armedLayer.classList.remove('armed');
-      toolbarHint.textContent = 'Click the video to play it.';
+      const thumb = document.createElement('div');
+      thumb.className = 'cc-thumb';
+      if (t.img) {
+        const img = document.createElement('img');
+        img.src = t.img; img.alt = '';
+        thumb.appendChild(img);
+      }
+      const dot = document.createElement('div');
+      dot.className = 'cc-thumb-dot';
+      dot.style.left = t.x + '%'; dot.style.top = t.y + '%';
+      thumb.appendChild(dot);
+
+      const body = document.createElement('div');
+      body.className = 'cc-card-body';
+      const meta = document.createElement('div');
+      meta.className = 'cc-card-meta';
+      meta.innerHTML = '<div class="cc-token"><span>' + (numbers.get(t.id) || '') + '</span></div>';
+      const stampTxt = fmtTime(t.time);
+      if (stampTxt) {
+        const stamp = document.createElement('span');
+        stamp.className = 'cc-stamp';
+        stamp.textContent = stampTxt;
+        meta.appendChild(stamp);
+      }
+      const time = document.createElement('span');
+      time.className = 'cc-time';
+      time.textContent = relTime(t.createdAt);
+      meta.appendChild(time);
+      const snippet = document.createElement('div');
+      snippet.className = 'cc-snippet';
+      snippet.textContent = t.messages.length ? t.messages[0].text : '…';
+      body.appendChild(meta);
+      body.appendChild(snippet);
+
+      card.appendChild(thumb);
+      card.appendChild(body);
+      card.addEventListener('click', (e) => { e.stopPropagation(); openThread(t.id); });
+      listEl.appendChild(card);
+    });
+  }
+
+  // ── Thread popover ───────────────────────────────────────
+  function clampPopover(el, xPct, yPct) {
+    const fw = frame.clientWidth, fh = frame.clientHeight;
+    const px = (xPct / 100) * fw, py = (yPct / 100) * fh;
+    const w = el.offsetWidth || 300, h = el.offsetHeight || 160;
+    let left = px + 18;
+    if (left + w > fw - 10) left = px - w - 18;
+    if (left < 10) left = 10;
+    let top = py - 10;
+    if (top + h > fh - 10) top = fh - h - 10;
+    if (top < 10) top = 10;
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }
+
+  function removePopover() {
+    if (popoverEl) { popoverEl.remove(); popoverEl = null; }
+  }
+
+  function fillMessages(container, t) {
+    container.innerHTML = '';
+    t.messages.forEach((m, i) => {
+      const msg = document.createElement('div');
+      msg.className = 'cc-msg';
+      if (i > 0) {
+        const mt = document.createElement('div');
+        mt.className = 'cc-msg-time';
+        mt.textContent = relTime(m.createdAt);
+        msg.appendChild(mt);
+      }
+      const txt = document.createElement('div');
+      txt.className = 'cc-msg-text';
+      txt.textContent = m.text;
+      msg.appendChild(txt);
+      container.appendChild(msg);
+    });
+  }
+
+  // Keeps an open popover honest when a Firestore snapshot replaces
+  // store.threads (e.g. another reviewer replied, or our own write echoed
+  // back) — without rebuilding the popover, which would eat focus and any
+  // half-typed reply.
+  function refreshOpenThread() {
+    if (!activeId || !popoverEl) return;
+    if (draft && draft.id === activeId) return;   // drafts aren't in the store yet
+    const t = store.threads.find(x => x.id === activeId);
+    if (!t || t.resolved) { closeThread(); return; }   // gone or resolved elsewhere
+    const msgs = popoverEl.querySelector('.cc-msgs');
+    if (msgs) fillMessages(msgs, t);
+  }
+
+  function openThread(id) {
+    const t = findThread(id);
+    if (!t) return;
+    // switching threads discards an empty draft
+    if (draft && draft.id !== id && !draft.messages.length) discardDraft();
+    activeId = id;
+    removePopover();
+
+    // Jump the video to the moment this comment was left on (existing threads
+    // only — a fresh draft is already at the current frame) and pause so it
+    // can be annotated on a still. Seeking there also brings the pin back into
+    // its PIN_WINDOW so it reappears on the frame.
+    if (t !== draft && typeof t.time === 'number') {
+      const player = getPlayer();
+      if (player) {
+        if (typeof player.pause === 'function') player.pause();
+        if (typeof player.seekTo === 'function' && Math.abs((player.time || 0) - t.time) > 0.3) {
+          player.seekTo(t.time);
+        }
+        renderPins();
+      }
     }
 
-    renderLivePins(player.time);
+    const pop = document.createElement('div');
+    pop.className = 'cc-popover cc-chrome';
+    pop.addEventListener('click', (e) => e.stopPropagation());
+
+    // head: video timestamp + relative time + delete — no identity chrome
+    const head = document.createElement('div');
+    head.className = 'cc-pop-head';
+    const headLeft = document.createElement('div');
+    headLeft.className = 'cc-pop-head-left';
+    const stampTxt = fmtTime(t.time);
+    if (stampTxt) {
+      const stamp = document.createElement('span');
+      stamp.className = 'cc-stamp';
+      stamp.textContent = stampTxt;
+      headLeft.appendChild(stamp);
+    }
+    const time = document.createElement('span');
+    time.className = 'cc-pop-time';
+    time.textContent = t.messages.length ? relTime(t.createdAt) : 'New comment';
+    // Delete is always present (the collapsed "menu" — just this one icon).
+    // On a real thread it confirms and removes; on an empty draft it just
+    // discards the pin.
+    const actions = document.createElement('div');
+    actions.className = 'cc-pop-actions';
+    const del = document.createElement('button');
+    del.className = 'cc-icon-btn';
+    del.title = 'Delete'; del.setAttribute('aria-label', 'Delete comment');
+    del.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    del.addEventListener('click', () => {
+      if (t.messages.length) {
+        if (!confirm('Delete this comment thread?')) return;
+        store.threads = store.threads.filter(x => x.id !== t.id);
+        persistDelete(t.id);
+      }
+      closeThread();   // an empty draft simply discards
+    });
+    actions.appendChild(del);
+    headLeft.appendChild(time);
+    head.appendChild(headLeft);
+    head.appendChild(actions);
+    pop.appendChild(head);
+
+    // body: messages (first = the note, rest = replies)
+    const msgs = document.createElement('div');
+    msgs.className = 'cc-msgs';
+    fillMessages(msgs, t);
+    pop.appendChild(msgs);
+
+    // foot: reply input + send
+    const foot = document.createElement('div');
+    foot.className = 'cc-pop-foot';
+    const input = document.createElement('textarea');
+    input.className = 'cc-reply';
+    input.rows = 1;
+    input.placeholder = t.messages.length ? 'Reply…' : 'Add a comment…';
+    const send = document.createElement('button');
+    send.className = 'cc-send';
+    send.title = 'Send'; send.setAttribute('aria-label', 'Send');
+    send.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    function doSend() {
+      const text = input.value.trim();
+      if (!text) { input.focus(); return; }
+      t.messages.push({ text: text, createdAt: Date.now() });
+      // Replace-by-id rather than plain push: a Firestore snapshot may have
+      // swapped store.threads for fresh objects since this popover opened,
+      // leaving `t` a stale reference that findThread would no longer see.
+      store.threads = store.threads.filter(x => x.id !== t.id);
+      store.threads.push(t);
+      if (draft && draft.id === t.id) draft = null;   // first message makes the draft real
+      persistThread(t);
+      openThread(t.id);   // re-render popover with the new message
+      renderAll();
+    }
+    send.addEventListener('click', doSend);
+    // Grow the input with its content (up to the CSS max-height, then scroll),
+    // re-clamping the popover so it doesn't slide off the frame as it grows.
+    function autoGrow() {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+      if (popoverEl) clampPopover(popoverEl, t.x, t.y);
+    }
+    input.addEventListener('input', autoGrow);
+    input.addEventListener('keydown', (e) => {
+      // Enter sends; Shift+Enter inserts a line break. (Esc is handled once,
+      // globally, by the capture-phase listener — never here.)
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); }
+    });
+    foot.appendChild(input);
+    foot.appendChild(send);
+    pop.appendChild(foot);
+
+    frame.appendChild(pop);
+    popoverEl = pop;
+    clampPopover(pop, t.x, t.y);
+    input.focus();
+    autoGrow();
+
+    renderAll();
   }
 
-  // ── Versioning ─────────────────────────────────────────
-
-  function swapVideo(file) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      videoFrame.removeAttribute('src');
-      videoFrame.srcdoc = reader.result;
-
-      store = {
-        version: store.version + 1,
-        title: file.name,
-        comments: []
-      };
-      cacheLocally();
-      renderVersionBadge();
-      clearLivePins();
-      enterLive();
-      persistVersionSwap(store.version, store.title);
-    };
-    reader.readAsText(file);
+  function discardDraft() {
+    draft = null;
   }
 
-  // ── Events ─────────────────────────────────────────────
+  function closeThread() {
+    if (draft && !draft.messages.length) discardDraft();
+    activeId = null;
+    removePopover();
+    renderAll();
+  }
 
-  armedLayer.addEventListener('click', (e) => {
-    if (mode !== 'live') return;
+  // ── Comment mode ─────────────────────────────────────────
+  function setMode(on) {
+    commentMode = on;
+    stage.classList.toggle('cc-mode', on);
+    // Entering comment mode pauses the video so you annotate a still frame
+    // (the video's own controls stay reachable — the catcher is kept clear of
+    // its control bar — so you can still scrub to another moment).
+    if (on) { const p = getPlayer(); if (p && typeof p.pause === 'function') p.pause(); }
+    else closeThread();
+  }
+
+  fab.addEventListener('click', (e) => { e.stopPropagation(); setMode(!commentMode); });
+  closeModeBtn.addEventListener('click', (e) => { e.stopPropagation(); setMode(false); });
+
+  function setRailCollapsed(on) {
+    rail.classList.toggle('cc-collapsed', on);
+    collapseBtn.title = on ? 'Expand comments' : 'Collapse comments';
+    collapseBtn.setAttribute('aria-label', collapseBtn.title);
+    try { localStorage.setItem(RAIL_COLLAPSED_KEY, on ? '1' : '0'); } catch (e) { /* best-effort */ }
+  }
+  collapseBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    beginCommentAt(e.clientX, e.clientY);
+    setRailCollapsed(!rail.classList.contains('cc-collapsed'));
   });
 
-  transportBtn.addEventListener('click', (e) => {
+  // drop a pin
+  catcher.addEventListener('click', (e) => {
     e.stopPropagation();
+    closeThread();
+    const rect = catcher.getBoundingClientRect();
+    const xPct = Math.min(98, Math.max(2, ((e.clientX - rect.left) / rect.width) * 100));
+    const yPct = Math.min(96, Math.max(4, ((e.clientY - rect.top) / rect.height) * 100));
     const player = getPlayer();
-    if (!player) return;
-    player.playing ? player.pause() : player.play();
+    const t = {
+      id: 'c' + Date.now() + Math.random().toString(36).slice(2, 7),
+      screen: currentScreen,
+      x: xPct, y: yPct,
+      img: null,
+      createdAt: Date.now(),
+      resolved: false,
+      time: player ? player.time : null,
+      messages: []
+    };
+    draft = t;
+    openThread(t.id);
+    // thumbnail for the rail card — captured async, attached when ready
+    captureFrame().then(url => {
+      if (!url) return;
+      const live = findThread(t.id);
+      if (!live) return;   // draft was discarded
+      live.img = url;
+      if (!draft || draft.id !== live.id) persistThread(live);
+      renderRail();
+    });
   });
 
-  // Clicking outside an open comment (compose/view/edit) closes it.
-  document.addEventListener('click', () => {
-    if (mode === 'composing' || mode === 'viewing' || mode === 'editing') enterLive();
+  // click outside an open thread closes it
+  document.addEventListener('click', (e) => {
+    if (!activeId) return;
+    if (popoverEl && popoverEl.contains(e.target)) return;
+    if (e.target.closest && e.target.closest('.cc-pin-wrap, .cc-card')) return;
+    closeThread();
   });
 
+  // Single source of truth for Esc, in the CAPTURE phase so it runs before
+  // any element-level handler and behaves identically no matter where focus
+  // sits (reply input, a pin, the body). One Esc is a full retreat: it
+  // dismisses any open card, exits comment mode, AND tucks the persistent
+  // menu back to its slim tab — the prototype is left clean in one press.
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (mode !== 'live') { enterLive(); return; }
-    // Paused and armed but no comment open yet — Esc just resumes playback,
-    // same as it would once you'd actually opened one.
-    if (armedLayer.classList.contains('armed')) {
-      const player = getPlayer();
-      if (player && typeof player.play === 'function') player.play();
+    const menuOpen = !rail.classList.contains('cc-collapsed');
+    if (!activeId && !commentMode && !menuOpen) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (commentMode) setMode(false);   // setMode(false) also closes the open thread
+    else closeThread();                // a card opened from the rail, mode off
+    setRailCollapsed(true);            // full retreat: back to the slim tab
+  }, true);
+
+  // ── Clear all ────────────────────────────────────────────
+  clearBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!store.threads.length) return;
+    if (!confirm('Delete all ' + store.threads.length + ' comment thread(s)? This can\'t be undone.')) return;
+    const ids = store.threads.map(t => t.id);
+    store.threads = [];
+    closeThread();
+    cacheLocally();
+    if (!SEED_DEMO) {
+      const batch = db.batch();
+      ids.forEach(id => batch.delete(threadsRef.doc(id)));
+      batch.commit().catch(err => {
+        console.warn('Could not clear comments', err);
+        showWarning("Couldn't clear all comments on the shared server — they may reappear on reload.");
+      });
     }
   });
 
-  setInterval(pollPlayer, 150);
-
-  fileInput.addEventListener('change', () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-    if (store.comments.length && !confirm('Loading a new video starts version ' + (store.version + 1) + ' and deletes all ' + store.comments.length + ' comment(s) on the current version. Continue?')) {
-      fileInput.value = '';
-      return;
-    }
-    swapVideo(file);
-    fileInput.value = '';
-  });
-
-  versionTitle.addEventListener('click', (e) => e.stopPropagation());
-  versionTitle.addEventListener('change', () => {
-    store.title = versionTitle.value.trim() || ('v' + store.version);
-    persistTitle();
-  });
-  versionTitle.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') versionTitle.blur();
-  });
-
-  // ── Sizing ─────────────────────────────────────────────
-  // Compute the 16:9 box in whole pixels rather than relying on CSS
-  // aspect-ratio, which can round fractionally at some zoom/DPI levels and
-  // leave a hairline gap between the frame and the iframe's own content.
-  function sizeVideoBox() {
-    const area = videoBox.parentElement;
-    const availW = Math.min(960, area.clientWidth - 56);
-    let w = Math.max(200, availW);
-    let h = Math.round(w * 9 / 16);
-    const availH = area.clientHeight - 56;
-    if (availH > 0 && h > availH) {
-      h = Math.max(112, availH);
-      w = Math.round(h * 16 / 9);
-    }
-    videoBox.style.width = w + 'px';
-    videoBox.style.height = h + 'px';
+  // ── Demo seeding (SEED_DEMO only — memory only, no persistence) ──
+  function seedDemo() {
+    const now = Date.now();
+    const mk = (x, y, mins, msgs) => ({
+      id: 'demo' + x + y, screen: null, x: x, y: y, img: null,
+      createdAt: now - mins * 60000, resolved: false,
+      messages: msgs.map((m, i) => ({ text: m, createdAt: now - mins * 60000 + i * 90000 }))
+    });
+    store.threads = [
+      mk(38, 30, 42, ['The headline feels one size too small at this width.']),
+      mk(62, 52, 18, ['Can this field validate on blur instead of on submit?', 'Agreed — on-submit-only feels laggy here.']),
+      mk(50, 74, 6,  ['Love the button treatment. Ship it.'])
+    ];
+    setMode(true);
+    renderAll();
+    openThread(store.threads[1].id);
   }
-  window.addEventListener('resize', sizeVideoBox);
 
-  // ── Init ───────────────────────────────────────────────
-  sizeVideoBox();
+  // ── Init ─────────────────────────────────────────────────
+  // The menu is persistent, so default it to the slim collapsed tab — it
+  // stays reachable at all times without covering the prototype. Only an
+  // explicit '0' (the reviewer expanded it before) keeps it open on load.
+  try { setRailCollapsed(localStorage.getItem(RAIL_COLLAPSED_KEY) !== '0'); }
+  catch (e) { setRailCollapsed(true); }
   loadLocalFallback();
-  renderVersionBadge();
-  renderSidebar();
+  renderAll();
   initSync();
+  checkNamespaceConflict();
+  if (SEED_DEMO) {
+    // wait a beat for the iframe so pins land over painted content
+    setTimeout(seedDemo, 600);
+  }
 })();
 </script>
 </body>

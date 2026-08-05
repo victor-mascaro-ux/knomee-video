@@ -1,0 +1,56 @@
+/* ============================================================
+   KNOMEE · TYPOGRAPHY TOKENS
+   Poppins carries everything. Sedan is a serif accent used for
+   the advisory-firm name in product nav. Roboto only appears
+   inside Google auth buttons.
+   ============================================================ */
+:root {
+  /* ---- Families ---- */
+  --font-sans:    'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-serif:   'Sedan', Georgia, 'Times New Roman', serif;   /* firm-name accent */
+  --font-google:  'Roboto', var(--font-sans);                   /* Google buttons only */
+
+  /* ---- Weights ---- */
+  --fw-light:     300; /* @kind font */
+  --fw-regular:   400; /* @kind font */
+  --fw-medium:    500; /* @kind font */
+  --fw-semibold:  600; /* @kind font */
+  --fw-bold:      700; /* @kind font */
+  --fw-heavy:     800; /* @kind font */
+
+  /* ---- Type scale (px) ----
+     Knomee headlines sit at medium/semibold weight with tight
+     negative tracking; body text is regular Poppins. */
+  --fs-display:   48px;   /* hero / welcome headline */
+  --fs-h1:        36px;   /* page title (My Prospects, question headline) */
+  --fs-h2:        26px;   /* card / login headline */
+  --fs-h3:        22px;   /* modal title, section header */
+  --fs-title:     18px;   /* KQ number, prominent label */
+  --fs-lg:        16px;   /* tab, emphasized body */
+  --fs-body:      15px;   /* default body */
+  --fs-sm:        14px;   /* table cells, inputs, buttons */
+  --fs-xs:        13px;   /* meta, labels */
+  --fs-2xs:       12px;   /* email, captions, tags */
+  --fs-micro:     11px;   /* eyebrow, nav sublabel */
+
+  /* ---- Line heights ---- */
+  --lh-tight:     1.2;    /* @kind other */
+  --lh-snug:      1.3; /* @kind other */
+  --lh-normal:    1.5;    /* @kind other */
+  --lh-relaxed:   1.65;   /* @kind other */
+
+  /* ---- Letter spacing ---- */
+  --ls-display:  -1px;    /* @kind spacing */
+  --ls-tight:    -0.5px; /* @kind spacing */
+  --ls-normal:    0; /* @kind spacing */
+  --ls-wide:      0.5px;  /* @kind spacing */
+  --ls-eyebrow:   1px;    /* @kind spacing */
+
+  /* ---- Semantic roles ---- */
+  --text-display:  var(--fw-medium) var(--fs-display)/var(--lh-tight) var(--font-sans);
+  --text-h1:       var(--fw-semibold) var(--fs-h1)/var(--lh-tight) var(--font-sans);
+  --text-h2:       var(--fw-bold) var(--fs-h2)/var(--lh-snug) var(--font-sans);
+  --text-h3:       var(--fw-bold) var(--fs-h3)/var(--lh-snug) var(--font-sans);
+  --text-body-role: var(--fw-regular) var(--fs-body)/var(--lh-normal) var(--font-sans);
+  --text-label:    var(--fw-semibold) var(--fs-xs)/var(--lh-normal) var(--font-sans);
+}

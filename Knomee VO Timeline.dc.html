@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/knomee-design-system-0c235514-a443-4023-bdbc-d42c50cf40aa/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/knomee-design-system-0c235514-a443-4023-bdbc-d42c50cf40aa/tokens/colors.css">
+<link rel="stylesheet" href="_ds/knomee-design-system-0c235514-a443-4023-bdbc-d42c50cf40aa/tokens/typography.css">
+<link rel="stylesheet" href="_ds/knomee-design-system-0c235514-a443-4023-bdbc-d42c50cf40aa/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/knomee-design-system-0c235514-a443-4023-bdbc-d42c50cf40aa/tokens/effects.css">
+<link rel="stylesheet" href="_ds/knomee-design-system-0c235514-a443-4023-bdbc-d42c50cf40aa/styles.css">
+<script src="voiceover/vo-captions.js"></script>
+<script src="voiceover/vo-cues.js"></script>
+<style>
+  body { margin: 0; background: #f5f5f7; }
+  a { color: #7639a1; }
+  a:hover { color: #240446; }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: #f5f5f7; font-family: Poppins, sans-serif; color: #1a1a1a; padding-bottom: 32px;">
+
+  <div style="position: sticky; top: 0; z-index: 20; background: #240446; color: #fff; padding: 14px 32px; display: flex; align-items: center; gap: 26px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.4px;">Voice-over timeline</span>
+      <span style="font-family: Sedan, serif; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.55;">Knomee</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div onClick="{{ togglePlay }}" style="width: 40px; height: 40px; border-radius: 999px; background: #3dbdaa; color: #240446; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; font-weight: 700;" style-hover="background: #c0ffe7;">{{ playIcon }}</div>
+      <div onClick="{{ rewind }}" style="height: 40px; padding: 0 16px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.28); display: flex; align-items: center; cursor: pointer; font-size: 13px; font-weight: 600;" style-hover="border-color: #3dbdaa; color: #3dbdaa;">Start</div>
+      <div style="font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 600; min-width: 140px; letter-spacing: -0.2px;">{{ clockLabel }}</div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+      <div onClick="{{ zoomOut }}" style="width: 34px; height: 38px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.28); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; font-weight: 700;" style-hover="border-color: #3dbdaa; color: #3dbdaa;">–</div>
+      <div onClick="{{ zoomIn }}" style="width: 34px; height: 38px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.28); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; font-weight: 700;" style-hover="border-color: #3dbdaa; color: #3dbdaa;">+</div>
+      <div onClick="{{ snapToCaptions }}" style="height: 38px; padding: 0 16px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.28); display: flex; align-items: center; cursor: pointer; font-size: 13px; font-weight: 600;" style-hover="border-color: #affc41; color: #affc41;">Snap all to captions</div>
+      <div onClick="{{ resetCues }}" style="height: 38px; padding: 0 16px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.28); display: flex; align-items: center; cursor: pointer; font-size: 13px; font-weight: 600;" style-hover="border-color: #ff9525; color: #ff9525;">Reset</div>
+      <div onClick="{{ exportCues }}" style="height: 38px; padding: 0 20px; border-radius: 999px; background: #fff; color: #240446; display: flex; align-items: center; cursor: pointer; font-size: 13px; font-weight: 700;" style-hover="background: #affc41;">{{ exportLabel }}</div>
+    </div>
+  </div>
+
+  <div style="padding: 18px 32px 12px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+    <div style="font-size: 13px; color: #757575; line-height: 1.5; max-width: 560px;">Drag a clip to move it. It magnets to its caption start and can never overlap a neighbour. Double-click a clip to snap it back. Click the ruler to scrub, space to play.</div>
+    <div style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: #364153;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #240446;"></span>Narration</div>
+    <div style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: #364153;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #ff9525;"></span>Off its caption</div>
+    <div style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: #364153;"><span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(36,4,70,0.14);"></span>Subtitle</div>
+    <div style="font-size: 12px; color: #757575; margin-left: auto; font-weight: 600;">{{ driftLabel }}</div>
+  </div>
+
+  <div ref="{{ scrollRef }}" style="overflow-x: auto; overflow-y: hidden; padding: 0 32px 22px;">
+    <div ref="{{ laneRef }}" style="position: relative; width: {{ boardWidth }};">
+
+      <div onClick="{{ onRulerClick }}" style="position: relative; height: 32px; cursor: pointer; border-bottom: 1px solid #cccccc;">
+        <sc-for list="{{ ticks }}" as="tick" hint-placeholder-count="20">
+          <div style="position: absolute; top: 0; bottom: 0; left: {{ tick.left }}; border-left: 1px solid #e4e4e8;">
+            <div style="position: absolute; top: 7px; left: 6px; font-size: 10px; color: #afafaf; font-variant-numeric: tabular-nums; white-space: nowrap;">{{ tick.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="position: relative; height: 26px; margin-top: 8px;">
+        <sc-for list="{{ sceneBlocks }}" as="sc" hint-placeholder-count="12">
+          <div style="position: absolute; top: 0; height: 26px; left: {{ sc.left }}; width: {{ sc.width }}; border-radius: 6px; background: rgba(118,57,161,0.1); border: 1px solid rgba(118,57,161,0.22); display: flex; align-items: center; padding: 0 8px; overflow: hidden;">
+            <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7639a1; white-space: nowrap;">{{ sc.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="position: relative; height: 46px; margin-top: 10px;">
+        <sc-for list="{{ capBlocks }}" as="cap" hint-placeholder-count="44">
+          <div style="position: absolute; top: 0; height: 46px; left: {{ cap.left }}; width: {{ cap.width }}; border-radius: 8px; background: rgba(36,4,70,0.07); border: 1px solid rgba(36,4,70,0.14); padding: 5px 8px; overflow: hidden;">
+            <div style="font-size: 10px; color: #757575; font-weight: 700; margin-bottom: 2px;">{{ cap.n }}</div>
+            <div style="font-size: 11px; line-height: 1.3; color: #364153; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{ cap.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="position: relative; height: 64px; margin-top: 12px;">
+        <sc-for list="{{ clipBlocks }}" as="clip" hint-placeholder-count="44">
+          <div onPointerDown="{{ clip.onDown }}" onDoubleClick="{{ clip.onSnap }}" style="position: absolute; top: 0; height: 64px; left: {{ clip.left }}; width: {{ clip.width }}; background: {{ clip.bg }}; outline: {{ clip.outline }}; border-radius: 10px; padding: 7px 10px; cursor: grab; box-shadow: 0 2px 8px rgba(36,4,70,0.18); user-select: none; overflow: hidden; color: #fff;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <span style="font-size: 10px; font-weight: 700; background: rgba(255,255,255,0.22); padding: 1px 6px; border-radius: 999px;">{{ clip.n }}</span>
+              <span style="font-size: 10px; opacity: 0.72; font-variant-numeric: tabular-nums; white-space: nowrap;">{{ clip.atLabel }}</span>
+            </div>
+            <div style="font-size: 11px; line-height: 1.3; opacity: 0.94; overflow: hidden;">{{ clip.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="position: absolute; top: 0; bottom: 0; left: {{ playheadLeft }}; width: 2px; background: #3dbdaa; pointer-events: none; box-shadow: 0 0 8px rgba(61,189,170,0.75);">
+        <div style="position: absolute; top: -3px; left: -5px; width: 12px; height: 12px; border-radius: 999px; background: #3dbdaa;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="margin: 0 32px; background: #fff; border: 1px solid #e8e8e8; border-radius: 14px; padding: 18px 22px 22px; position: relative; overflow: hidden;">
+    <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #757575; font-weight: 600; margin-bottom: 10px;">Now playing</div>
+    <div style="font-size: 20px; font-weight: 500; letter-spacing: -0.4px; line-height: 1.35; min-height: 54px; text-wrap: pretty;">{{ nowText }}</div>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: #7639a1;"></div>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:760}}">
+class Component extends DCLogic {
+  state = { cues: [], time: 0, playing: false, pps: 9, exported: false, drag: null, loaded: false };
+
+  componentDidMount() {
+    const base = (window.KNOMEE_VO || []).map((c) => ({ ...c }));
+    let cues = base;
+    try {
+      const saved = JSON.parse(localStorage.getItem('knomee-vo-cues') || 'null');
+      if (saved && saved.length === base.length) cues = base.map((c, i) => ({ ...c, at: saved[i].at }));
+    } catch (e) {}
+    this.setState({ cues });
+    this.decode(cues);
+    window.addEventListener('pointermove', this.onMove);
+    window.addEventListener('pointerup', this.onUp);
+    window.addEventListener('keydown', this.onKey);
+  }
+
+  componentWillUnmount() {
+    this.stopAll();
+    if (this.raf) cancelAnimationFrame(this.raf);
+    window.removeEventListener('pointermove', this.onMove);
+    window.removeEventListener('pointerup', this.onUp);
+    window.removeEventListener('keydown', this.onKey);
+  }
+
+  decode(cues) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC || !cues.length) return;
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.connect(this.ctx.destination);
+    Promise.all(cues.map((c) =>
+      fetch(c.src).then((r) => r.arrayBuffer()).then((b) => this.ctx.decodeAudioData(b)).catch(() => null)
+    )).then((bufs) => { this.bufs = bufs; this.setState({ loaded: true }); });
+  }
+
+  stopAll() {
+    (this.srcs || []).forEach((s) => { try { s.stop(); } catch (e) {} });
+    this.srcs = [];
+  }
+
+  schedule(from) {
+    if (!this.ctx || !this.bufs) return;
+    this.stopAll();
+    this.epoch = this.ctx.currentTime - from;
+    this.srcs = [];
+    this.state.cues.forEach((c, i) => {
+      const buf = this.bufs[i];
+      if (!buf || c.at + c.len <= from) return;
+      const skip = Math.max(0, from - c.at);
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(this.master);
+      src.start(Math.max(this.ctx.currentTime, this.epoch + c.at + skip), c.off + skip, Math.max(0.02, c.len - skip));
+      this.srcs.push(src);
+    });
+  }
+
+  duration() { return window.KNOMEE_DURATION || 189; }
+
+  togglePlay = () => { this.state.playing ? this.pause() : this.play(); };
+
+  play = () => {
+    if (!this.ctx) return;
+    this.ctx.resume().catch(() => {});
+    const from = this.state.time >= this.duration() - 0.05 ? 0 : this.state.time;
+    this.setState({ playing: true, time: from });
+    this.schedule(from);
+    const step = () => {
+      const t = this.ctx.currentTime - this.epoch;
+      if (t >= this.duration()) { this.stopAll(); this.setState({ time: this.duration(), playing: false }); return; }
+      this.setState({ time: t });
+      this.follow(t);
+      this.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  };
+
+  pause = () => {
+    this.stopAll();
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.setState({ playing: false });
+  };
+
+  seek = (t) => {
+    const at = Math.max(0, Math.min(this.duration(), t));
+    this.setState({ time: at });
+    if (this.state.playing) this.schedule(at);
+  };
+
+  rewind = () => this.seek(0);
+
+  follow(t) {
+    const el = this.scrollEl;
+    if (!el) return;
+    const x = t * this.state.pps;
+    if (x < el.scrollLeft + 40 || x > el.scrollLeft + el.clientWidth - 120) el.scrollLeft = Math.max(0, x - 180);
+  }
+
+  scrollRef = (el) => { this.scrollEl = el; };
+  laneRef = (el) => { this.laneEl = el; };
+
+  onRulerClick = (e) => {
+    if (!this.laneEl) return;
+    const r = this.laneEl.getBoundingClientRect();
+    this.seek((e.clientX - r.left) / this.state.pps);
+  };
+
+  zoomIn = () => this.setState((s) => ({ pps: Math.min(60, s.pps * 1.6) }));
+  zoomOut = () => this.setState((s) => ({ pps: Math.max(4, s.pps / 1.6) }));
+
+  onMove = (e) => {
+    const d = this.state.drag;
+    if (!d) return;
+    let at = d.at0 + (e.clientX - d.x0) / this.state.pps;
+    const caps = window.KNOMEE_CAPTIONS || [];
+    const cap = caps[d.i];
+    if (cap && Math.abs(at - cap.start) < 0.3) at = cap.start;
+    this.moveCue(d.i, at);
+  };
+
+  onUp = () => {
+    if (!this.state.drag) return;
+    this.setState({ drag: null });
+    if (this.state.playing) this.schedule(this.state.time);
+  };
+
+  onKey = (e) => {
+    if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); this.togglePlay(); }
+  };
+
+  moveCue(i, want) {
+    this.setState((s) => {
+      const cues = s.cues.map((c) => ({ ...c }));
+      const prev = cues[i - 1], next = cues[i + 1];
+      const lo = prev ? prev.at + prev.len + 0.07 : 0;
+      const hi = next ? next.at - 0.07 - cues[i].len : this.duration() - cues[i].len;
+      cues[i].at = +Math.max(lo, Math.min(Math.max(lo, hi), want)).toFixed(2);
+      this.persist(cues);
+      return { cues };
+    });
+  }
+
+  persist(cues) {
+    try { localStorage.setItem('knomee-vo-cues', JSON.stringify(cues.map((c) => ({ n: c.n, at: c.at })))); } catch (e) {}
+  }
+
+  snapToCaptions = () => {
+    const caps = window.KNOMEE_CAPTIONS || [];
+    this.setState((s) => {
+      const cues = s.cues.map((c) => ({ ...c }));
+      let prevEnd = -99;
+      cues.forEach((c, i) => {
+        c.at = +Math.max(caps[i] ? caps[i].start : c.at, prevEnd + 0.07).toFixed(2);
+        prevEnd = c.at + c.len;
+      });
+      this.persist(cues);
+      return { cues };
+    });
+    if (this.state.playing) this.schedule(this.state.time);
+  };
+
+  resetCues = () => {
+    try { localStorage.removeItem('knomee-vo-cues'); } catch (e) {}
+    this.setState({ cues: (window.KNOMEE_VO || []).map((c) => ({ ...c })) });
+    if (this.state.playing) this.schedule(this.state.time);
+  };
+
+  exportCues = () => {
+    const body = '// Voice-over cue sheet — edited in Knomee VO Timeline.\n'
+      + '// at = playhead second the clip fires, off = seek into the mp3, len = seconds to play.\n'
+      + 'window.KNOMEE_VO = ' + JSON.stringify(this.state.cues, null, 2) + ';\n';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([body], { type: 'text/javascript' }));
+    a.download = 'vo-cues.js';
+    a.click();
+    this.setState({ exported: true });
+  };
+
+  renderVals() {
+    const { cues, time, playing, pps, drag } = this.state;
+    const dur = this.duration();
+    const caps = window.KNOMEE_CAPTIONS || [];
+    const px = (v) => (v * pps).toFixed(1) + 'px';
+
+    const step = pps > 30 ? 2 : pps > 14 ? 5 : pps > 7 ? 10 : 20;
+    const ticks = [];
+    for (let t = 0; t <= dur; t += step) {
+      ticks.push({ left: px(t), label: Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0') });
+    }
+
+    const sceneBlocks = (window.KNOMEE_SCENES || []).map((s) => ({
+      left: px(s.start), width: px(Math.max(0.6, s.end - s.start)), label: s.n + '. ' + s.title,
+    }));
+
+    const capBlocks = caps.map((c) => ({
+      n: c.n, text: c.text, left: px(c.start), width: px(Math.max(0.6, c.end - c.start)),
+    }));
+
+    let off = 0;
+    const clipBlocks = cues.map((c, i) => {
+      const cap = caps[i];
+      const bad = cap ? Math.abs(c.at - cap.start) > 0.45 : false;
+      if (bad) off++;
+      return {
+        n: c.n, text: cap ? cap.text : '',
+        left: px(c.at), width: px(Math.max(0.5, c.len)),
+        atLabel: c.at.toFixed(1) + 's · ' + c.len.toFixed(1) + 's',
+        bg: bad ? 'linear-gradient(180deg,#ff9525,#dd7a0c)' : 'linear-gradient(180deg,#3a1163,#240446)',
+        outline: drag && drag.i === i ? '2px solid #3dbdaa' : 'none',
+        onDown: (e) => { e.preventDefault(); this.setState({ drag: { i, x0: e.clientX, at0: c.at } }); },
+        onSnap: () => { if (cap) this.moveCue(i, cap.start); },
+      };
+    });
+
+    const cur = cues.find((c) => time >= c.at && time < c.at + c.len);
+    const curCap = cur ? caps[cur.n - 1] : null;
+    const total = Math.floor(dur / 60) + ':' + String(Math.round(dur % 60)).padStart(2, '0');
+
+    return {
+      ticks, sceneBlocks, capBlocks, clipBlocks,
+      boardWidth: px(dur),
+      playheadLeft: px(time),
+      clockLabel: Math.floor(time / 60) + ':' + (time % 60).toFixed(1).padStart(4, '0') + ' / ' + total,
+      playIcon: playing ? '❚❚' : '▶',
+      driftLabel: !this.state.loaded ? 'Loading 44 clips…'
+        : off ? off + (off > 1 ? ' clips' : ' clip') + ' more than 0.45s off caption'
+        : 'All 44 clips sit on their captions',
+      nowText: curCap ? curCap.text : '—',
+      exportLabel: this.state.exported ? 'Downloaded ✓' : 'Export cue sheet',
+      togglePlay: this.togglePlay, rewind: this.rewind, zoomIn: this.zoomIn, zoomOut: this.zoomOut,
+      snapToCaptions: this.snapToCaptions, resetCues: this.resetCues, exportCues: this.exportCues,
+      onRulerClick: this.onRulerClick, scrollRef: this.scrollRef, laneRef: this.laneRef,
+    };
+  }
+}
+</script>
+</body>
+</html>

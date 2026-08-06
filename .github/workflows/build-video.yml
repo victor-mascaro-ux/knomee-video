@@ -1,0 +1,61 @@
+name: Rebuild video
+
+# video.html is generated from scenes.jsx + animations.jsx. Editing the
+# sources does not change it, and nothing in the browser says so — the film
+# just carries on showing the old build. This rebuilds it on every push that
+# touches the sources, so the two can't drift apart.
+#
+# The push below only ever writes video.html, and video.html is not a trigger
+# path, so this cannot set itself off in a loop.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scenes.jsx
+      - animations.jsx
+      - build/build-video.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rebuild-video
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild video.html from the sources
+        run: python3 build/build-video.py
+
+      - name: Check assets and soundtrack length
+        id: check
+        continue-on-error: true
+        run: python3 build/check-video.py
+
+      - name: Commit the rebuilt video
+        run: |
+          if git diff --quiet -- video.html; then
+            echo "video.html already matched the sources — nothing to commit"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add video.html
+          git commit -m "Rebuild video.html from ${GITHUB_SHA:0:7}"
+          git push
+
+      # Deliberately after the commit: if an image is missing or the
+      # soundtrack no longer matches the cut, video.html should still be
+      # rebuilt so it reflects the sources. The run is marked failed so the
+      # problem is visible rather than silently shipped.
+      - name: Report check result
+        if: steps.check.outcome == 'failure'
+        run: |
+          echo "::error::Rebuilt, but the checks failed — see 'Check assets and soundtrack length' above."
+          exit 1

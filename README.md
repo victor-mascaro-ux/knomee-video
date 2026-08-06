@@ -47,10 +47,22 @@ trusting that it loaded. `assets/goals/` also holds `hobbies`, `home` and
 
 ## Rebuilding
 
-After editing `animations.jsx` or `scenes.jsx`:
+**This happens automatically.** Push a change to `scenes.jsx` or
+`animations.jsx` on `main` — through GitHub's web upload or any other way —
+and the *Rebuild video* action regenerates `video.html` and commits it back,
+usually within a minute. Refresh once the run finishes.
+
+It also runs `build/check-video.py`, which fails the run if an image
+`scenes.jsx` asks for is missing, or if the soundtrack no longer matches
+`VIDEO_DURATION`. Both are silent in the browser, so a red mark on the run is
+the only warning you get. The rebuild is still committed either way, so
+`video.html` always reflects the sources.
+
+To do it by hand:
 
 ```sh
-python3 build/build-video.py
+python3 build/build-video.py   # regenerate video.html
+python3 build/check-video.py   # verify assets and soundtrack length
 ```
 
 `video.html` is an export: an HTML shell plus a manifest of gzipped, base64'd

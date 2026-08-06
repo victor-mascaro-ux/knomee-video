@@ -667,17 +667,16 @@ const SCENES = [
   { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 20, end: 44 },
   { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 44, end: 51 },
   { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 51, end: 73 },
-  { id: 'intelligence',  n: 5, title: 'Behavioral intelligence', start: 73, end: 91 },
-  { id: 'signals',       n: 6, title: 'Signals advisors can act on', start: 91, end: 111 },
-  { id: 'founder-1',     n: 7, title: 'Founder POV — clarity changes everything', start: 111, end: 125 },
-  { id: 'meeting-prep',  n: 8, title: 'Meeting prep', start: 125, end: 135 },
-  { id: 'different',     n: 9, title: 'Show up different', start: 135, end: 144 },
-  { id: 'founder-2',     n: 10, title: 'Founder POV — build trust faster', start: 144, end: 153 },
-  { id: 'lifecycle',     n: 11, title: 'The lifecycle', start: 153, end: 169 },
-  { id: 'close',         n: 12, title: 'Better beginnings', start: 169, end: 181 },
-  { id: 'final',         n: 13, title: 'Making advice stronger', start: 181, end: 189 },
+  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 73, end: 93 },
+  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 93, end: 111.3 },
+  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 111.3, end: 125 },
+  { id: 'different',     n: 8, title: 'Show up different', start: 125, end: 134 },
+  { id: 'founder-2',     n: 9, title: 'Founder POV — build trust faster', start: 134, end: 143 },
+  { id: 'lifecycle',     n: 10, title: 'The lifecycle', start: 143, end: 159 },
+  { id: 'close',         n: 11, title: 'Better beginnings', start: 159, end: 171 },
+  { id: 'final',         n: 12, title: 'Making advice stronger', start: 171, end: 179 },
 ];
-const VIDEO_DURATION = 189;
+const VIDEO_DURATION = 179;
 
 // Bridges the internal timeline to a stable global API + postMessage stream.
 // Mounted once inside <Stage>. Your embedding page uses window.KnomeePlayer
@@ -750,11 +749,38 @@ function KnomeeIcon({ color = '#2DD2B0', size = 120, style }) {
     </svg>
   );
 }
-function KnomeeWordmark({ iconColor = '#2DD2B0', textColor = '#fff', height = 46, showR = false, style }) {
+// Tight bounds of the drawn glyphs (the raw viewBox has dead space on the right),
+// so lockups centre optically instead of needing marginLeft nudges.
+const WORD_X0 = 378.6, WORD_X1 = 1587.6, MARK_H = 288;
+function RegMark({ color = '#fff', cx = WORD_X1 + 74, cy = 50, r = 38 }) {
   return (
-    <svg height={height} viewBox="0 0 1702 288" fill="none" style={{ display: 'block', ...style }}>
+    <g>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={13} />
+      <text x={cx} y={cy + 1} fill={color} fontFamily="Poppins, sans-serif" fontWeight={600}
+        fontSize={50} textAnchor="middle" dominantBaseline="central">R</text>
+    </g>
+  );
+}
+// Word only, tightly cropped so it centres on its own. The ® overhangs to the right
+// (overflow visible) so the word itself stays optically centred under the icon.
+function KnomeeWord({ color = '#fff', height = 46, showR = true, style }) {
+  const w = WORD_X1 - WORD_X0;
+  return (
+    <svg height={height} width={height * w / MARK_H} viewBox={`${WORD_X0} 0 ${w} ${MARK_H}`} fill="none"
+      style={{ display: 'block', overflow: 'visible', ...style }}>
+      {KNOMEE_WORD_PATHS.map((d, i) => <path key={'w' + i} d={d} fill={color} />)}
+      {showR ? <RegMark color={color} /> : null}
+    </svg>
+  );
+}
+function KnomeeWordmark({ iconColor = '#2DD2B0', textColor = '#fff', height = 46, showR = true, style }) {
+  const w = WORD_X1 + (showR ? 118 : 0);
+  return (
+    <svg height={height} width={height * w / MARK_H} viewBox={`0 0 ${w} ${MARK_H}`} fill="none"
+      style={{ display: 'block', ...style }}>
       {KNOMEE_ICON_PATHS.map((d, i) => <path key={'i' + i} d={d} fill={iconColor} />)}
       {KNOMEE_WORD_PATHS.map((d, i) => <path key={'w' + i} d={d} fill={textColor} />)}
+      {showR ? <RegMark color={textColor} /> : null}
     </svg>
   );
 }
@@ -800,8 +826,7 @@ function Scene3() {
           <KnomeeIcon color="#2DD2B0" size={150} />
         </div>
         <div style={{ opacity: wordP, transform: `translateY(${(1 - wordP) * 14}px)` }}>
-          <KnomeeWordmark iconColor="transparent" textColor="#fff" height={62}
-            style={{ marginLeft: -160 }} />
+          <KnomeeWord color="#fff" height={62} />
         </div>
       </div>
 
@@ -862,6 +887,59 @@ function Chip({ label, sel = 0 }) {
   );
 }
 
+// Financial Joy mark — the thumbs up / thumbs down pair from the app
+function FinancialJoyIcon({ size = 42 }) {
+  const thumb = 'M9 21V10.5H6.8A1.8 1.8 0 0 0 5 12.3v6.9A1.8 1.8 0 0 0 6.8 21H9z M10.5 10.4l3.1-6.6c.5-1.05 2.05-.8 2.3.3l.9 3.4h3.4c1.4 0 2.4 1.3 2.05 2.6l-2.05 7.4c-.3 1-1.2 1.7-2.2 1.7H10.5z';
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="24" fill={KDS.white} />
+      <circle cx="19" cy="20" r="11.5" fill="#34c759" />
+      <g transform="translate(6.5 7.5) scale(0.79)" fill={KDS.white}><path d={thumb} /></g>
+      <circle cx="30" cy="29" r="11.5" fill="#f4566f" stroke={KDS.white} strokeWidth="2" />
+      <g transform="translate(41.5 40.5) scale(-0.79)" fill={KDS.white}><path d={thumb} /></g>
+    </svg>
+  );
+}
+
+// Value tile, app-style: photo at native 150px, caption, lime selection ring. sel: 0..1.
+function ValueTile({ src, label, sel = 0 }) {
+  const on = sel > 0.02;
+  const p = clamp(sel, 0, 1);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ width: 150, height: 150, borderRadius: 22,
+        transform: `scale(${1 + 0.03 * p})`, willChange: 'transform',
+        boxShadow: on ? `0 0 0 ${(4 * p).toFixed(2)}px ${KDS.lime}, 0 6px 18px rgba(36,4,70,0.14)` : 'none' }}>
+        <img src={src} alt={label} width={150} height={150} style={{ display: 'block', borderRadius: 22 }} />
+      </div>
+      <div style={{ marginTop: 8, height: 48, fontSize: 20, lineHeight: 1.2, textAlign: 'center',
+        fontWeight: on ? 700 : 500, color: on ? KDS.plum : KDS.body }}>{label}</div>
+    </div>
+  );
+}
+
+const SWIPE_COLOR = { less: '#e05e3c', same: '#5aa9e6', more: KDS.teal };
+
+// The more / the same / less controls under the swipe deck
+function SwipeBtn({ kind, pulse = 0 }) {
+  const col = SWIPE_COLOR[kind];
+  const hot = pulse > 0.5;
+  const glyph = kind === 'less'
+    ? <line x1="9" y1="16" x2="23" y2="16" />
+    : kind === 'same'
+      ? <g><line x1="9" y1="12.5" x2="23" y2="12.5" /><line x1="9" y1="19.5" x2="23" y2="19.5" /></g>
+      : <g><line x1="16" y1="8" x2="16" y2="24" /><line x1="8" y1="16" x2="24" y2="16" /></g>;
+  return (
+    <div style={{ width: 62, height: 62, borderRadius: '50%', border: `2.5px solid ${col}`,
+      background: hot ? col : KDS.white, transform: `scale(${1 + 0.16 * pulse})`, willChange: 'transform',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      boxShadow: hot ? `0 0 0 ${(9 * pulse).toFixed(1)}px ${col}26` : '0 2px 8px rgba(36,4,70,0.08)' }}>
+      <svg width="32" height="32" viewBox="0 0 32 32" stroke={hot ? KDS.white : col}
+        strokeWidth="5" strokeLinecap="round" fill="none">{glyph}</svg>
+    </div>
+  );
+}
+
 function ProgressDots({ active = 0, total = 3 }) {
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -890,17 +968,39 @@ function Scene4() {
   const stepEnter = Easing.easeOutCubic(clamp((l - (step === 0 ? 0.8 : step === 1 ? 8.2 : 14.7)) / 0.5, 0, 1));
   const sel = (start) => Easing.easeOutBack(clamp((l - start) / 0.55, 0, 1));
 
+  // Values step mirrors the app's Financial Joy question: overline, prompt, "Choose up to 3."
+  const tiles = [
+    ['assets/values/choice.png', 'Choice', -1],
+    ['assets/values/comfort.png', 'Comfort', 2.0],
+    ['assets/values/independence.png', 'Independence', 5.2],
+    ['assets/values/moment.png', 'Enjoying the moment', -1],
+    ['assets/values/security.png', 'Security', -1],
+    ['assets/values/family.png', 'Supporting my family', 3.4],
+  ];
+
   const content = {
-    0: { kicker: 'VALUES', prompt: 'I want money to help me with…',
-      chips: [['Family', 2.0], ['Freedom', 3.4], ['Legacy', 5.2], ['Security', -1], ['Growth', -1], ['Purpose', -1]] },
-    1: { kicker: 'GOALS', prompt: 'What do you want your wealth to make possible?',
-      chips: [['Launch a startup', 9.0], ['Visit Italy', 10.6], ['Donate to the humane society', -1], ['Kids\u2019 advanced degrees', 12.0]] },
+    0: { kicker: 'Financial Joy' },
+    1: { kicker: 'GOALS' },
   }[step];
 
+  // Goals step: the app's swipe deck — left = less, right = more, down = the same.
+  const GOAL_CARDS = [
+    { src: 'assets/goals/work.png', label: 'Work and career', at: 9.3, dir: 'less' },
+    { src: 'assets/goals/family.png', label: 'Family and relationships', at: 10.9, dir: 'more' },
+    { src: 'assets/goals/travel.png', label: 'Travel and adventure', at: 12.5, dir: 'same' },
+    { src: 'assets/goals/health.png', label: 'Health and wellness', at: -1, dir: null },
+  ];
+  const swipeP = GOAL_CARDS.map((c) => (c.at < 0 ? 0 : clamp((l - c.at) / 0.6, 0, 1)));
+  const swiped = swipeP.filter((p) => p > 0.25).length;
+  const btnPulse = (kind) => GOAL_CARDS.reduce((m, c) => (c.dir === kind && c.at > 0
+    ? Math.max(m, 1 - clamp(Math.abs(l - c.at) / 0.3, 0, 1)) : m), 0);
+
   // Vision typewriter
-  const visionFull = 'Dear me \u2014 you took the month in Italy. The business is in Sofia\u2019s hands and it still feels like ours. You gave the shelter what you always meant to. You stopped waiting.';
+  const visionIntro = 'Dear Me,';
+  const visionFull = 'You took the month in Italy. The business is in Sofia’s hands and it still feels like ours. You gave the shelter what you always meant to. You stopped waiting.';
   const vShown = visionFull.slice(0, Math.floor(clamp((l - 15.2) / 4.6, 0, 1) * visionFull.length));
   const caret = Math.floor(l * 2) % 2 === 0;
+  const sigIn = Easing.easeOutCubic(clamp((l - 20.1) / 0.6, 0, 1));
 
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: s4op, background: KDS.plum }}>
@@ -912,45 +1012,99 @@ function Scene4() {
       {/* app card */}
       <div style={{ position: 'absolute', left: '50%', top: '50%',
         transform: `translate(-50%,-50%) translate(${floatX}px, ${-40 + floatY}px) scale(${cardScale})`, opacity: intro, willChange: 'transform, opacity' }}>
-        <div style={{ width: 720, minHeight: 560, background: KDS.white, borderRadius: 28,
+        <div style={{ width: 720, height: 720, background: '#F8FAFA', borderRadius: 28,
           boxShadow: '0 40px 110px rgba(12,4,30,0.5), 0 8px 30px rgba(12,4,30,0.3)', padding: 44, boxSizing: 'border-box',
           display: 'flex', flexDirection: 'column', fontFamily: DISPLAY, position: 'relative', overflow: 'hidden' }}>
           {/* grape accent bar */}
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 6, background: KDS.grapeBar }} />
           {/* header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <KnomeeIcon color={KDS.teal} size={36} />
-              <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: '1px', color: KDS.grape }}>{content ? content.kicker : 'VISION'}</div>
-            </div>
+            {step < 2 ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <FinancialJoyIcon size={42} />
+                <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.4px', color: KDS.plum }}>Financial Joy</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.4px', color: KDS.plum }}>Future You</div>
+              </div>
+            )}
             <ProgressDots active={step} total={3} />
           </div>
           {/* prompt + body swap by step */}
-          <div style={{ marginTop: 34, opacity: stepEnter, transform: `translateY(${(1 - stepEnter) * 14}px)`, flex: 1 }}>
-            {step < 2 ? (
+          <div style={{ marginTop: step === 0 ? 34 : 24, opacity: stepEnter, transform: `translateY(${(1 - stepEnter) * 14}px)`, flex: 1 }}>
+            {step === 0 ? (
               <div>
-                <div style={{ fontSize: 40, fontWeight: 600, lineHeight: 1.15, letterSpacing: '-0.5px', color: KDS.plum, maxWidth: 560 }}>
-                  {content.prompt}
+                <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.3px', color: KDS.plum }}>
+                  Money is a tool!
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 38 }}>
-                  {content.chips.map(([label, at]) => (
-                    <Chip key={label} label={label} sel={at < 0 ? 0 : sel(at)} />
+                <div style={{ fontSize: 28, fontWeight: 400, lineHeight: 1.2, letterSpacing: '-0.3px', color: KDS.plum, marginTop: 2 }}>
+                  I want money to help me with…
+                </div>
+                <div style={{ fontSize: 20, fontStyle: 'italic', color: KDS.slate, marginTop: 5 }}>Choose up to 3.</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 150px)', justifyContent: 'center',
+                  gap: '14px 26px', marginTop: 20 }}>
+                  {tiles.map(([src, label, at]) => (
+                    <ValueTile key={label} src={src} label={label} sel={at < 0 ? 0 : sel(at)} />
                   ))}
+                </div>
+              </div>
+            ) : step === 1 ? (
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 500, color: KDS.slate }}>{Math.min(swiped + 1, 7)} / 7</div>
+                <div style={{ fontSize: 26, fontWeight: 400, lineHeight: 1.25, letterSpacing: '-0.2px', color: KDS.plum, marginTop: 4 }}>
+                  Would you like to direct <span style={{ color: SWIPE_COLOR.more, fontWeight: 600 }}>more</span>,{' '}
+                  <span style={{ color: SWIPE_COLOR.same, fontWeight: 600 }}>the same</span>, or{' '}
+                  <span style={{ color: SWIPE_COLOR.less, fontWeight: 600 }}>less</span> of your attention to…
+                </div>
+                <div style={{ position: 'relative', height: 373, marginTop: 10 }}>
+                  {GOAL_CARDS.map((c, i) => {
+                    const p = swipeP[i];
+                    if (p >= 1) return null;
+                    const d = p > 0 ? 0 : i - swiped;
+                    if (d > 2) return null;
+                    const e = Easing.easeOutCubic(p);
+                    const tx = c.dir === 'less' ? -880 * e : c.dir === 'more' ? 880 * e : 0;
+                    const ty = c.dir === 'same' ? 700 * e : d * 11;
+                    const rot = c.dir === 'same' ? 4 * e : (c.dir === 'less' ? -20 : 20) * e;
+                    const sc = 1 - 0.045 * d;
+                    return (
+                      <div key={c.src} style={{ position: 'absolute', left: '50%', top: 0, zIndex: 10 - i,
+                        transform: `translateX(-50%) translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${sc})`,
+                        opacity: 1 - clamp((p - 0.55) / 0.45, 0, 1), willChange: 'transform, opacity' }}>
+                        <img src={c.src} alt={c.label} width={308} height={373}
+                          style={{ display: 'block', filter: 'drop-shadow(0 12px 22px rgba(36,4,70,0.18))' }} />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 44, marginTop: 16 }}>
+                  <SwipeBtn kind="less" pulse={btnPulse('less')} />
+                  <SwipeBtn kind="same" pulse={btnPulse('same')} />
+                  <SwipeBtn kind="more" pulse={btnPulse('more')} />
                 </div>
               </div>
             ) : (
               <div>
-                <div style={{ fontSize: 40, fontWeight: 600, lineHeight: 1.15, letterSpacing: '-0.5px', color: KDS.plum, maxWidth: 580 }}>
-                  Write a postcard to yourself from future you.
+                <div style={{ fontSize: 26, fontWeight: 400, lineHeight: 1.3, letterSpacing: '-0.2px', color: KDS.plum }}>
+                  Now step into the shoes of Future You. Write a postcard to yourself right now from Future You.
                 </div>
-                <div style={{ marginTop: 32, background: KDS.tealLight, border: `1.5px solid ${KDS.mint}`, borderRadius: 20,
-                  padding: '28px 30px', minHeight: 170 }}>
-                  <div style={{ fontSize: 28, lineHeight: 1.5, color: KDS.body, fontWeight: 500 }}>
-                    {vShown}<span style={{ opacity: caret ? 1 : 0, color: KDS.teal, fontWeight: 700 }}>|</span>
+                <div style={{ fontSize: 22, fontStyle: 'italic', lineHeight: 1.4, color: KDS.slate, marginTop: 10 }}>
+                  Consider: location, people, activities, hobbies and interests, feelings, age…
+                </div>
+                {/* airmail frame */}
+                <div style={{ marginTop: 22, padding: 18, borderRadius: 6,
+                  background: 'repeating-linear-gradient(45deg, #e8412c 0 44px, #ffffff 44px 62px, #2f6fe0 62px 106px, #ffffff 106px 124px)' }}>
+                  <div style={{ background: KDS.white, border: `1px solid ${KDS.stone}`, borderRadius: 10, padding: '30px 34px' }}>
+                    <div style={{ fontSize: 26, lineHeight: 1.55, color: KDS.plum }}>{visionIntro}</div>
+                    <div style={{ fontSize: 26, lineHeight: 1.55, color: KDS.plum, marginTop: 16, minHeight: 124 }}>
+                      {vShown}<span style={{ opacity: caret ? 1 : 0, color: KDS.grape, fontWeight: 700 }}>|</span>
+                    </div>
+                    <div style={{ fontSize: 26, lineHeight: 1.55, color: KDS.plum, marginTop: 16, opacity: sigIn }}>
+                      With love and pride,
+                      <div>Future You</div>
+                    </div>
                   </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 24, color: KDS.tealDeep, fontSize: 19, fontWeight: 600 }}>
-                  <KnomeeIcon color={KDS.teal} size={22} /> In your own words — no forms, no scores yet.
                 </div>
               </div>
             )}
@@ -994,119 +1148,6 @@ function toneStyle(tone) {
   return { bg: 'rgba(120,102,150,0.14)', fg: '#8a7ba6', bar: 'linear-gradient(90deg,#b9a9d9,#cdbfe6)' };
 }
 
-// ── SCENE 5 — Behavioral intelligence (advisor dashboard) ─────────────────────
-// 73–91s. The Knomee Quotient + readiness signals most firms never see.
-function Scene5() {
-  const t = useT();
-  const S = 73;
-  const l = t - S;
-  const s5op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
-  const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
-  const cardScale = 0.95 + 0.05 * intro;
-  const floatY = Math.cos(l * 0.5) * 6;
-  const ringVal = interpolate([1.0, 3.4], [0, 82], Easing.easeOutCubic)(l);
-  const rowP = (i) => Easing.easeOutCubic(clamp((l - (2.6 + i * 0.55)) / 0.6, 0, 1));
-  const activeRow = l >= 6.3 && l < 9 ? 0 : l >= 9 && l < 11.6 ? 1 : -1;
-  const driverGlow = Easing.easeOutCubic(clamp((l - 11.6) / 0.6, 0, 1));
-  const sentiment = { 1: 5, 2: 3, 3: 2 };
-
-  return (
-    <div style={{ position: 'absolute', inset: 0, opacity: s5op, background: KDS.appBg }}>
-      <div style={{ position: 'absolute', inset: 0,
-        background: 'radial-gradient(1200px 820px at 50% 0%, rgba(36,4,70,0.07), rgba(36,4,70,0) 58%)' }} />
-      <div style={{ position: 'absolute', left: '50%', top: '50%',
-        transform: `translate(-50%,-50%) translate(0, ${-30 + floatY}px) scale(${cardScale})`, opacity: intro, willChange: 'transform, opacity' }}>
-        <div style={{ width: 1280, background: KDS.white, borderRadius: 20,
-          boxShadow: '0 30px 90px rgba(36,4,70,0.16), 0 4px 20px rgba(36,4,70,0.08)', border: `1px solid ${KDS.borderSoft}`,
-          padding: 40, boxSizing: 'border-box', fontFamily: DISPLAY, position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 6, background: KDS.grapeBar }} />
-          {/* header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <KnomeeIcon color={KDS.teal} size={40} />
-              <div>
-                <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px', color: KDS.plum }}>Behavioral Intelligence</div>
-                <div style={{ fontSize: 14, color: KDS.muted, fontWeight: 500 }}>Advisor view · new prospects</div>
-              </div>
-            </div>
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '1px', color: KDS.tealDeep,
-              background: KDS.tealLight, padding: '9px 16px', borderRadius: 999 }}>LIVE SIGNAL</div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 30 }}>
-            {/* left — quotient ring */}
-            <div style={{ width: 360, flexShrink: 0, background: KDS.tray, border: `1px solid ${KDS.borderSoft}`,
-              borderRadius: 16, padding: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '1px', color: KDS.grape, alignSelf: 'flex-start' }}>KNOMEE QUOTIENT</div>
-              <div style={{ position: 'relative', marginTop: 18 }}>
-                <QuotientRing value={ringVal} size={250} />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontSize: 72, fontWeight: 700, letterSpacing: '-1px', color: KDS.plum, lineHeight: 1 }}>{Math.round(ringVal)}</div>
-                  <div style={{ fontSize: 15, color: KDS.muted, fontWeight: 500, marginTop: 4 }}>/ 100 readiness to act</div>
-                </div>
-              </div>
-              <div style={{ marginTop: 20, fontSize: 16, fontWeight: 600, color: KDS.ocean,
-                background: tierTint(1), padding: '9px 18px', borderRadius: 999 }}>Tier 1 · Ready now</div>
-            </div>
-
-            {/* right — segmented prospect list */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '1px', color: KDS.grape }}>WHO'S READY · WHO NEEDS CLARITY</div>
-              {PROSPECTS.map((p, i) => {
-                const ti = kqTier(p.q);
-                const tc = tierColor(ti);
-                const hot = activeRow === i;
-                const pr = rowP(i);
-                return (
-                  <div key={p.name} style={{ opacity: pr, transform: `translateX(${(1 - pr) * 26}px)`,
-                    background: '#fff', border: `1.5px solid ${hot ? KDS.teal : KDS.borderSoft}`, borderRadius: 14,
-                    padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14, minWidth: 0,
-                    boxShadow: hot ? '0 12px 30px rgba(61,189,170,0.22)' : '0 1px 6px rgba(36,4,70,0.05)',
-                    willChange: 'transform, opacity' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-                      background: `linear-gradient(135deg, ${KDS.plum}, ${KDS.grape})`, color: '#fff', fontWeight: 700, fontSize: 20,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{p.name[0]}</div>
-                    <div style={{ width: 122, flexShrink: 0, minWidth: 0 }}>
-                      <div style={{ fontSize: 19, fontWeight: 600, color: KDS.plum }}>{p.name}</div>
-                      <div style={{ fontSize: 13, color: KDS.muted }}>New prospect</div>
-                    </div>
-                    {/* KQ badge */}
-                    <span style={{ minWidth: 52, height: 36, padding: '0 14px', borderRadius: 8, display: 'inline-flex',
-                      alignItems: 'center', justifyContent: 'center', fontFamily: DISPLAY, fontWeight: 700, fontSize: 18,
-                      color: '#fff', background: tc, flexShrink: 0 }}>{Math.round(pr * p.q)}</span>
-                    {/* drivers */}
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 8, overflow: 'hidden', opacity: 0.5 + 0.5 * driverGlow }}>
-                      {p.drivers.map((d) => (
-                        <div key={d} style={{ fontSize: 14, fontWeight: 600, color: KDS.grape, background: KDS.grapeLight,
-                          padding: '7px 13px', borderRadius: 999, whiteSpace: 'nowrap',
-                          boxShadow: driverGlow > 0.5 ? '0 6px 16px rgba(118,57,161,0.16)' : 'none' }}>{d}</div>
-                      ))}
-                    </div>
-                    {/* sentiment dots */}
-                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                      {[0, 1, 2, 3, 4].map((di) => {
-                        const filled = di < sentiment[ti];
-                        return <span key={di} style={{ width: 11, height: 11, borderRadius: '50%',
-                          background: filled ? KDS.bolt : KDS.pearl, border: filled ? 'none' : `1.5px solid ${KDS.stone}` }} />;
-                      })}
-                    </div>
-                    <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: tc, background: tierTint(ti),
-                        padding: '8px 13px', borderRadius: 999, whiteSpace: 'nowrap' }}>{p.status}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  );
-}
-
 // Reusable founder-interview shot (scenes 7, 10, 13). Warm bg, video placeholder + rising quote.
 function MarlaShot({ l = 0, quoteLines = [], quoteStart = 1.0 }) {
   const intro = Easing.easeOutCubic(clamp(l / 0.7, 0, 1));
@@ -1143,91 +1184,212 @@ function MarlaShot({ l = 0, quoteLines = [], quoteStart = 1.0 }) {
 }
 
 // ── SCENE 6 — signals advisors can act on ─────────────────────────────────────
-// 91–111s. Quotient → conversation starters, grounded in behavioral science.
+// 73–93s. Prospect Readiness (KQ + breakdown, tier) crossfades to Prospect
+// Playbook (top action, conversation starters, communication guidance).
+const KQ_BREAKDOWN = [
+  { k: 'Intent', q: 'Are they actively working toward a goal?', v: 83, note: 'Actively pursuing a meaningful goal' },
+  { k: 'Clarity', q: 'Can they articulate what they want?', v: 62, note: 'Vision present, not fully formed' },
+  { k: 'Receptivity', q: 'Are they open to guidance?', v: 100, note: 'Explicitly open, support-seeking' },
+];
+const TAG_STYLE = {
+  'Positive Talk': { bg: '#fdf1d4', fg: '#8a6210' },
+  'Demonstrate Curiosity': { bg: '#e2f6e9', fg: '#1f7a45' },
+  'Acknowledge and Validate': { bg: '#fde6eb', fg: '#b0234a' },
+  'Self-Reinforcement': { bg: '#e5eeff', fg: '#2a5cad' },
+};
+const STARTERS = [
+  { q: '\u201CYou mentioned wanting to leave a lasting legacy for your child. I\u2019d love to hear more about what that means to you.\u201D',
+    why: 'Get Sarah talking positively about her future and what\u2019s possible.', tags: ['Positive Talk'] },
+  { q: '\u201CYou said you feel guilty enjoying things you\u2019ve earned. What if we built a plan that gave you full permission to enjoy life?\u201D',
+    why: 'Curiosity is a predictor of likeability.', tags: ['Demonstrate Curiosity', 'Acknowledge and Validate'] },
+];
+const WORDS_USE = ['Security', 'Independence', 'Simplicity', 'Confidence', 'Enjoy', 'Future', 'Health', 'Family'];
+
+function Tag({ label }) {
+  const st = TAG_STYLE[label] || { bg: '#f0edf6', fg: '#5b4d78' };
+  return (
+    <div style={{ fontSize: 15, fontWeight: 600, color: st.fg, background: st.bg,
+      padding: '5px 13px', borderRadius: 999, whiteSpace: 'nowrap' }}>{label}</div>
+  );
+}
+
+function KQRing({ value = 81, p = 1, size = 196 }) {
+  const r = size / 2 - 14;
+  const c = 2 * Math.PI * r;
+  return (
+    <div style={{ position: 'relative', width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <defs>
+          <linearGradient id="kq-violet" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stopColor="#7C3AED" /><stop offset="1" stopColor="#c084fc" />
+          </linearGradient>
+        </defs>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e9e7ee" strokeWidth={17} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="url(#kq-violet)" strokeWidth={17}
+          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - (value / 100) * p)}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 62, fontWeight: 800, letterSpacing: '-0.03em', color: '#1a1f36' }}>{Math.round(value * p)}</div>
+    </div>
+  );
+}
+
 function Scene6() {
   const t = useT();
-  const S = 91;
+  const S = 73;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
   const scale = 0.94 + 0.06 * intro;
-  const starters = [
-    { hi: 'Legacy', text: '\u201CHow do you want the business to feel for Sofia in ten years?\u201D' },
-    { hi: 'Freedom', text: '\u201CYou mentioned a month in Italy \u2014 what makes that hard to plan today?\u201D' },
-    { hi: 'Ready to act', text: '\u201CWant to start with the succession piece you keep putting off?\u201D' },
-  ];
-  const rowP = (i) => Easing.easeOutCubic(clamp((l - (4.4 + i * 0.7)) / 0.6, 0, 1));
-  const footP = Easing.easeOutCubic(clamp((l - 8.4) / 0.7, 0, 1));
+
+  // shot A = readiness (0–7.6s), shot B = playbook
+  const swap = Easing.easeInOutCubic(clamp((l - 7.6) / 0.6, 0, 1));
+  const ringP = Easing.easeOutCubic(clamp((l - 4.1) / 1.2, 0, 1));
+  const brk = (i) => Easing.easeOutCubic(clamp((l - (4.7 + i * 0.4)) / 0.5, 0, 1));
+  const tierP = Easing.easeOutCubic(clamp((l - 6.2) / 0.5, 0, 1));
+  const topP = Easing.easeOutCubic(clamp((l - 8.3) / 0.5, 0, 1));
+  const stP = (i) => Easing.easeOutCubic(clamp((l - (9.0 + i * 0.9)) / 0.6, 0, 1));
+  const tagP = Easing.easeOutCubic(clamp((l - 11.8) / 0.6, 0, 1));
+  const wordsP = Easing.easeOutCubic(clamp((l - 12.8) / 0.6, 0, 1));
+  const takeP = Easing.easeOutCubic(clamp((l - 14.6) / 0.7, 0, 1));
+
+  const TABS = ['Prospect Readiness', 'Prospect Playbook'];
 
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
       <WarmField l={l} />
       <div style={{ position: 'absolute', left: '50%', top: '50%',
-        transform: `translate(-50%,-50%) translateY(-34px) scale(${scale})`, opacity: intro, willChange: 'transform, opacity' }}>
-        <div style={{ width: 1220, background: '#fff', borderRadius: 30, padding: 40, boxSizing: 'border-box',
+        transform: `translate(-50%,-50%) translateY(-28px) scale(${scale})`, opacity: intro, willChange: 'transform, opacity' }}>
+        <div style={{ width: 1260, background: '#fff', borderRadius: 30, padding: 40, boxSizing: 'border-box',
           boxShadow: '0 50px 130px rgba(12,4,30,0.55)', fontFamily: DISPLAY }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
-            <KnomeeIcon color="#2DD2B0" size={40} />
-            <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', color: '#1b1230' }}>Signals you can act on</div>
+          {/* prospect header + tabs */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 26 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 58, height: 58, borderRadius: '50%', background: 'linear-gradient(135deg,#7C3AED,#c084fc)',
+                color: '#fff', fontWeight: 800, fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>S</div>
+              <div>
+                <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: KDS.plum }}>Sarah Mitchell</div>
+                <div style={{ fontSize: 16, color: '#9a8bbd' }}>New prospect</div>
+              </div>
+            </div>
+            <div>
+              <div style={{ display: 'flex' }}>
+                {TABS.map((x, i) => (
+                  <div key={x} style={{ width: 250, textAlign: 'center', fontSize: 20, paddingBottom: 12,
+                    fontWeight: (i === 0 ? 1 - swap : swap) > 0.5 ? 700 : 500,
+                    color: (i === 0 ? 1 - swap : swap) > 0.5 ? KDS.plum : '#9a8bbd' }}>{x}</div>
+                ))}
+              </div>
+              <div style={{ height: 3, background: '#efecf5', position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 0, top: 0, width: 250, height: 3, background: KDS.plum,
+                  transform: `translateX(${swap * 250}px)`, willChange: 'transform' }} />
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 34 }}>
-            {/* readiness summary */}
-            <div style={{ width: 340, flexShrink: 0, background: '#faf7ff', border: '1.5px solid #f0e8fc', borderRadius: 22,
-              padding: 30, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 56, height: 56, borderRadius: 16, background: 'linear-gradient(135deg,#7C3AED,#2DD2B0)',
-                  color: '#fff', fontWeight: 800, fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>E</div>
-                <div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#1b1230' }}>Elena R.</div>
-                  <div style={{ fontSize: 15, color: '#9a8bbd' }}>New prospect</div>
+
+          <div style={{ position: 'relative', height: 470 }}>
+            {/* ── shot A — prospect readiness ── */}
+            <div style={{ position: 'absolute', inset: 0, opacity: 1 - swap,
+              transform: `translateY(${swap * -18}px)`, pointerEvents: 'none', willChange: 'transform, opacity' }}>
+              <div style={{ display: 'flex', gap: 22 }}>
+                <div style={{ width: 330, flexShrink: 0, height: 352, boxSizing: 'border-box', background: '#fff',
+                  border: '1.5px solid #ece9f2', borderRadius: 20, padding: '24px 20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#7C3AED' }}>Knomee Quotient (KQ)</div>
+                  <div style={{ fontSize: 16, fontStyle: 'italic', color: '#8a8a9a', marginTop: 4 }}>How ready is this prospect to convert?</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 22 }}>
+                    <KQRing value={81} p={ringP} />
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 19, fontWeight: 600, color: '#4a4a58', marginBottom: 12 }}>KQ Breakdown:</div>
+                  <div style={{ display: 'flex', gap: 18 }}>
+                    {KQ_BREAKDOWN.map((m, i) => {
+                      const p = brk(i);
+                      return (
+                        <div key={m.k} style={{ flex: 1, height: 308, boxSizing: 'border-box', background: '#fff',
+                          border: '1.5px solid #ece9f2', borderRadius: 18, padding: '20px 16px', textAlign: 'center',
+                          opacity: p, transform: `translateY(${(1 - p) * 18}px)`, willChange: 'transform, opacity',
+                          display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ fontSize: 22, fontWeight: 700, color: '#7C3AED' }}>{m.k}</div>
+                          <div style={{ fontSize: 15, fontStyle: 'italic', color: '#8a8a9a', marginTop: 4, lineHeight: 1.3 }}>{m.q}</div>
+                          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 64, fontWeight: 800, letterSpacing: '-0.03em', color: '#1a1f36' }}>{Math.round(m.v * p)}</div>
+                          <div style={{ fontSize: 17, color: '#4a4a58', lineHeight: 1.3 }}>{m.note}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                <div style={{ fontSize: 60, fontWeight: 800, letterSpacing: '-0.03em', color: '#1b1230', lineHeight: 1 }}>82</div>
-                <div style={{ fontSize: 16, color: '#9a8bbd', fontWeight: 600 }}>Knomee Quotient</div>
+              <div style={{ marginTop: 20, background: '#e9f7ee', borderRadius: 14, padding: '18px 24px',
+                opacity: tierP, transform: `translateY(${(1 - tierP) * 14}px)`, willChange: 'transform, opacity' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 5, background: KDS.ocean }} />
+                  <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '0.08em', color: '#1a1f36' }}>TIER 1 – READY NOW</div>
+                </div>
+                <div style={{ fontSize: 19, color: '#2f3b34', marginTop: 8 }}>High-readiness prospect — actively seeking guidance and ready to engage.</div>
               </div>
-              <div style={{ fontSize: 18, fontWeight: 600, color: '#0e9b7c', background: 'rgba(45,210,176,0.14)',
-                padding: '10px 18px', borderRadius: 999, alignSelf: 'flex-start' }}>Ready to take action</div>
             </div>
-            {/* conversation starters */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.16em', color: '#a08fc4' }}>CONVERSATION STARTERS</div>
-              {starters.map((s, i) => {
-                const pr = rowP(i);
-                return (
-                  <div key={i} style={{ opacity: pr, transform: `translateX(${(1 - pr) * 24}px)`,
-                    display: 'flex', alignItems: 'center', gap: 18, background: '#fff', border: '1.5px solid #eee6f8',
-                    borderRadius: 18, padding: '20px 22px', boxShadow: '0 2px 12px rgba(36,4,70,0.04)', willChange: 'transform, opacity' }}>
-                    <div style={{ width: 12, height: 12, borderRadius: 6, background: 'linear-gradient(135deg,#7C3AED,#2DD2B0)', flexShrink: 0 }} />
-                    <div style={{ fontSize: 24, color: '#2b1f47', fontWeight: 500, lineHeight: 1.35, flex: 1 }}>{s.text}</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#7C3AED', background: '#f5f0fc',
-                      border: '1.5px solid #ece2fb', padding: '7px 14px', borderRadius: 999, flexShrink: 0 }}>{s.hi}</div>
+
+            {/* ── shot B — prospect playbook ── */}
+            <div style={{ position: 'absolute', inset: 0, opacity: swap,
+              transform: `translateY(${(1 - swap) * 18}px)`, pointerEvents: 'none', willChange: 'transform, opacity' }}>
+              <div style={{ background: '#f7f0ff', borderRadius: 14, padding: '16px 22px', display: 'flex',
+                alignItems: 'center', gap: 14, opacity: topP, transform: `translateY(${(1 - topP) * 12}px)` }}>
+                <div style={{ fontSize: 19, fontWeight: 700, color: KDS.plum, whiteSpace: 'nowrap' }}>Top Action</div>
+                <div style={{ fontSize: 19, color: '#2b1f47' }}>“Worked since 13, ready for adventures”; lead with Future You vision.</div>
+              </div>
+              <div style={{ display: 'flex', gap: 22, marginTop: 18 }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.16em', color: '#a08fc4' }}>CONVERSATION STARTERS</div>
+                  {STARTERS.map((c, i) => {
+                    const p = stP(i);
+                    return (
+                      <div key={i} style={{ opacity: p, transform: `translateX(${(1 - p) * 22}px)`, willChange: 'transform, opacity',
+                        background: '#fff', border: '1.5px solid #eee6f8', borderRadius: 16, padding: '18px 22px',
+                        boxShadow: '0 2px 12px rgba(36,4,70,0.04)' }}>
+                        <div style={{ fontSize: 20, fontStyle: 'italic', lineHeight: 1.4, color: '#2b1f47' }}>{c.q}</div>
+                        <div style={{ fontSize: 16, color: '#8a8a9a', marginTop: 6 }}>{c.why}</div>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 10, opacity: 0.35 + 0.65 * tagP }}>
+                          {c.tags.map((tg) => <Tag key={tg} label={tg} />)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ width: 300, flexShrink: 0 }}>
+                  <div style={{ opacity: wordsP, transform: `translateY(${(1 - wordsP) * 14}px)`, willChange: 'transform, opacity' }}>
+                    <div style={{ fontSize: 19, fontWeight: 700, color: '#2b1f47', marginBottom: 12 }}>Words to Use</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {WORDS_USE.map((w) => (
+                        <div key={w} style={{ fontSize: 16, fontWeight: 500, color: '#7C3AED', background: '#f5edfe',
+                          border: '1px solid #ecdefb', padding: '7px 14px', borderRadius: 999 }}>{w}</div>
+                      ))}
+                    </div>
                   </div>
-                );
-              })}
+                  <div style={{ marginTop: 20, background: '#faf7ff', border: '1.5px solid #f0e8fc', borderRadius: 16,
+                    padding: '16px 18px', opacity: takeP, transform: `translateY(${(1 - takeP) * 14}px)`, willChange: 'transform, opacity' }}>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: '#2b1f47' }}>Advisor takeaway</div>
+                    <div style={{ fontSize: 17, color: '#4a4a58', lineHeight: 1.4, marginTop: 6 }}>
+                      A direct, purposeful communication style will likely resonate with her.
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          {/* science footer */}
-          <div style={{ opacity: footP, marginTop: 26, paddingTop: 24, borderTop: '1.5px solid #f0e8fc',
-            display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <div style={{ fontSize: 16, color: '#9a8bbd', fontWeight: 600 }}>Grounded in</div>
-            {['Behavioral science', 'Decision research', 'Momentum modeling'].map((x) => (
-              <div key={x} style={{ fontSize: 16, fontWeight: 700, color: '#3a2b57', background: '#faf7ff',
-                border: '1.5px solid #ece2fb', padding: '9px 16px', borderRadius: 999 }}>{x}</div>
-            ))}
           </div>
         </div>
       </div>
-
     </div>
   );
 }
 
 // ── SCENE 7 — founder POV (Marla) ─────────────────────────────────────────────
-// 111–125s.
+// 93–111.3s.
 function Scene7() {
   const t = useT();
-  const S = 111;
+  const S = 93;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   return (
@@ -1242,20 +1404,21 @@ function Scene7() {
 }
 
 // ── SCENE 8 — meeting prep ────────────────────────────────────────────────────
-// 125–135s. Context, emotional insight, a clear path in.
+// 111.3–125s. Context, emotional insight, a clear path in.
 function Scene8() {
   const t = useT();
-  const S = 125;
+  const S = 111.3;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
   const scale = 0.94 + 0.06 * intro;
   const cards = [
-    { k: 'CONTEXT', icon: '#7C3AED', text: 'Second-generation family business. Succession within three years.' },
-    { k: 'EMOTIONAL INSIGHT', icon: '#2DD2B0', text: 'Wants Sofia ready \u2014 and a month in Italy without guilt.' },
-    { k: 'A CLEAR PATH IN', icon: '#a06bf0', text: '\u201CHow do you want the business to feel for Sofia in ten years?\u201D' },
+    { k: 'CONTEXT', icon: '#7C3AED', text: 'Retiring at 55 is her north star. Primary goal has a sub-12-month timeline.' },
+    { k: 'EMOTIONAL INSIGHT', icon: '#2DD2B0', text: 'Feels guilty enjoying what she has earned — and it stalls decisions.' },
+    { k: 'A CLEAR PATH IN', icon: '#a06bf0', text: '“What would working less in the next five years actually look like for you?”' },
   ];
-  const cP = (i) => Easing.easeOutCubic(clamp((l - (1.6 + i * 0.7)) / 0.6, 0, 1));
+  const CARD_AT = [4.5, 6.4, 8.2];
+  const cP = (i) => Easing.easeOutCubic(clamp((l - CARD_AT[i]) / 0.6, 0, 1));
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
       <WarmField l={l} />
@@ -1267,7 +1430,7 @@ function Scene8() {
             <KnomeeIcon color="#2DD2B0" size={40} />
             <div>
               <div style={{ fontSize: 15, color: '#9a8bbd', fontWeight: 600, letterSpacing: '0.02em' }}>Preparing for the first meeting</div>
-              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', color: '#1b1230' }}>Elena R.</div>
+              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', color: '#1b1230' }}>Sarah Mitchell</div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 20 }}>
@@ -1275,13 +1438,13 @@ function Scene8() {
               const p = cP(i);
               return (
                 <div key={i} style={{ flex: 1, opacity: p, transform: `translateY(${(1 - p) * 26}px)`,
-                  background: '#faf7ff', border: '1.5px solid #f0e8fc', borderRadius: 22, padding: 28, willChange: 'transform, opacity' }}>
-                  <div style={{ width: 46, height: 46, borderRadius: 14, background: c.icon, marginBottom: 20,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <KnomeeIcon color="#fff" size={26} />
+                  background: '#fff', border: '1.5px solid #eee6f8', borderRadius: 16, padding: '22px 24px',
+                  boxShadow: '0 2px 12px rgba(36,4,70,0.04)', willChange: 'transform, opacity' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <KnomeeIcon color={c.icon} size={22} />
+                    <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.14em', color: '#a08fc4' }}>{c.k}</div>
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.14em', color: '#a08fc4', marginBottom: 12 }}>{c.k}</div>
-                  <div style={{ fontSize: 25, fontWeight: 600, lineHeight: 1.35, color: '#2b1f47' }}>{c.text}</div>
+                  <div style={{ fontSize: 24, fontWeight: 500, lineHeight: 1.4, color: '#2b1f47' }}>{c.text}</div>
                 </div>
               );
             })}
@@ -1293,18 +1456,18 @@ function Scene8() {
 }
 
 // ── SCENE 9 — show up different ────────────────────────────────────────────────
-// 135–144s. Default portfolio recedes; prepared / relevant / different stamp in.
+// 125–134s. Default portfolio recedes; prepared / relevant / different stamp in.
 function Scene9() {
   const t = useT();
-  const S = 135;
+  const S = 125;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   // cold portfolio card recedes
   const recede = Easing.easeInOutCubic(clamp((l - 2.6) / 1.0, 0, 1));
   const words = [
-    { w: 'Prepared.', at: 5.4, c: '#fff' },
-    { w: 'Relevant.', at: 6.5, c: '#2DD2B0' },
-    { w: 'Different.', at: 7.6, c: '#a06bf0' },
+    { w: 'Prepared.', at: 4.0, c: '#fff' },
+    { w: 'Relevant.', at: 4.75, c: '#2DD2B0' },
+    { w: 'Different.', at: 5.45, c: '#a06bf0' },
   ];
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
@@ -1347,10 +1510,10 @@ function Scene9() {
 }
 
 // ── SCENE 10 — founder POV (Marla) ────────────────────────────────────────────
-// 144–153s.
+// 134–143s.
 function Scene10() {
   const t = useT();
-  const S = 144;
+  const S = 134;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   return (
@@ -1364,10 +1527,10 @@ function Scene10() {
 }
 
 // ── SCENE 11 — the lifecycle ──────────────────────────────────────────────────
-// 153–169s. Understanding grows across life stages and generations.
+// 143–159s. Understanding grows across life stages and generations.
 function Scene11() {
   const t = useT();
-  const S = 153;
+  const S = 143;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const stages = [
@@ -1418,10 +1581,10 @@ function Scene11() {
 }
 
 // ── SCENE 12 — close (kinetic type) ───────────────────────────────────────────
-// 169–181s. Better beginnings → better everything.
+// 159–171s. Better beginnings → better everything.
 function Scene12() {
   const t = useT();
-  const S = 169;
+  const S = 159;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const lines = [
@@ -1462,10 +1625,10 @@ function Scene12() {
 }
 
 // ── SCENE 13 — final (Marla → brand end card) ─────────────────────────────────
-// 181–189s.
+// 171–179s.
 function Scene13() {
   const t = useT();
-  const S = 181;
+  const S = 171;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const marlaFade = 1 - Easing.easeInOutCubic(clamp((l - 5.6) / 0.7, 0, 1));
@@ -1483,7 +1646,7 @@ function Scene13() {
         <WarmField l={l} />
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', gap: 28, transform: `scale(${0.96 + 0.04 * endP})` }}>
-          <KnomeeWordmark iconColor="#2DD2B0" textColor="#fff" height={78} style={{ marginLeft: -40 }} />
+          <KnomeeWordmark iconColor="#2DD2B0" textColor="#fff" height={78} />
           <div style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: 34, color: '#2DD2B0', letterSpacing: '-0.01em' }}>Know more, grow more.</div>
         </div>
       </div>
@@ -1680,17 +1843,16 @@ function KnomeeVideo() {
       <Sprite start={19.9} end={44.05}><Scene2 /></Sprite>
       <Sprite start={43.9} end={51.1}><Scene3 /></Sprite>
       <Sprite start={50.9} end={73.1}><Scene4 /></Sprite>
-      <Sprite start={72.9} end={91.1}><Scene5 /></Sprite>
-      <Sprite start={90.9} end={111.1}><Scene6 /></Sprite>
-      <Sprite start={110.9} end={125.1}><Scene7 /></Sprite>
-      <Sprite start={124.9} end={135.1}><Scene8 /></Sprite>
-      <Sprite start={134.9} end={144.1}><Scene9 /></Sprite>
-      <Sprite start={143.9} end={153.1}><Scene10 /></Sprite>
-      <Sprite start={152.9} end={169.1}><Scene11 /></Sprite>
-      <Sprite start={168.9} end={181.1}><Scene12 /></Sprite>
-      <Sprite start={180.9} end={189}><Scene13 /></Sprite>
+      <Sprite start={72.9} end={93.1}><Scene6 /></Sprite>
+      <Sprite start={92.9} end={111.4}><Scene7 /></Sprite>
+      <Sprite start={111.2} end={125.1}><Scene8 /></Sprite>
+      <Sprite start={124.9} end={134.1}><Scene9 /></Sprite>
+      <Sprite start={133.9} end={143.1}><Scene10 /></Sprite>
+      <Sprite start={142.9} end={159.1}><Scene11 /></Sprite>
+      <Sprite start={158.9} end={171.1}><Scene12 /></Sprite>
+      <Sprite start={170.9} end={179}><Scene13 /></Sprite>
     </Stage>
   );
 }
 
-Object.assign(window, { KnomeeVideo, Soundtrack, Scene1, Scene2, Scene3, Scene4, Scene5, Scene6, Scene7, Scene8, Scene9, Scene10, Scene11, Scene12, Scene13, MarlaShot, WarmField, Chip, ProgressDots, QuotientRing, PROSPECTS, PlayerBridge, SCENES, KnomeeIcon, KnomeeWordmark, StampLabel, FirmCard, CompanyPage, FIRMS, BRAND, COLD, Placeholder, Cursor, Caption, BrowserFrame, ColdLandingPage });
+Object.assign(window, { Tag, KQRing, KnomeeWord, KnomeeWordmark, KnomeeIcon, KnomeeVideo, Soundtrack, Scene1, Scene2, Scene3, Scene4, Scene6, Scene7, Scene8, Scene9, Scene10, Scene11, Scene12, Scene13, MarlaShot, WarmField, Chip, ProgressDots, QuotientRing, PROSPECTS, PlayerBridge, SCENES, KnomeeIcon, KnomeeWordmark, StampLabel, FirmCard, CompanyPage, FIRMS, BRAND, COLD, Placeholder, Cursor, Caption, BrowserFrame, ColdLandingPage });

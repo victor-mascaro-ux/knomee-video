@@ -7,7 +7,7 @@ comments on it.
 | --- | --- |
 | `index.html` | the review wrapper — loads `video.html` in an iframe and drives it through `window.KnomeePlayer` |
 | `video.html` | **generated.** The film, self-contained. Don't hand-edit — see below |
-| `voiceover/knomee-soundtrack.wav` | the 189s mixed track: narration over a music bed held at a constant 7.5% |
+| `voiceover/knomee-soundtrack.wav` | the 179s mixed track: narration over a music bed held at a constant 7.5% |
 
 ## Source
 
@@ -19,7 +19,7 @@ and the `.dc.html` / `support.js` pair is that project's own runtime.
 | | |
 | --- | --- |
 | `animations.jsx` | the timeline engine — `Stage`, `Sprite`, easings, the playback bar |
-| `scenes.jsx` | the 13 scenes, the brand tokens, the `Soundtrack` component, and the `KnomeePlayer` bridge |
+| `scenes.jsx` | the 12 scenes, the brand tokens, the `Soundtrack` component, and the `KnomeePlayer` bridge |
 
 Plus two supporting files, straight from the export and unmodified:
 
@@ -27,6 +27,23 @@ Plus two supporting files, straight from the export and unmodified:
 | --- | --- |
 | `support.js` | the dc-runtime — transpiles JSX in the browser |
 | `Knomee Conversion Video.dc.html` | the project entry point, for running from source |
+
+### Images
+
+Not everything on screen is drawn in code. `scenes.jsx` loads ten photographs
+by relative path, and they are not carried inside `video.html` — they are
+fetched at play time and have to exist in the tree:
+
+| | |
+| --- | --- |
+| `assets/values/` | six 150×150 tiles — `choice`, `comfort`, `independence`, `moment`, `security`, `family`. Captions are drawn in code, so these carry no text |
+| `assets/goals/` | four 308×373 swipe cards — `work`, `family`, `travel`, `health`. No separate caption is drawn, so the text is part of the image |
+
+A missing one fails silently: the film plays, the console shows a 404, and a
+blank box sits where the photo should be. After any change to `scenes.jsx`,
+step through the whole timeline and watch for failed requests rather than
+trusting that it loaded. `assets/goals/` also holds `hobbies`, `home` and
+`planning`, which nothing currently references.
 
 ## Rebuilding
 
@@ -71,10 +88,16 @@ a shared `AudioContext` and the playhead reads the audio clock, so the picture
 cannot drift from the voice — `window.__OM_EXTERNAL_CLOCK` is the handshake
 that tells the timeline to stop advancing itself.
 
-The track is a 16 MB uncompressed WAV, kept in that form because it's what the
-export produces. Re-encoding it to AAC takes it to roughly 2.4 MB, but that
-means editing the `SOUNDTRACK` path in `scenes.jsx` and redoing it after every
-export.
+The track is a 15.8 MB uncompressed WAV, kept in that form because it's what
+the export produces. Re-encoding it to AAC would take it to roughly 2 MB, but
+that means editing the `SOUNDTRACK` path in `scenes.jsx` and redoing it after
+every export.
+
+**Its length has to match `VIDEO_DURATION` in `scenes.jsx`.** Cutting a scene
+changes the film and not the mix, and nothing warns you — if the cut was in the
+middle, every line after it plays against the wrong picture. When the edit
+changes, the track has to be re-rendered, and the two numbers checked against
+each other.
 
 ## Voice-over timeline
 

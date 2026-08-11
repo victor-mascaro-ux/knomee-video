@@ -283,20 +283,8 @@
   }
   .cc-send:hover { opacity: 0.85; }
 
-  /* ════════ 5. FAB ════════ */
-  .cc-fab {
-    position: absolute; right: 20px; bottom: 20px; width: 52px; height: 52px;
-    border-radius: 50%; z-index: 65; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--cc-ink);
-    box-shadow: 0 12px 30px -8px rgba(20,10,40,0.45);
-    transition: transform 0.15s, background 0.15s, color 0.15s;
-  }
-  .cc-fab:hover { transform: translateY(-2px); }
   /* Soft shadow on the bubble glyph itself (on top of the button's own
      shadow) so the yellow reads on a light frosted circle too. */
-  .cc-fab svg { filter: drop-shadow(0 1.5px 1.5px rgba(20,10,40,0.45)); }
-  .cc-stage.cc-mode .cc-fab { background: var(--cc-ink); color: #fff; border-color: transparent; }
 
   /* ════════ 6. Esc pill ════════ */
   .cc-esc {
@@ -346,7 +334,6 @@
   .cc-stage[data-cc-theme="smoke-tray"] .cc-send { background: #fff; color: var(--cc-ink); }
   .cc-stage[data-cc-theme="smoke-tray"] .cc-empty { border-color: rgba(255,255,255,0.22); }
   .cc-stage[data-cc-theme="smoke-tray"] .cc-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
-  .cc-stage[data-cc-theme="smoke-tray"] .cc-fab:not(.cc-mode *) { color: #fff; }
   .cc-stage[data-cc-theme="smoke-tray"] .cc-clear-btn:hover { color: #fff; }
 
   /* ════════════════════════════════════════════════════════
@@ -364,8 +351,6 @@
     content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
     background: var(--cc-purple); border-radius: 3px;
   }
-  .cc-stage[data-cc-theme="branded-frost"] .cc-fab { color: var(--cc-purple); }
-  .cc-stage[data-cc-theme="branded-frost"].cc-mode .cc-fab { background: var(--cc-purple-deep); color: #fff; }
 </style>
 </head>
 <body style="margin:0">
@@ -401,14 +386,6 @@
     <div class="cc-list" id="ccList"></div>
   </aside>
 
-  <!-- 5. FAB -->
-  <button class="cc-fab cc-frost cc-chrome" id="ccFab" title="Toggle comment mode" aria-label="Toggle comment mode">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M5 4H19C20.1046 4 21 4.89543 21 6V15C21 16.1046 20.1046 17 19 17H9.41421L5.70711 20.7071C5.42111 20.9931 5 20.7889 5 20.3839V17C3.89543 17 3 16.1046 3 15V6C3 4.89543 3.89543 4 5 4Z" fill="none" stroke="#1E1A28" stroke-width="3.2" stroke-linejoin="round" stroke-opacity="0.9"/>
-      <path d="M5 4H19C20.1046 4 21 4.89543 21 6V15C21 16.1046 20.1046 17 19 17H9.41421L5.70711 20.7071C5.42111 20.9931 5 20.7889 5 20.3839V17C3.89543 17 3 16.1046 3 15V6C3 4.89543 3.89543 4 5 4Z" style="fill:var(--cc-pin);stroke:#fff;stroke-width:1.5;stroke-linejoin:round"/>
-    </svg>
-  </button>
-
   <!-- 6. esc pill -->
   <div class="cc-esc cc-chrome">Press <b>Esc</b> to exit comment mode</div>
 
@@ -438,7 +415,6 @@
   const proto    = document.getElementById('ccProto');
   const catcher  = document.getElementById('ccCatcher');
   const pinLayer = document.getElementById('ccPinLayer');
-  const fab      = document.getElementById('ccFab');
   const closeModeBtn = document.getElementById('ccCloseMode');
   const listEl   = document.getElementById('ccList');
   const countEl  = document.getElementById('ccCount');
@@ -1030,7 +1006,6 @@
     else closeThread();
   }
 
-  fab.addEventListener('click', (e) => { e.stopPropagation(); setMode(!commentMode); });
   closeModeBtn.addEventListener('click', (e) => { e.stopPropagation(); setMode(false); });
 
   function setRailCollapsed(on) {
@@ -1091,6 +1066,30 @@
   // For a video prototype it also resumes playback, since the video was
   // paused on the way in (comment mode / opening a comment); Esc hands
   // playback back so you're watching again, not stuck on a still.
+  // C or F2 is the way in, mirroring Esc on the way out: it opens the menu
+  // and arms comment mode in one press, so there is no on-screen button to
+  // reach for. Both are idempotent — pressing them again leaves the overlay
+  // open rather than toggling it shut, since Esc owns closing.
+  //
+  // C is a bare letter, so it has to stay out of the way of typing: skip it
+  // while a field or contenteditable has focus, and skip it whenever a
+  // modifier is held so Ctrl/Cmd+C still copies. F2 carries no such risk and
+  // works regardless.
+  document.addEventListener('keydown', (e) => {
+    const isF2 = e.key === 'F2';
+    const isC  = (e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey;
+    if (!isF2 && !isC) return;
+    if (isC) {
+      const el = e.target;
+      const tag = el && el.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (el && el.isContentEditable)) return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    setRailCollapsed(false);
+    if (!commentMode) setMode(true);
+  }, true);
+
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     const menuOpen = !rail.classList.contains('cc-collapsed');

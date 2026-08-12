@@ -446,6 +446,7 @@ function Stage({
     } catch { return 0; }
   });
   const [playing, setPlaying] = React.useState(autoplay);
+  const [hoverTime, setHoverTime] = React.useState(null);
   const [scale, setScale] = React.useState(1);
   // bumped by an external clock owner so the loop effect re-evaluates
   const [externalClockTick, setExternalClockTick] = React.useState(0);
@@ -552,9 +553,11 @@ function Stage({
   // with the right fonts. Sets data-om-fonts-inlined once done.
   useInlineFontsInto(canvasRef);
 
+  const displayTime = hoverTime != null ? hoverTime : time;
+
   const ctxValue = React.useMemo(
-    () => ({ time, duration, playing, setTime, setPlaying }),
-    [time, duration, playing]
+    () => ({ time: displayTime, duration, playing, setTime, setPlaying }),
+    [displayTime, duration, playing]
   );
 
   return (
@@ -608,12 +611,14 @@ function Stage({
 
       {/* Playback bar — stacked below canvas, never overlapping */}
       <PlaybackBar
-        time={time}
+        time={displayTime}
+        actualTime={time}
         duration={duration}
         playing={playing}
         onPlayPause={() => setPlaying(p => !p)}
         onReset={() => { setTime(0); }}
         onSeek={(t) => setTime(t)}
+        onHover={(t) => setHoverTime(t)}
       />
     </div>
   );
@@ -623,7 +628,7 @@ function Stage({
 // Play/pause, return-to-begin, scrub track, time display.
 // Uses fixed-width time fields so layout doesn't thrash.
 
-function PlaybackBar({ time, duration, playing, onPlayPause, onReset, onSeek }) {
+function PlaybackBar({ time, duration, playing, onPlayPause, onReset, onSeek, onHover }) {
   const trackRef = React.useRef(null);
   const [dragging, setDragging] = React.useState(false);
 
@@ -633,16 +638,25 @@ function PlaybackBar({ time, duration, playing, onPlayPause, onReset, onSeek }) 
     return x * duration;
   }, [duration]);
 
-  // Scrubbing only follows the pointer while the track is held down —
-  // moving across it without pressing leaves the playhead where it is.
   const onTrackMove = (e) => {
-    if (!dragging || !trackRef.current) return;
-    onSeek(timeFromEvent(e));
+    if (!trackRef.current) return;
+    const t = timeFromEvent(e);
+    if (dragging) {
+      onSeek(t);
+    } else {
+      onHover(t);
+    }
+  };
+
+  const onTrackLeave = () => {
+    if (!dragging) onHover(null);
   };
 
   const onTrackDown = (e) => {
     setDragging(true);
-    onSeek(timeFromEvent(e));
+    const t = timeFromEvent(e);
+    onSeek(t);
+    onHover(null);
   };
 
   React.useEffect(() => {
@@ -721,6 +735,7 @@ function PlaybackBar({ time, duration, playing, onPlayPause, onReset, onSeek }) 
       <div
         ref={trackRef}
         onMouseMove={onTrackMove}
+        onMouseLeave={onTrackLeave}
         onMouseDown={onTrackDown}
         style={{
           flex: 1,

@@ -5,7 +5,7 @@
 // cut too — they are not part of the film and are not shipped.
 window.KNOMEE_VO = [
   { "n": 1,  "src": "uploads/ElevenLabs_Untitled_project/1_Chapter_1.mp3",  "at": 0.5,   "off": 0,    "len": 2.83, "text": "Most wealth firms don't have a pipeline problem." },
-  { "n": 2,  "src": "uploads/ElevenLabs_Untitled_project/2_Chapter_1.mp3",  "at": 3.4,   "off": 0.05, "len": 1.55, "text": "They have a conversion problem." },
+  { "n": 2,  "src": "uploads/ElevenLabs_Untitled_project/2_Chapter_1.mp3",  "at": 3.9,   "off": 0.05, "len": 1.55, "text": "They have a conversion problem." },
   { "n": 3,  "src": "uploads/ElevenLabs_Untitled_project/3_Chapter_1.mp3",  "at": 5.9,   "off": 0.07, "len": 1.32, "text": "You have target lists." },
   { "n": 4,  "src": "uploads/ElevenLabs_Untitled_project/4_Chapter_1.mp3",  "at": 7.9,   "off": 0.08, "len": 1.81, "text": "But you're not converting new clients." },
   { "n": 5,  "src": "uploads/ElevenLabs_Untitled_project/5_Chapter_1.mp3",  "at": 10.3,  "off": 0.06, "len": 4.84, "text": "You start with what you offer — before understanding what wealth means to them." },

@@ -633,10 +633,11 @@
     if (player) {
       renderPins();
       const now = !!player.playing;
-      if (wasPlaying === true && now === false && !commentMode) {
-        setRailCollapsed(false);
-        setMode(true);
-      }
+      if (wasPlaying === true && now === false && !commentMode) setMode(true);
+      // Pressing play is a decision to carry on watching, so comment mode
+      // stands down with it. Without this it stayed armed over a running film
+      // and the catcher swallowed every click.
+      if (wasPlaying === false && now === true && commentMode) setMode(false);
       wasPlaying = now;
     }
   }, 150);
@@ -1105,7 +1106,6 @@
     }
     e.preventDefault();
     e.stopPropagation();
-    setRailCollapsed(false);
     if (!commentMode) setMode(true);
   }, true);
 

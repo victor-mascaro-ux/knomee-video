@@ -1179,10 +1179,25 @@ function MarlaVideo({ clipStart = 0, clipEnd = 0, l = 0, w = 620, h = 392 }) {
   // Land the trim as soon as the media is seekable. While the timeline is paused no further
   // render happens, so a seek skipped for "not ready yet" would never be retried and the shot
   // would sit on frame 0 — these listeners apply the position independently of React.
+  // ...once, and then stop listening. canplay does not fire only at load: it
+  // fires again every time the element recovers from starving for data. Left
+  // attached, it seeks on each one, and a seek discards the buffer, so the clip
+  // starves again immediately and fires canplay again. The loop sustains itself:
+  // readyState never climbs back past 1, the audio stream never runs long enough
+  // to be heard, and the picture updates only in fits. Measured in a browser
+  // during the shot it decoded roughly fifteen times more frames than playing
+  // once needs, with readyState pinned at 1 and no error of any kind.
   React.useEffect(() => {
     const v = ref.current;
     if (!v) return;
-    const apply = () => { try { v.currentTime = targetRef.current; } catch (e) {} };
+    let landed = false;
+    const apply = () => {
+      if (landed || v.readyState < 1) return;
+      landed = true;
+      try { v.currentTime = targetRef.current; } catch (e) {}
+      v.removeEventListener('loadedmetadata', apply);
+      v.removeEventListener('canplay', apply);
+    };
     v.addEventListener('loadedmetadata', apply);
     v.addEventListener('canplay', apply);
     apply();

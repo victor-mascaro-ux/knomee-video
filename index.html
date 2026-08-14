@@ -359,7 +359,11 @@
 
   <!-- the prototype under review -->
   <div class="cc-frame" id="ccFrame">
-    <iframe id="ccProto" src="video.html" title="Video"></iframe>
+    <!-- allow="autoplay" is what makes the founder footage audible: Chrome blocks
+         audible playback inside an iframe without it, so MarlaVideo's play() rejects
+         and its .catch() swallows the failure, leaving the clip silent. The film's own
+         soundtrack is Web Audio and is unaffected either way. -->
+    <iframe id="ccProto" src="video.html" title="Video" allow="autoplay"></iframe>
     <div class="cc-catcher" id="ccCatcher"></div>
     <div class="cc-pin-layer" id="ccPinLayer"></div>
     <!-- thread popover appended here -->

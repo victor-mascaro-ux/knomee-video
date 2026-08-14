@@ -1229,6 +1229,68 @@ function MarlaVideo({ clipStart = 0, clipEnd = 0, l = 0, w = 620, h = 392 }) {
   );
 }
 
+// The framed shot — footage plus name card — rendered on the stage overlay
+// instead of inside the svg. A <video> in an <svg><foreignObject> is not
+// hardware-composited, so it stutters and its audio is unreliable; the same
+// element on the normal path is not. A placeholder of identical size stays in
+// the flex row so the quote column still lays out against it, and its measured
+// position is where the portalled copy is drawn, in stage coordinates.
+function MarlaFrame({ l = 0, clipStart = 0, clipEnd = 0, w = 620, h = 392, intro = 1 }) {
+  const overlay = (typeof useStageOverlay === 'function') ? useStageOverlay() : null;
+  const slotRef = React.useRef(null);
+  const [box, setBox] = React.useState(null);
+
+  React.useLayoutEffect(() => {
+    const canvas = overlay && overlay.canvasRef && overlay.canvasRef.current;
+    const slot = slotRef.current;
+    if (!overlay || !overlay.el || !canvas || !slot) return;
+    const measure = () => {
+      const c = canvas.getBoundingClientRect();
+      const s = slot.getBoundingClientRect();
+      const scale = c.width / (overlay.width || 1280);
+      if (!scale) return;
+      setBox({ x: (s.left - c.left) / scale, y: (s.top - c.top) / scale });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(canvas);
+    ro.observe(slot);
+    window.addEventListener('resize', measure);
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
+  }, [overlay]);
+
+  const shot = (
+    <React.Fragment>
+      <div style={{ borderRadius: 26, overflow: 'hidden', boxShadow: '0 44px 120px rgba(12,4,30,0.6)',
+        border: '1px solid rgba(255,255,255,0.10)' }}>
+        <MarlaVideo l={l} clipStart={clipStart} clipEnd={clipEnd} w={w} h={h} />
+      </div>
+      <div style={{ position: 'absolute', left: 24, bottom: 24, background: 'rgba(16,3,34,0.74)',
+        backdropFilter: 'blur(6px)', borderRadius: 14, padding: '13px 20px', borderLeft: '4px solid #2DD2B0' }}>
+        <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 25, color: '#fff', letterSpacing: '-0.01em' }}>Marla</div>
+        <div style={{ fontFamily: DISPLAY, fontSize: 16, color: '#2DD2B0', fontWeight: 600 }}>Founder &amp; CEO, Knomee</div>
+      </div>
+    </React.Fragment>
+  );
+
+  // Until the overlay is measured — and if this ever renders without a Stage
+  // around it — fall back to drawing in place rather than not at all.
+  const portalReady = overlay && overlay.el && box && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal;
+
+  return (
+    <React.Fragment>
+      <div ref={slotRef} style={{ width: w, height: h, position: 'relative' }}>
+        {portalReady ? null : shot}
+      </div>
+      {portalReady ? ReactDOM.createPortal(
+        <div style={{ position: 'absolute', left: box.x, top: box.y, width: w, height: h,
+          opacity: intro, transform: `translateY(${(1 - intro) * 22}px)`, willChange: 'transform, opacity' }}>
+          {shot}
+        </div>, overlay.el) : null}
+    </React.Fragment>
+  );
+}
+
 // Reusable founder-interview shot (scenes 7, 10, 13). Warm bg, footage + rising quote.
 function MarlaShot({ l = 0, quoteLines = [], quoteStart = 1.0, clipStart = 0, clipEnd = 0 }) {
   const intro = Easing.easeOutCubic(clamp(l / 0.7, 0, 1));
@@ -1236,20 +1298,12 @@ function MarlaShot({ l = 0, quoteLines = [], quoteStart = 1.0, clipStart = 0, cl
     <React.Fragment>
       <WarmField l={l} />
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 1240, display: 'flex', gap: 52, alignItems: 'center',
-          opacity: intro, transform: `translateY(${(1 - intro) * 22}px)`, willChange: 'transform, opacity' }}>
-          <div style={{ width: 620, flexShrink: 0, position: 'relative' }}>
-            <div style={{ borderRadius: 26, overflow: 'hidden', boxShadow: '0 44px 120px rgba(12,4,30,0.6)',
-              border: '1px solid rgba(255,255,255,0.10)' }}>
-              <MarlaVideo l={l} clipStart={clipStart} clipEnd={clipEnd} w={620} h={392} />
-            </div>
-            <div style={{ position: 'absolute', left: 24, bottom: 24, background: 'rgba(16,3,34,0.74)',
-              backdropFilter: 'blur(6px)', borderRadius: 14, padding: '13px 20px', borderLeft: '4px solid #2DD2B0' }}>
-              <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 25, color: '#fff', letterSpacing: '-0.01em' }}>Marla</div>
-              <div style={{ fontFamily: DISPLAY, fontSize: 16, color: '#2DD2B0', fontWeight: 600 }}>Founder &amp; CEO, Knomee</div>
-            </div>
+        <div style={{ width: 1240, display: 'flex', gap: 52, alignItems: 'center' }}>
+          <div style={{ width: 620, flexShrink: 0 }}>
+            <MarlaFrame l={l} clipStart={clipStart} clipEnd={clipEnd} w={620} h={392} intro={intro} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, opacity: intro, transform: `translateY(${(1 - intro) * 22}px)`,
+            willChange: 'transform, opacity' }}>
             <div style={{ fontFamily: DISPLAY, fontSize: 40, lineHeight: 1.34, color: '#fff', fontWeight: 500, letterSpacing: '-0.01em',
               position: 'relative', paddingLeft: 46 }}>
               <span style={{ position: 'absolute', left: 0, top: 3, color: '#2DD2B0', fontSize: 64, fontWeight: 800,
@@ -1938,4 +1992,4 @@ function KnomeeVideo() {
   );
 }
 
-Object.assign(window, { Tag, KQRing, KnomeeWord, KnomeeWordmark, KnomeeIcon, KnomeeVideo, Soundtrack, Scene1, Scene2, Scene3, Scene4, Scene6, Scene7, Scene8, Scene9, Scene10, Scene11, Scene12, Scene13, MarlaShot, WarmField, Chip, ProgressDots, QuotientRing, PROSPECTS, PlayerBridge, SCENES, KnomeeIcon, KnomeeWordmark, StampLabel, FirmCard, CompanyPage, FIRMS, BRAND, COLD, Placeholder, Cursor, Caption, BrowserFrame, ColdLandingPage });
+Object.assign(window, { MarlaFrame, Tag, KQRing, KnomeeWord, KnomeeWordmark, KnomeeIcon, KnomeeVideo, Soundtrack, Scene1, Scene2, Scene3, Scene4, Scene6, Scene7, Scene8, Scene9, Scene10, Scene11, Scene12, Scene13, MarlaShot, WarmField, Chip, ProgressDots, QuotientRing, PROSPECTS, PlayerBridge, SCENES, KnomeeIcon, KnomeeWordmark, StampLabel, FirmCard, CompanyPage, FIRMS, BRAND, COLD, Placeholder, Cursor, Caption, BrowserFrame, ColdLandingPage });

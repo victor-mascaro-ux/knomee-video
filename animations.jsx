@@ -160,6 +160,14 @@ const useTimeline = () => React.useContext(TimelineContext);
 const SpriteContext = React.createContext({ localTime: 0, progress: 0, duration: 0 });
 const useSprite = () => React.useContext(SpriteContext);
 
+// A layer that sits over the canvas but OUTSIDE the svg. Anything a browser
+// refuses to hardware-composite inside an <svg><foreignObject> — video, in
+// practice — can be portalled here and drawn on the normal path instead, while
+// keeping a placeholder in the flow so layout is unaffected. Carries the same
+// size and scale as the canvas, so stage coordinates mean the same thing in both.
+const StageOverlayContext = React.createContext(null);
+const useStageOverlay = () => React.useContext(StageOverlayContext);
+
 function Sprite({ start = 0, end = Infinity, children, keepMounted = false }) {
   const { time } = useTimeline();
   const visible = time >= start && time <= end;
@@ -457,6 +465,7 @@ function Stage({
 
   const stageRef = React.useRef(null);
   const canvasRef = React.useRef(null);
+  const [overlayEl, setOverlayEl] = React.useState(null);
   const rafRef = React.useRef(null);
   const lastTsRef = React.useRef(null);
 
@@ -557,6 +566,11 @@ function Stage({
     [time, duration, playing]
   );
 
+  const overlayValue = React.useMemo(
+    () => ({ el: overlayEl, canvasRef, width, height }),
+    [overlayEl, width, height]
+  );
+
   return (
     <div
       ref={stageRef}
@@ -575,6 +589,7 @@ function Stage({
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         overflow: 'hidden',
         minHeight: 0,
+        position: 'relative',
       }}>
         <svg
           ref={canvasRef}
@@ -599,11 +614,28 @@ function Stage({
               }}
             >
               <TimelineContext.Provider value={ctxValue}>
-                {children}
+                <StageOverlayContext.Provider value={overlayValue}>
+                  {children}
+                </StageOverlayContext.Provider>
               </TimelineContext.Provider>
             </div>
           </foreignObject>
         </svg>
+
+        {/* Same box and scale as the canvas, painted after it. Portalled media
+            lands here in stage coordinates and composites normally. */}
+        <div
+          ref={setOverlayEl}
+          data-omelette-overlay
+          style={{
+            position: 'absolute', left: '50%', top: '50%',
+            width, height,
+            transform: `translate(-50%, -50%) scale(${scale})`,
+            transformOrigin: 'center',
+            overflow: 'hidden',
+            pointerEvents: 'none',
+          }}
+        />
       </div>
 
       {/* Playback bar — stacked below canvas, never overlapping */}
@@ -840,6 +872,7 @@ function VideoSprite({ src, start = 0, end, speed = 1, style, ...rest }) {
 
 
 Object.assign(window, {
+  StageOverlayContext, useStageOverlay,
   Easing, interpolate, animate, clamp,
   TimelineContext, useTime, useTimeline,
   Sprite, SpriteContext, useSprite,

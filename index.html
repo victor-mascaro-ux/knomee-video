@@ -621,9 +621,24 @@
     catcher.style.bottom = stripH + 'px';
   }
 
+  // Pausing is how someone says "wait, I want to say something about this" — so
+  // a pause arms comment mode and opens the menu, and they can go straight to
+  // placing a pin. Only on the transition, so it does not fight Esc or re-arm
+  // itself every tick while the film sits paused. Entering comment mode pauses
+  // the video in turn, which is already true here and so a no-op.
+  let wasPlaying = null;
   setInterval(() => {
     updateCatcherBounds();
-    if (getPlayer()) renderPins();
+    const player = getPlayer();
+    if (player) {
+      renderPins();
+      const now = !!player.playing;
+      if (wasPlaying === true && now === false && !commentMode) {
+        setRailCollapsed(false);
+        setMode(true);
+      }
+      wasPlaying = now;
+    }
   }, 150);
 
   // ── Helpers ──────────────────────────────────────────────

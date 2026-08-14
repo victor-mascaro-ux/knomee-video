@@ -587,14 +587,17 @@ function Stage({
       }}
     >
       {/* Canvas area — vertically centered in remaining space */}
-      <div style={{
-        flex: 1,
-        width: '100%',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden',
-        minHeight: 0,
-        position: 'relative',
-      }}>
+      <div
+        onClick={() => setPlaying(p => !p)}
+        style={{
+          flex: 1,
+          width: '100%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',
+          cursor: 'pointer',
+        }}>
         <svg
           ref={canvasRef}
           width={width} height={height}
@@ -625,6 +628,32 @@ function Stage({
             </div>
           </foreignObject>
         </svg>
+
+        {/* Parked on the first frame, nothing has happened yet and the film is
+            waiting on a click it cannot ask for any other way — a browser will
+            not start audible media unhinted. Once it is running, or once anyone
+            has scrubbed, the playback bar carries the state and this would only
+            be in the way, so it appears at zero and nowhere else. */}
+        {!playing && time < 0.05 && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            pointerEvents: 'none',
+          }}>
+            <div style={{
+              width: 96, height: 96, borderRadius: '50%',
+              background: 'rgba(12,4,30,0.55)',
+              backdropFilter: 'blur(6px)',
+              border: '1.5px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.45)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5.5l11 6.5-11 6.5V5.5z" fill="#fff" />
+              </svg>
+            </div>
+          </div>
+        )}
 
         {/* Same box and scale as the canvas, painted after it. Portalled media
             lands here in stage coordinates and composites normally. */}

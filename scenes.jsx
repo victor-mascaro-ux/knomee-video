@@ -2005,7 +2005,12 @@ function Soundtrack({ muted = false, volume = 1 }) {
     const tickClock = () => {
       const ctx = ctxRef.current;
       const src = srcRef.current;
-      const running = !!(ctx && src && playRef.current);
+      // Only drive the playhead while the context is genuinely running. A
+      // suspended context — which is every context before the page is clicked —
+      // has a frozen currentTime, and writing that back each tick fought the
+      // Stage's own loop advancing forward: the playhead oscillated over a
+      // single frame, visibly flickering between two hundredths of a second.
+      const running = !!(ctx && src && playRef.current && ctx.state === "running");
       if (running) {
         if (ownRef.current >= 0 && Math.abs(tRef.current - ownRef.current) > 0.25) {
           start(Math.max(0, Math.min(durRef.current, tRef.current)));   // outside seek
@@ -2022,7 +2027,7 @@ function Soundtrack({ muted = false, volume = 1 }) {
           }
         }
       }
-      const own = running && ctx.state === "running";
+      const own = running;
       if (window.__OM_EXTERNAL_CLOCK !== own) {
         window.__OM_EXTERNAL_CLOCK = own;
         window.dispatchEvent(new Event("om-clock-claim"));
@@ -2090,9 +2095,14 @@ function Soundtrack({ muted = false, volume = 1 }) {
 }
 
 // ── Root ────────────────────────────────────────────────────────────────────
+// autoplay is off on purpose. A browser will not let audible media start before
+// the page is interacted with, so autoplaying only ever produced a film running
+// silently, or stuck, until someone pressed play anyway. Opening parked on the
+// first frame says what to do instead of pretending to have started.
 function KnomeeVideo() {
   return (
-    <Stage width={1920} height={1080} duration={VIDEO_DURATION} background="#0c1524" persistKey="knomee-video">
+    <Stage width={1920} height={1080} duration={VIDEO_DURATION} background="#0c1524"
+      persistKey="knomee-video" autoplay={false}>
       <PlayerBridge />
       <Soundtrack />
       <Sprite start={0} end={20.1}><Scene1 /></Sprite>

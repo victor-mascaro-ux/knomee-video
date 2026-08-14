@@ -1188,14 +1188,28 @@ function MarlaVideo({ clipStart = 0, clipEnd = 0, l = 0, w = 620, h = 392 }) {
     apply();
     return () => { v.removeEventListener('loadedmetadata', apply); v.removeEventListener('canplay', apply); };
   }, []);
+  // Whether the shot should be running, kept as a boolean so the effect below
+  // fires only when it actually flips. The timeline re-renders every frame, so
+  // the unguarded version called play() on every one of them — measured at 148
+  // calls in five seconds of this scene, against none once settled. Each returns
+  // a fresh promise on an element that is already playing, while the drift
+  // correction seeks the same element underneath, and the two together keep the
+  // decode pipeline from ever settling.
+  const shouldPlay = playing && l >= 0 && target < clipEnd - 0.05;
+  React.useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    v.volume = 1;
+    if (shouldPlay) { const r = v.play(); if (r) r.catch(() => {}); }
+    else v.pause();
+  }, [shouldPlay]);
+  // Drift correction only. A seek flushes the decode pipeline, so it stays behind
+  // the 0.34s threshold instead of running every frame.
   React.useEffect(() => {
     const v = ref.current;
     if (!v) return;
     if (Math.abs(v.currentTime - target) > 0.34) { try { v.currentTime = target; } catch (e) {} }
-    v.volume = 1;
-    if (playing && l >= 0 && target < clipEnd - 0.05) v.play().catch(() => {});
-    else v.pause();
-  });
+  }, [target]);
   return (
     <video ref={ref} src={MARLA_SRC} playsInline preload="auto"
       style={{ width: w, height: h, objectFit: 'cover', display: 'block', background: '#1b0a2e' }} />

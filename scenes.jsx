@@ -1203,13 +1203,26 @@ function MarlaVideo({ clipStart = 0, clipEnd = 0, l = 0, w = 620, h = 392 }) {
     if (shouldPlay) { const r = v.play(); if (r) r.catch(() => {}); }
     else v.pause();
   }, [shouldPlay]);
-  // Drift correction only. A seek flushes the decode pipeline, so it stays behind
-  // the 0.34s threshold instead of running every frame.
+  // Drift correction, but never while the shot is running.
+  //
+  // The clip draws on a slow path: a <video> inside the transformed svg
+  // foreignObject the whole film renders into, which browsers will not
+  // hardware-composite. So it falls behind the timeline, the old 0.34s threshold
+  // tripped, the seek flushed the decode pipeline, and that cost it more time
+  // than it was behind — tripping the threshold again. The loop feeds itself and
+  // shows up as a picture that stutters rather than plays.
+  //
+  // While the shot runs, the clip is left alone at its own rate. Each is a single
+  // continuous take of at most 22s and its own audio carries the moment, so small
+  // drift against the timeline is not worth chasing. Seeks still apply when the
+  // timeline is parked or genuinely jumped, which is what scrubbing needs.
   React.useEffect(() => {
     const v = ref.current;
     if (!v) return;
-    if (Math.abs(v.currentTime - target) > 0.34) { try { v.currentTime = target; } catch (e) {} }
-  }, [target]);
+    const drift = Math.abs(v.currentTime - target);
+    if (drift < 0.05) return;
+    if (!shouldPlay || drift > 1.5) { try { v.currentTime = target; } catch (e) {} }
+  }, [target, shouldPlay]);
   return (
     <video ref={ref} src={MARLA_SRC} playsInline preload="auto"
       style={{ width: w, height: h, objectFit: 'cover', display: 'block', background: '#1b0a2e' }} />

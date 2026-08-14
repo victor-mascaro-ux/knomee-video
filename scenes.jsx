@@ -1196,12 +1196,39 @@ function MarlaVideo({ clipStart = 0, clipEnd = 0, l = 0, w = 620, h = 392 }) {
   // correction seeks the same element underneath, and the two together keep the
   // decode pipeline from ever settling.
   const shouldPlay = playing && l >= 0 && target < clipEnd - 0.05;
+
+  // Autoplay policy rejects play() on an audible element until the page has been
+  // interacted with, and the film starts itself. A single attempt when the shot
+  // begins is therefore free to fail silently and never be retried, which leaves
+  // the clip paused for good: no sound, and a picture that only moves when the
+  // drift correction drags it — indistinguishable from a broken frame rate.
+  //
+  // The soundtrack survives this because it resumes its AudioContext on the first
+  // pointer or key event. This element needs the same, plus a slow watchdog for
+  // the case where playback is refused or stalls for any other reason. Half a
+  // second is far too coarse to be the per-frame churn removed earlier, and the
+  // call is skipped entirely unless the element is actually paused.
   React.useEffect(() => {
     const v = ref.current;
     if (!v) return;
-    v.volume = 1;
-    if (shouldPlay) { const r = v.play(); if (r) r.catch(() => {}); }
-    else v.pause();
+    if (!shouldPlay) { v.pause(); return; }
+    let dead = false;
+    const attempt = () => {
+      if (dead || !v.paused) return;
+      v.volume = 1;
+      const r = v.play();
+      if (r && r.catch) r.catch(() => {});
+    };
+    attempt();
+    const id = setInterval(attempt, 500);
+    window.addEventListener('pointerdown', attempt);
+    window.addEventListener('keydown', attempt);
+    return () => {
+      dead = true;
+      clearInterval(id);
+      window.removeEventListener('pointerdown', attempt);
+      window.removeEventListener('keydown', attempt);
+    };
   }, [shouldPlay]);
   // Drift correction, but never while the shot is running.
   //

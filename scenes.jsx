@@ -23,9 +23,9 @@ const COLD = {
   accent: '#3d566e',
 };
 const DISPLAY = "'Poppins', system-ui, sans-serif";
-const SERIF = "'Sedan', Georgia, 'Times New Roman', serif"; // firm-name accent
-const GENERIC = "Arial, 'Helvetica Neue', sans-serif";
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+const SERIF = DISPLAY;   // Sedan retired — the film is Poppins throughout
+const GENERIC = DISPLAY;
+const MONO = DISPLAY;
 
 // Exact Knomee Design System tokens (hand-matched for the timeline)
 const KDS = {
@@ -455,16 +455,16 @@ function FirmCard({ firm, scale = 0.315, dim = 0, delay = 0 }) {
 const FIRMS = [
   { id: 'aspen',  name: 'ASPEN RIDGE',        url: 'aspenridgeprivate.com',    variant: 'serif-centered',
     theme: { bg: '#f3f1ec', card: '#fff', ink: '#1f2a24', sub: '#6a7269', line: '#e0ddd3', accent: '#2f5d4a', field: '#f7f6f1' },
-    font: "'Georgia', 'Times New Roman', serif", tag: 'PRIVATE WEALTH', heroA: 'Wealth,', heroB: 'quietly stewarded.', mark: 'square' },
+    font: DISPLAY, tag: 'PRIVATE WEALTH', heroA: 'Wealth,', heroB: 'quietly stewarded.', mark: 'square' },
   { id: 'north',  name: 'NORTHBRIDGE',        url: 'northbridge-partners.com', variant: 'photo-left',
     theme: { bg: '#0f1c2e', card: '#16283f', ink: '#eaf1f9', sub: '#93a6bd', line: '#25384f', accent: '#3f7cc4', field: '#1c3149' },
-    font: "'Helvetica Neue', Arial, sans-serif", tag: 'INSTITUTIONAL ADVISORY', heroA: 'Capital with', heroB: 'conviction.', mark: 'circle', dark: true },
+    font: DISPLAY, tag: 'INSTITUTIONAL ADVISORY', heroA: 'Capital with', heroB: 'conviction.', mark: 'circle', dark: true },
   { id: 'beacon', name: 'Beacon Wealth',      url: 'beaconwealth.co',          variant: 'split-warm',
     theme: { bg: '#faf6f0', card: '#fff', ink: '#3a2318', sub: '#8a7161', line: '#ece2d6', accent: '#a8632c', field: '#f6efe6' },
-    font: "'Palatino Linotype', 'Book Antiqua', serif", tag: 'FAMILY OFFICE', heroA: 'A steady hand', heroB: 'for what you build.', mark: 'diamond' },
+    font: DISPLAY, tag: 'FAMILY OFFICE', heroA: 'A steady hand', heroB: 'for what you build.', mark: 'diamond' },
   { id: 'halcyon',name: 'Halcyon Capital',    url: 'halcyoncapital.io',        variant: 'minimal-mono',
     theme: { bg: '#eef1f0', card: '#fff', ink: '#1a2b2b', sub: '#5e7373', line: '#dbe4e2', accent: '#0d8f8f', field: '#f2f6f5' },
-    font: "'Inter', 'Segoe UI', sans-serif", tag: 'MODERN PORTFOLIO MGMT', heroA: 'Invest with', heroB: 'clarity.', mark: 'pill' },
+    font: DISPLAY, tag: 'MODERN PORTFOLIO MGMT', heroA: 'Invest with', heroB: 'clarity.', mark: 'pill' },
 ];
 
 function firmMark(shape, color) {
@@ -668,15 +668,15 @@ const SCENES = [
   { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 44, end: 48 },
   { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 48, end: 70 },
   { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 70, end: 90 },
-  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 90, end: 108.3 },
-  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 108.3, end: 122 },
-  { id: 'different',     n: 8, title: 'Show up different', start: 122, end: 131 },
-  { id: 'founder-2',     n: 9, title: 'Founder POV — build trust faster', start: 131, end: 140 },
-  { id: 'lifecycle',     n: 10, title: 'The lifecycle', start: 140, end: 156 },
-  { id: 'close',         n: 11, title: 'Better beginnings', start: 156, end: 168 },
-  { id: 'final',         n: 12, title: 'Making advice stronger', start: 168, end: 176 },
+  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 90, end: 112 },
+  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 112, end: 125.7 },
+  { id: 'different',     n: 8, title: 'Show up different', start: 125.7, end: 134.7 },
+  { id: 'founder-2',     n: 9, title: 'Founder POV — build trust faster', start: 134.7, end: 140.7 },
+  { id: 'lifecycle',     n: 10, title: 'The lifecycle', start: 140.7, end: 156.7 },
+  { id: 'close',         n: 11, title: 'Better beginnings', start: 156.7, end: 168.7 },
+  { id: 'final',         n: 12, title: 'Making advice stronger', start: 168.7, end: 176.7 },
 ];
-const VIDEO_DURATION = 176;
+const VIDEO_DURATION = 176.7;
 
 // Bridges the internal timeline to a stable global API + postMessage stream.
 // Mounted once inside <Stage>. Your embedding page uses window.KnomeePlayer
@@ -901,6 +901,23 @@ function FinancialJoyIcon({ size = 42 }) {
   );
 }
 
+// Future You mark — the telescope from the app's Adventures list
+function FutureYouIcon({ size = 42 }) {
+  const dark = '#240446', lilac = '#b49ad0';
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" style={{ display: 'block' }}>
+      <path d="M22 31 L16.5 44" stroke={dark} strokeWidth={3.2} strokeLinecap="round" />
+      <path d="M22 31 L27.5 44" stroke={dark} strokeWidth={3.2} strokeLinecap="round" />
+      <g transform="rotate(-24 24 22)">
+        <rect x="4" y="17.5" width="7" height="9.5" rx="1.8" fill={dark} />
+        <rect x="10" y="18.5" width="4.5" height="7.5" fill={lilac} />
+        <rect x="13.5" y="13.5" width="21" height="17.5" rx="2.4" fill={lilac} />
+        <rect x="33.5" y="12" width="5.5" height="20.5" rx="1.8" fill={dark} />
+      </g>
+    </svg>
+  );
+}
+
 // Value tile, app-style: photo at native 150px, caption, lime selection ring. sel: 0..1.
 function ValueTile({ src, label, sel = 0 }) {
   const on = sel > 0.02;
@@ -1026,6 +1043,7 @@ function Scene4() {
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <FutureYouIcon size={42} />
                 <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.4px', color: KDS.plum }}>Future You</div>
               </div>
             )}
@@ -1148,8 +1166,44 @@ function toneStyle(tone) {
   return { bg: 'rgba(120,102,150,0.14)', fg: '#8a7ba6', bar: 'linear-gradient(90deg,#b9a9d9,#cdbfe6)' };
 }
 
-// Reusable founder-interview shot (scenes 7, 10, 13). Warm bg, video placeholder + rising quote.
-function MarlaShot({ l = 0, quoteLines = [], quoteStart = 1.0 }) {
+// Founder interview footage — ONE source file, three trims. The clip is driven off the
+// timeline clock rather than its own playback, so scrubbing, pausing and replaying all
+// land on the right frame and the picture cannot drift from the voice.
+const MARLA_SRC = 'assets/marla-founder.mp4';
+function MarlaVideo({ clipStart = 0, clipEnd = 0, l = 0, w = 620, h = 392 }) {
+  const ref = React.useRef(null);
+  const { playing } = useTimeline();
+  const target = clamp(clipStart + Math.max(l, 0), clipStart, clipEnd);
+  const targetRef = React.useRef(target);
+  targetRef.current = target;
+  // Land the trim as soon as the media is seekable. While the timeline is paused no further
+  // render happens, so a seek skipped for "not ready yet" would never be retried and the shot
+  // would sit on frame 0 — these listeners apply the position independently of React.
+  React.useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    const apply = () => { try { v.currentTime = targetRef.current; } catch (e) {} };
+    v.addEventListener('loadedmetadata', apply);
+    v.addEventListener('canplay', apply);
+    apply();
+    return () => { v.removeEventListener('loadedmetadata', apply); v.removeEventListener('canplay', apply); };
+  }, []);
+  React.useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    if (Math.abs(v.currentTime - target) > 0.34) { try { v.currentTime = target; } catch (e) {} }
+    v.volume = 1;
+    if (playing && l >= 0 && target < clipEnd - 0.05) v.play().catch(() => {});
+    else v.pause();
+  });
+  return (
+    <video ref={ref} src={MARLA_SRC} playsInline preload="auto"
+      style={{ width: w, height: h, objectFit: 'cover', display: 'block', background: '#1b0a2e' }} />
+  );
+}
+
+// Reusable founder-interview shot (scenes 7, 10, 13). Warm bg, footage + rising quote.
+function MarlaShot({ l = 0, quoteLines = [], quoteStart = 1.0, clipStart = 0, clipEnd = 0 }) {
   const intro = Easing.easeOutCubic(clamp(l / 0.7, 0, 1));
   return (
     <React.Fragment>
@@ -1160,7 +1214,7 @@ function MarlaShot({ l = 0, quoteLines = [], quoteStart = 1.0 }) {
           <div style={{ width: 620, flexShrink: 0, position: 'relative' }}>
             <div style={{ borderRadius: 26, overflow: 'hidden', boxShadow: '0 44px 120px rgba(12,4,30,0.6)',
               border: '1px solid rgba(255,255,255,0.10)' }}>
-              <Placeholder label="Founder interview — Marla to camera (16:9)" w={620} h={392} tone="warm" style={{ borderRadius: 0 }} />
+              <MarlaVideo l={l} clipStart={clipStart} clipEnd={clipEnd} w={620} h={392} />
             </div>
             <div style={{ position: 'absolute', left: 24, bottom: 24, background: 'rgba(16,3,34,0.74)',
               backdropFilter: 'blur(6px)', borderRadius: 14, padding: '13px 20px', borderLeft: '4px solid #2DD2B0' }}>
@@ -1169,8 +1223,10 @@ function MarlaShot({ l = 0, quoteLines = [], quoteStart = 1.0 }) {
             </div>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: 40, lineHeight: 1.34, color: '#fff', fontWeight: 500, letterSpacing: '-0.01em' }}>
-              <span style={{ color: '#2DD2B0', fontSize: 64, fontWeight: 800, verticalAlign: '-0.18em', marginRight: 6 }}>&ldquo;</span>
+            <div style={{ fontFamily: DISPLAY, fontSize: 40, lineHeight: 1.34, color: '#fff', fontWeight: 500, letterSpacing: '-0.01em',
+              position: 'relative', paddingLeft: 46 }}>
+              <span style={{ position: 'absolute', left: 0, top: 3, color: '#2DD2B0', fontSize: 64, fontWeight: 800,
+                lineHeight: 1 }}>&ldquo;</span>
               {quoteLines.map((ln, i) => {
                 const p = Easing.easeOutCubic(clamp((l - (quoteStart + i * 1.0)) / 0.7, 0, 1));
                 return <span key={i} style={{ opacity: p }}>{ln} </span>;
@@ -1266,8 +1322,8 @@ function Scene6() {
           {/* prospect header + tabs */}
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 26 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 58, height: 58, borderRadius: '50%', background: 'linear-gradient(135deg,#7C3AED,#c084fc)',
-                color: '#fff', fontWeight: 800, fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>S</div>
+              <div style={{ width: 58, height: 58, borderRadius: '50%', background: '#ededed',
+                color: '#8a8a8a', fontWeight: 600, fontSize: 26, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>S</div>
               <div>
                 <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: KDS.plum }}>Sarah Mitchell</div>
                 <div style={{ fontSize: 16, color: '#9a8bbd' }}>New prospect</div>
@@ -1394,7 +1450,7 @@ function Scene7() {
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
-      <MarlaShot l={l} quoteStart={0.8} quoteLines={[
+      <MarlaShot l={l} quoteStart={0.8} clipStart={0} clipEnd={22} quoteLines={[
         'Wealth managers want to improve their clients\u2019 lives.',
         'When prospects start with Knomee, advisors understand what matters, where they are, and how to help them move forward.',
         'That clarity changes everything.',
@@ -1407,7 +1463,7 @@ function Scene7() {
 // 108.3–122s. Context, emotional insight, a clear path in.
 function Scene8() {
   const t = useT();
-  const S = 108.3;
+  const S = 112;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
@@ -1459,7 +1515,7 @@ function Scene8() {
 // 122–131s. Default portfolio recedes; prepared / relevant / different stamp in.
 function Scene9() {
   const t = useT();
-  const S = 122;
+  const S = 125.7;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   // cold portfolio card recedes
@@ -1513,12 +1569,12 @@ function Scene9() {
 // 131–140s.
 function Scene10() {
   const t = useT();
-  const S = 131;
+  const S = 134.7;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
-      <MarlaShot l={l} quoteStart={0.8} quoteLines={[
+      <MarlaShot l={l} quoteStart={0.8} clipStart={24} clipEnd={30} quoteLines={[
         'This is how you build trust faster.',
         'People want to feel understood — and confident in their decisions.',
       ]} />
@@ -1530,7 +1586,7 @@ function Scene10() {
 // 140–156s. Understanding grows across life stages and generations.
 function Scene11() {
   const t = useT();
-  const S = 140;
+  const S = 140.7;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const stages = [
@@ -1584,7 +1640,7 @@ function Scene11() {
 // 156–168s. Better beginnings → better everything.
 function Scene12() {
   const t = useT();
-  const S = 156;
+  const S = 156.7;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const lines = [
@@ -1625,18 +1681,18 @@ function Scene12() {
 }
 
 // ── SCENE 13 — final (Marla → brand end card) ─────────────────────────────────
-// 168–176s.
+// 168.7–176.7s. 4s of footage, then a 4s brand end card.
 function Scene13() {
   const t = useT();
-  const S = 168;
+  const S = 168.7;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
-  const marlaFade = 1 - Easing.easeInOutCubic(clamp((l - 5.6) / 0.7, 0, 1));
-  const endP = Easing.easeOutCubic(clamp((l - 6.0) / 0.8, 0, 1));
+  const marlaFade = 1 - Easing.easeInOutCubic(clamp((l - 3.7) / 0.7, 0, 1));
+  const endP = Easing.easeOutCubic(clamp((l - 4.1) / 0.8, 0, 1));
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
       <div style={{ position: 'absolute', inset: 0, opacity: marlaFade }}>
-        <MarlaShot l={l} quoteStart={0.8} quoteLines={[
+        <MarlaShot l={l} quoteStart={0.8} clipStart={31} clipEnd={35} quoteLines={[
           'We\u2019re not replacing the human side of advice.',
           'We\u2019re making it stronger.',
         ]} />
@@ -1844,13 +1900,13 @@ function KnomeeVideo() {
       <Sprite start={43.9} end={48.1}><Scene3 /></Sprite>
       <Sprite start={47.9} end={70.1}><Scene4 /></Sprite>
       <Sprite start={69.9} end={90.1}><Scene6 /></Sprite>
-      <Sprite start={89.9} end={108.4}><Scene7 /></Sprite>
-      <Sprite start={108.2} end={122.1}><Scene8 /></Sprite>
-      <Sprite start={121.9} end={131.1}><Scene9 /></Sprite>
-      <Sprite start={130.9} end={140.1}><Scene10 /></Sprite>
-      <Sprite start={139.9} end={156.1}><Scene11 /></Sprite>
-      <Sprite start={155.9} end={168.1}><Scene12 /></Sprite>
-      <Sprite start={167.9} end={176}><Scene13 /></Sprite>
+      <Sprite start={89.9} end={112.1}><Scene7 /></Sprite>
+      <Sprite start={111.9} end={125.8}><Scene8 /></Sprite>
+      <Sprite start={125.6} end={134.8}><Scene9 /></Sprite>
+      <Sprite start={134.6} end={140.8}><Scene10 /></Sprite>
+      <Sprite start={140.6} end={156.8}><Scene11 /></Sprite>
+      <Sprite start={156.6} end={168.8}><Scene12 /></Sprite>
+      <Sprite start={168.6} end={176.7}><Scene13 /></Sprite>
     </Stage>
   );
 }

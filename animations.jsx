@@ -447,12 +447,15 @@ function Stage({
   if (typeof loop === 'string') loop = loop !== 'false';
   if (typeof autoplay === 'string') autoplay = autoplay !== 'false';
 
-  const [time, setTime] = React.useState(() => {
-    try {
-      const v = parseFloat(localStorage.getItem(persistKey + ':t') || '0');
-      return isFinite(v) ? clamp(v, 0, duration) : 0;
-    } catch { return 0; }
-  });
+  // Always open at the beginning. The playhead used to be written to
+  // localStorage on every frame and restored on load, which is right for
+  // authoring — reload and carry on where you were — and wrong for anyone
+  // opening a link to watch the film. They landed at whatever second the last
+  // visit happened to stop at, apparently at random, and with the picture
+  // frozen there: the soundtrack owns the clock and its AudioContext stays
+  // suspended until the page is interacted with, so nothing advanced until
+  // they pressed play themselves.
+  const [time, setTime] = React.useState(0);
   const [playing, setPlaying] = React.useState(autoplay);
   const [scale, setScale] = React.useState(1);
   // bumped by an external clock owner so the loop effect re-evaluates
@@ -469,10 +472,11 @@ function Stage({
   const rafRef = React.useRef(null);
   const lastTsRef = React.useRef(null);
 
-  // Persist playhead
+  // Clear any playhead left behind by the version that persisted one, so a
+  // returning viewer is not held at an old position by stale storage.
   React.useEffect(() => {
-    try { localStorage.setItem(persistKey + ':t', String(time)); } catch {}
-  }, [time, persistKey]);
+    try { localStorage.removeItem(persistKey + ':t'); } catch {}
+  }, [persistKey]);
 
   // Auto-scale to fit viewport
   React.useEffect(() => {

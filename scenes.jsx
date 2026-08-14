@@ -1331,6 +1331,30 @@ function MarlaFrame({ l = 0, clipStart = 0, clipEnd = 0, w = 620, h = 392, intro
   const slotRef = React.useRef(null);
   const [box, setBox] = React.useState(null);
 
+  // Portalling the clip out of the svg also took it out of reach of every
+  // opacity its scene sets on the way down — the entry fade each shot uses, and
+  // the fade that hands the closing shot to the end card. Left alone the clip
+  // never disappears and sits on top of the logo.
+  //
+  // The placeholder is still inside that subtree, so the product of the inline
+  // opacities above it is exactly what the clip should be wearing. Walking a
+  // handful of nodes per frame is cheaper than threading a fade prop through
+  // every scene, and it picks up any wrapper added later without being told.
+  const [inherited, setInherited] = React.useState(1);
+  React.useLayoutEffect(() => {
+    const slot = slotRef.current;
+    if (!slot) return;
+    let o = 1;
+    for (let el = slot; el && el !== document.body; el = el.parentElement) {
+      const v = el.style && el.style.opacity;
+      if (v !== '' && v != null) {
+        const f = parseFloat(v);
+        if (!isNaN(f)) o *= f;
+      }
+    }
+    setInherited((prev) => (Math.abs(prev - o) > 0.004 ? o : prev));
+  });
+
   React.useLayoutEffect(() => {
     const canvas = overlay && overlay.canvasRef && overlay.canvasRef.current;
     const slot = slotRef.current;
@@ -1375,7 +1399,8 @@ function MarlaFrame({ l = 0, clipStart = 0, clipEnd = 0, w = 620, h = 392, intro
       </div>
       {portalReady ? ReactDOM.createPortal(
         <div style={{ position: 'absolute', left: box.x, top: box.y, width: w, height: h,
-          opacity: intro, transform: `translateY(${(1 - intro) * 22}px)`, willChange: 'transform, opacity' }}>
+          opacity: intro * inherited, transform: `translateY(${(1 - intro) * 22}px)`,
+          willChange: 'transform, opacity', display: intro * inherited < 0.005 ? 'none' : 'block' }}>
           {shot}
         </div>, overlay.el) : null}
     </React.Fragment>

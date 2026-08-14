@@ -313,7 +313,7 @@ function BrowserFrame({ url, children, w = 1360, h = 812 }) {
 }
 
 // ── The generic / cold competitor landing page ────────────────────────────────
-function ColdLandingPage({ formHi = 0, dim = 0, name = 'MERIDIAN WEALTH', btnHi = 0 }) {
+function ColdLandingPage({ formHi = 0, dim = 0, name = 'TARNBECK WEALTH', btnHi = 0 }) {
   const Field = ({ label, hi }) => (
     <div style={{ marginBottom: 14 }}>
       <div style={{ fontSize: 12, color: COLD.slate, marginBottom: 6, fontFamily: GENERIC }}>{label}</div>
@@ -406,7 +406,7 @@ function Scene1() {
         transform: `translate(-50%,-50%) translate(${camX + shakeX + floatX}px, ${camY + shakeY + floatY}px) rotate(${tilt}deg) scale(${camScale * (0.97 + 0.03 * intro)})`,
         opacity: intro, willChange: 'transform, opacity' }}>
         <PageShatter t={t} start={16.4}>
-          <BrowserFrame url="meridianwealthpartners.com">
+          <BrowserFrame url="tarnbeckwealth.com">
             <ColdLandingPage formHi={formHi} dim={dim} />
           </BrowserFrame>
         </PageShatter>
@@ -453,16 +453,16 @@ function FirmCard({ firm, scale = 0.315, dim = 0, delay = 0 }) {
 
 // ── Distinct competitor firms (each its own brand + layout) ────────────────────
 const FIRMS = [
-  { id: 'aspen',  name: 'ASPEN RIDGE',        url: 'aspenridgeprivate.com',    variant: 'serif-centered',
+  { id: 'verrowyn',  name: 'VERROWYN',           url: 'verrowynprivate.com',    variant: 'serif-centered',
     theme: { bg: '#f3f1ec', card: '#fff', ink: '#1f2a24', sub: '#6a7269', line: '#e0ddd3', accent: '#2f5d4a', field: '#f7f6f1' },
     font: DISPLAY, tag: 'PRIVATE WEALTH', heroA: 'Wealth,', heroB: 'quietly stewarded.', mark: 'square' },
-  { id: 'north',  name: 'NORTHBRIDGE',        url: 'northbridge-partners.com', variant: 'photo-left',
+  { id: 'halbrook',  name: 'HALBROOK',           url: 'halbrook-partners.com', variant: 'photo-left',
     theme: { bg: '#0f1c2e', card: '#16283f', ink: '#eaf1f9', sub: '#93a6bd', line: '#25384f', accent: '#3f7cc4', field: '#1c3149' },
     font: DISPLAY, tag: 'INSTITUTIONAL ADVISORY', heroA: 'Capital with', heroB: 'conviction.', mark: 'circle', dark: true },
-  { id: 'beacon', name: 'Beacon Wealth',      url: 'beaconwealth.co',          variant: 'split-warm',
+  { id: 'quillane', name: 'Quillane Wealth',    url: 'quillanewealth.co',          variant: 'split-warm',
     theme: { bg: '#faf6f0', card: '#fff', ink: '#3a2318', sub: '#8a7161', line: '#ece2d6', accent: '#a8632c', field: '#f6efe6' },
     font: DISPLAY, tag: 'FAMILY OFFICE', heroA: 'A steady hand', heroB: 'for what you build.', mark: 'diamond' },
-  { id: 'halcyon',name: 'Halcyon Capital',    url: 'halcyoncapital.io',        variant: 'minimal-mono',
+  { id: 'merrowfield',name: 'Merrowfield Capital',url: 'merrowfieldcapital.io',        variant: 'minimal-mono',
     theme: { bg: '#eef1f0', card: '#fff', ink: '#1a2b2b', sub: '#5e7373', line: '#dbe4e2', accent: '#0d8f8f', field: '#f2f6f5' },
     font: DISPLAY, tag: 'MODERN PORTFOLIO MGMT', heroA: 'Invest with', heroB: 'clarity.', mark: 'pill' },
 ];
@@ -614,7 +614,7 @@ function Scene2() {
       <div style={{ position: 'absolute', inset: 0,
         background: 'radial-gradient(1300px 760px at 50% 34%, #17263c 0%, #0c1524 72%)' }} />
 
-      {/* SHOT 1 — single firm (Northbridge) + form friction */}
+      {/* SHOT 1 — single firm (Halbrook) + form friction */}
       <Sprite start={19.9} end={30.15}>
         <div style={{ position: 'absolute', left: '50%', top: '50%',
           transform: `translate(-50%,-50%) translate(${camX}px, ${camY}px) scale(${camScale})`, willChange: 'transform' }}>
@@ -1859,12 +1859,15 @@ function Scene13() {
   const S = 168.7;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
-  const marlaFade = 1 - Easing.easeInOutCubic(clamp((l - 3.7) / 0.7, 0, 1));
-  const endP = Easing.easeOutCubic(clamp((l - 4.1) / 0.8, 0, 1));
+  // Her last line runs to about 35.4s in the source and the trim now carries it
+  // to 35.6, so the shot has to hold past l = 4.6 or the final word is clipped.
+  // The hand-off moves back to match; the end card still gets a little over 3s.
+  const marlaFade = 1 - Easing.easeInOutCubic(clamp((l - 4.7) / 0.7, 0, 1));
+  const endP = Easing.easeOutCubic(clamp((l - 5.1) / 0.8, 0, 1));
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
       <div style={{ position: 'absolute', inset: 0, opacity: marlaFade }}>
-        <MarlaShot l={l} quoteStart={0.8} clipStart={31} clipEnd={35} quoteLines={[
+        <MarlaShot l={l} quoteStart={0.8} clipStart={31} clipEnd={35.6} quoteLines={[
           'We\u2019re not replacing the human side of advice.',
           'We\u2019re making it stronger.',
         ]} />

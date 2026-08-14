@@ -1196,6 +1196,28 @@ function MarlaVideo({ clipStart = 0, clipEnd = 0, l = 0, w = 620, h = 392 }) {
   // correction seeks the same element underneath, and the two together keep the
   // decode pipeline from ever settling.
   const shouldPlay = playing && l >= 0 && target < clipEnd - 0.05;
+  // ?debug=1 in the url draws what this element is actually doing over the shot.
+  // Reports only — it changes nothing about playback, and is off otherwise.
+  const DEBUG = typeof location !== 'undefined' && /[?&]debug=1/.test(location.search);
+  const [diag, setDiag] = React.useState({});
+  React.useEffect(() => {
+    if (!DEBUG) return;
+    const id = setInterval(() => {
+      const v = ref.current;
+      if (!v) return;
+      setDiag((d) => ({ ...d,
+        paused: v.paused, muted: v.muted, volume: v.volume,
+        readyState: v.readyState, networkState: v.networkState,
+        clipTime: +v.currentTime.toFixed(2), dims: v.videoWidth + 'x' + v.videoHeight,
+        mediaError: v.error ? (v.error.code + ': ' + v.error.message) : 'none',
+        frames: v.getVideoPlaybackQuality
+          ? (() => { const q = v.getVideoPlaybackQuality();
+              return q.totalVideoFrames + ' decoded, ' + q.droppedVideoFrames + ' dropped'; })()
+          : 'n/a',
+      }));
+    }, 400);
+    return () => clearInterval(id);
+  }, [DEBUG]);
 
   // Autoplay policy rejects play() on an audible element until the page has been
   // interacted with, and the film starts itself. A single attempt when the shot
@@ -1217,7 +1239,8 @@ function MarlaVideo({ clipStart = 0, clipEnd = 0, l = 0, w = 620, h = 392 }) {
       if (dead || !v.paused) return;
       v.volume = 1;
       const r = v.play();
-      if (r && r.catch) r.catch(() => {});
+      if (r && r.catch) r.catch((e) => setDiag((d) => ({ ...d,
+        playError: ((e && e.name) || 'Error') + ': ' + ((e && e.message) || String(e)) })));
     };
     attempt();
     const id = setInterval(attempt, 500);
@@ -1250,9 +1273,35 @@ function MarlaVideo({ clipStart = 0, clipEnd = 0, l = 0, w = 620, h = 392 }) {
     if (drift < 0.05) return;
     if (!shouldPlay || drift > 1.5) { try { v.currentTime = target; } catch (e) {} }
   }, [target, shouldPlay]);
-  return (
+  const el = (
     <video ref={ref} src={MARLA_SRC} playsInline preload="auto"
       style={{ width: w, height: h, objectFit: 'cover', display: 'block', background: '#1b0a2e' }} />
+  );
+  if (!DEBUG) return el;
+  const rows = [
+    ['paused', String(diag.paused)],
+    ['muted / volume', diag.muted + ' / ' + diag.volume],
+    ['readyState', diag.readyState + '  (4 = can play through)'],
+    ['networkState', String(diag.networkState)],
+    ['video dims', String(diag.dims)],
+    ['clip time', diag.clipTime + '   target ' + target.toFixed(2)],
+    ['frames', String(diag.frames)],
+    ['media error', String(diag.mediaError)],
+    ['play() error', String(diag.playError || 'none')],
+  ];
+  return (
+    <React.Fragment>
+      {el}
+      <div style={{ position: 'absolute', left: 0, top: 0, right: 0, background: 'rgba(0,0,0,0.88)',
+        color: '#9ff0e0', font: '12px/1.55 ui-monospace, SFMono-Regular, monospace', padding: '10px 12px', zIndex: 5 }}>
+        {rows.map(([k, v]) => (
+          <div key={k} style={{ display: 'flex', gap: 10 }}>
+            <span style={{ opacity: 0.6, width: 116, flexShrink: 0 }}>{k}</span>
+            <span style={{ color: '#fff' }}>{v}</span>
+          </div>
+        ))}
+      </div>
+    </React.Fragment>
   );
 }
 

@@ -1847,8 +1847,8 @@ function Scene12() {
     ['Better ', 'decisions', '.'],
   ];
   const lineP = (i) => Easing.easeOutCubic(clamp((l - (0.8 + i * 0.9)) / 0.6, 0, 1));
-  const finalP = Easing.easeOutCubic(clamp((l - 8.4) / 0.9, 0, 1));
-  const listFade = 1 - Easing.easeInOutCubic(clamp((l - 8.0) / 0.7, 0, 1));
+  const finalP = Easing.easeOutCubic(clamp((l - 6.0) / 0.9, 0, 1));
+  const listFade = 1 - Easing.easeInOutCubic(clamp((l - 5.6) / 0.7, 0, 1));
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
       <WarmField l={l} />

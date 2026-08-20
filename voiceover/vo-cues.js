@@ -4,12 +4,12 @@
 // The Behavioral Intelligence beat was cut from the edit, so clips 25–28 of the take are
 // cut too — they are not part of the film and are not shipped.
 window.KNOMEE_VO = [
-  { "n": 1,  "src": "uploads/ElevenLabs_Untitled_project/1_Chapter_1.mp3",  "at": 0.5,   "off": 0,    "len": 2.83, "text": "Most wealth firms don't have a pipeline problem." },
-  { "n": 2,  "src": "uploads/ElevenLabs_Untitled_project/2_Chapter_1.mp3",  "at": 3.9,   "off": 0.05, "len": 1.55, "text": "They have a conversion problem." },
-  { "n": 3,  "src": "uploads/ElevenLabs_Untitled_project/3_Chapter_1.mp3",  "at": 5.9,   "off": 0.07, "len": 1.32, "text": "You have target lists." },
-  { "n": 4,  "src": "uploads/ElevenLabs_Untitled_project/4_Chapter_1.mp3",  "at": 7.9,   "off": 0.08, "len": 1.81, "text": "But you're not converting new clients." },
-  { "n": 5,  "src": "uploads/ElevenLabs_Untitled_project/5_Chapter_1.mp3",  "at": 10.3,  "off": 0.06, "len": 4.84, "text": "You start with what you offer — before understanding what wealth means to them." },
-  { "n": 6,  "src": "uploads/ElevenLabs_Untitled_project/6_Chapter_1.mp3",  "at": 16.3,  "off": 0.08, "len": 1.76, "text": "And that's where momentum breaks." },
+  { "n": 1,  "src": "uploads/ElevenLabs_Untitled_project/1_Chapter_1.mp3",  "at": 1.5,   "off": 0,    "len": 2.83, "text": "Most wealth firms don't have a pipeline problem." },
+  { "n": 2,  "src": "uploads/ElevenLabs_Untitled_project/2_Chapter_1.mp3",  "at": 4.9,   "off": 0.05, "len": 1.55, "text": "They have a conversion problem." },
+  { "n": 3,  "src": "uploads/ElevenLabs_Untitled_project/3_Chapter_1.mp3",  "at": 6.9,   "off": 0.07, "len": 1.32, "text": "You have target lists." },
+  { "n": 4,  "src": "uploads/ElevenLabs_Untitled_project/4_Chapter_1.mp3",  "at": 8.47,   "off": 0.08, "len": 1.81, "text": "But you're not converting new clients." },
+  { "n": 5,  "src": "uploads/ElevenLabs_Untitled_project/5_Chapter_1.mp3",  "at": 10.87,  "off": 0.06, "len": 4.84, "text": "You start with what you offer — before understanding what wealth means to them." },
+  { "n": 6,  "src": "uploads/ElevenLabs_Untitled_project/6_Chapter_1.mp3",  "at": 16.87,  "off": 0.08, "len": 1.76, "text": "And that's where momentum breaks." },
   { "n": 7,  "src": "uploads/ElevenLabs_Untitled_project/7_Chapter_1.mp3",  "at": 20.4,  "off": 0.07, "len": 3.17, "text": "At first touch, every wealth firm feels the same." },
   { "n": 8,  "src": "uploads/ElevenLabs_Untitled_project/8_Chapter_1.mp3",  "at": 23.7,  "off": 0.05, "len": 1.84, "text": "A click leads to a form." },
   { "n": 9,  "src": "uploads/ElevenLabs_Untitled_project/9_Chapter_1.mp3",  "at": 25.6,  "off": 0.06, "len": 0.75, "text": "Questions." },

@@ -1131,11 +1131,15 @@ function Scene4() {
                   <div style={{ background: KDS.white, border: `1px solid ${KDS.stone}`, borderRadius: 10, padding: '30px 34px' }}>
                     <div style={{ fontSize: 26, lineHeight: 1.55, color: KDS.plum }}>{visionIntro}</div>
                     <div style={{ fontSize: 26, lineHeight: 1.55, color: KDS.plum, marginTop: 16, minHeight: 124 }}>
-                      {vShown}<span style={{ opacity: caret ? 1 : 0, color: KDS.grape, fontWeight: 700 }}>|</span>
+                      {vShown}<span style={{ opacity: (caret && sigIn < 0.5) ? 1 : 0, color: KDS.grape, fontWeight: 700 }}>|</span>
                     </div>
                     <div style={{ fontSize: 26, lineHeight: 1.55, color: KDS.plum, marginTop: 16, opacity: sigIn }}>
                       With love and pride,
-                      <div>Future You</div>
+                      {/* The caret follows the writing. While the body is being typed it sits at
+                          the end of that text; once the sign-off has landed the postcard finishes
+                          on this line, so the cursor belongs here rather than stranded three
+                          lines above it. */}
+                      <div>Future You<span style={{ opacity: (caret && sigIn >= 0.5) ? 1 : 0, color: KDS.grape, fontWeight: 700 }}>|</span></div>
                     </div>
                   </div>
                 </div>

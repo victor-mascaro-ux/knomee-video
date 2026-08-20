@@ -111,7 +111,11 @@ function UIMock({ kind = 'chart', w = '100%', h = '100%', style }) {
 // to its polygon, then tipped, spun and dropped under gravity.
 const FRAME_W = 1360, FRAME_H = 812;
 const CX = FRAME_W / 2, CY = FRAME_H * 0.5;
-const SHARD_SPOKES = 7;
+// Five spokes, not seven. Each shard paints its own full-size copy of the page,
+// and the film draws inside an svg foreignObject that browsers will not
+// hardware-composite, so every extra shard is another whole page repainted on
+// every frame of the break. Ten pieces still reads as shattered glass.
+const SHARD_SPOKES = 5;
 const jit = (i, k) => {
   const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453;
   return x - Math.floor(x);
@@ -223,17 +227,28 @@ function PageShatter({ t, start = 16.4, children }) {
           const ty = (dy0 / dist) * push * 0.5 + 540 * f * f;
           const rot = (jit(k, 7) - 0.5) * 130 * f;
           const sc = 1 - 0.1 * clamp(f, 0, 1);
-          const op = clamp(1 - f / 1.5, 0, 1);
+          const op = clamp(1 - f / 1.05, 0, 1);
           if (op <= 0) return null;
           return (
             <div key={k} style={{ position: 'absolute', left: sh.bx, top: sh.by, width: sh.bw, height: sh.bh,
               clipPath: sh.clip, overflow: 'hidden',
               transformOrigin: (sh.cx - sh.bx).toFixed(0) + 'px ' + (sh.cy - sh.by).toFixed(0) + 'px',
               transform: 'translate(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px) rotate(' + rot.toFixed(1) + 'deg) scale(' + sc.toFixed(3) + ')',
-              opacity: op, backfaceVisibility: 'hidden' }}>
-              <div style={{ position: 'absolute', left: -sh.bx, top: -sh.by, width: FRAME_W, height: FRAME_H }}>
-                <FrozenPage node={children} />
-              </div>
+              opacity: op, backfaceVisibility: 'hidden', willChange: 'transform, opacity' }}>
+              {f < 0.55 ? (
+                // Still close enough to read: real page content.
+                <div style={{ position: 'absolute', left: -sh.bx, top: -sh.by, width: FRAME_W, height: FRAME_H }}>
+                  <FrozenPage node={children} />
+                </div>
+              ) : (
+                // Only once a piece is small, fast and nearly gone. Swapping earlier is
+                // cheaper but stops the break reading as a page — it becomes an abstract
+                // field of glass. Held until 0.55 the shards are still recognisably the
+                // site while they matter, and flat only as they leave.
+                <div style={{ position: 'absolute', inset: 0,
+                  background: 'linear-gradient(' + (140 + jit(k, 8) * 80).toFixed(0) + 'deg, #f6f8fb 0%, #e4e9f1 62%, #d3dae5 100%)',
+                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.85)' }} />
+              )}
             </div>
           );
         })

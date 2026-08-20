@@ -651,8 +651,12 @@ function Scene2() {
       <Sprite start={29.9} end={41.59}>
         {({ localTime }) => {
           const drift = interpolate([0, 10], [0, -26], Easing.linear)(localTime);
-          // fade firms one by one near the end ("most just leave") — local ~11.5+
-          const gone = (i) => interpolate([11.4 + i * 0.5, 12.2 + i * 0.5], [0, 0.9], Easing.easeInOutQuad)(localTime);
+          // Firms leave one by one, on the line. "And most just leave" is at 38.38s
+          // absolute — local 8.48 against this sprite's 29.9 start — and runs 1.67s.
+          // The old numbers put the first card at local 11.4, i.e. 41.3s absolute,
+          // against a sprite that ends at 41.59: the last card had not begun to move
+          // before the scene cut, so the line landed over four cards sitting still.
+          const gone = (i) => interpolate([8.5 + i * 0.45, 9.3 + i * 0.45], [0, 1], Easing.easeInOutQuad)(localTime);
           const firms = FIRMS;
           return (
             <div style={{ position: 'absolute', inset: 0 }}>
@@ -683,8 +687,8 @@ const SCENES = [
   { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 41.59, end: 44.95 },
   { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 44.95, end: 65.26 },
   { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 65.26, end: 85.27 },
-  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 85.27, end: 107.75 },
-  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 107.75, end: 118.3 },
+  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 85.27, end: 108.55 },
+  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 108.55, end: 118.3 },
   { id: 'different',     n: 8, title: 'Show up different', start: 118.3, end: 127.09 },
   { id: 'founder-2',     n: 9, title: 'Founder POV — build trust faster', start: 127.09, end: 133.09 },
   { id: 'lifecycle',     n: 10, title: 'The lifecycle', start: 133.09, end: 148.57 },
@@ -1517,9 +1521,15 @@ function Scene6() {
 
   // shot A = readiness (0–7.6s), shot B = playbook
   const swap = Easing.easeInOutCubic(clamp((l - 7.6) / 0.6, 0, 1));
-  const ringP = Easing.easeOutCubic(clamp((l - 4.1) / 1.2, 0, 1));
-  const brk = (i) => Easing.easeOutCubic(clamp((l - (4.7 + i * 0.4)) / 0.5, 0, 1));
-  const tierP = Easing.easeOutCubic(clamp((l - 6.2) / 0.5, 0, 1));
+  // The board is up by l=0.8 and used to sit empty until l=4.1 — three and a half
+  // seconds of a zeroed ring under "We turn insight into clear signals advisors
+  // can act on" (65.27–69.70), which is why that line reads as slow. There is no
+  // pause inside the recording to cut, so the picture is what moves instead: the
+  // ring now fills under the line and the breakdown rolls into "A Knomee Quotient
+  // that shows readiness" (69.97) rather than starting on it.
+  const ringP = Easing.easeOutCubic(clamp((l - 2.4) / 1.2, 0, 1));
+  const brk = (i) => Easing.easeOutCubic(clamp((l - (3.4 + i * 0.4)) / 0.5, 0, 1));
+  const tierP = Easing.easeOutCubic(clamp((l - 5.2) / 0.5, 0, 1));
   const topP = Easing.easeOutCubic(clamp((l - 8.3) / 0.5, 0, 1));
   const stP = (i) => Easing.easeOutCubic(clamp((l - (9.0 + i * 0.9)) / 0.6, 0, 1));
   const tagP = Easing.easeOutCubic(clamp((l - 11.8) / 0.6, 0, 1));
@@ -1658,12 +1668,19 @@ function Scene6() {
 }
 
 // ── SCENE 7 — founder POV (Marla) ─────────────────────────────────────────────
-// 90–108.3s.
+// 85.27–108.55s.
+//
+// The take runs 0–22.45 and the scene used to end at 107.75 — 0.03s after her
+// last word — so the shot was cut off the instant she stopped, with no fade.
+// The room for it was already in the mix: nothing is spoken between the end of
+// her take (107.72) and "Before sitting down for a first meeting" at 108.77.
+// That 0.8s now belongs to this scene's outro instead of scene 8's intro, and
+// the shot fades over it.
 function Scene7() {
   const t = useT();
   const S = 85.27;
   const l = t - S;
-  const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
+  const op = interpolate([S - 0.1, S + 0.5, S + 22.5, S + 23.28], [0, 1, 1, 0], Easing.linear)(t);
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
       <MarlaShot l={l} quoteStart={0.8} clipStart={0} clipEnd={22.45} quoteLines={[
@@ -1676,10 +1693,10 @@ function Scene7() {
 }
 
 // ── SCENE 8 — meeting prep ────────────────────────────────────────────────────
-// 108.3–122s. Context, emotional insight, a clear path in.
+// 108.55–118.3s. Context, emotional insight, a clear path in.
 function Scene8() {
   const t = useT();
-  const S = 107.75;
+  const S = 108.55;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
@@ -1689,7 +1706,9 @@ function Scene8() {
     { k: 'EMOTIONAL INSIGHT', icon: '#2DD2B0', text: 'Feels guilty enjoying what she has earned — and it stalls decisions.' },
     { k: 'A CLEAR PATH IN', icon: '#a06bf0', text: '“What would working less in the next five years actually look like for you?”' },
   ];
-  const CARD_AT = [4.35, 5.64, 7.26];
+  // Held against the cues, not the scene: "Context." 112.2, "Emotional insight."
+  // 113.45, "A clear path into the conversation." 115.17. Shifted with S.
+  const CARD_AT = [3.55, 4.84, 6.46];
   const cP = (i) => Easing.easeOutCubic(clamp((l - CARD_AT[i]) / 0.6, 0, 1));
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
@@ -2129,8 +2148,8 @@ function KnomeeVideo() {
       <Sprite start={41.5} end={45.03}><Scene3 /></Sprite>
       <Sprite start={44.86} end={65.36}><Scene4 /></Sprite>
       <Sprite start={65.21} end={85.37}><Scene6 /></Sprite>
-      <Sprite start={85.17} end={107.85}><Scene7 /></Sprite>
-      <Sprite start={107.65} end={118.33}><Scene8 /></Sprite>
+      <Sprite start={85.17} end={108.65}><Scene7 /></Sprite>
+      <Sprite start={108.45} end={118.33}><Scene8 /></Sprite>
       <Sprite start={118.27} end={127.19}><Scene9 /></Sprite>
       <Sprite start={126.99} end={133.19}><Scene10 /></Sprite>
       <Sprite start={132.99} end={148.67}><Scene11 /></Sprite>

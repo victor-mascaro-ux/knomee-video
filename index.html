@@ -363,7 +363,10 @@
          audible playback inside an iframe without it, so MarlaVideo's play() rejects
          and its .catch() swallows the failure, leaving the clip silent. The film's own
          soundtrack is Web Audio and is unaffected either way. -->
-    <iframe id="ccProto" src="video.html" title="Video" allow="autoplay"></iframe>
+    <!-- ?v= is a cache buster, and it has to be bumped by hand on every cut.
+         A hard reload does not reach an iframe's own cache, so without it a
+         reviewer keeps watching the previous build and reports the edit missing. -->
+    <iframe id="ccProto" src="video.html?v=26" title="Video" allow="autoplay"></iframe>
     <div class="cc-catcher" id="ccCatcher"></div>
     <div class="cc-pin-layer" id="ccPinLayer"></div>
     <!-- thread popover appended here -->

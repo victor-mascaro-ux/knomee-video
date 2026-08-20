@@ -595,7 +595,7 @@ function CompanyPage({ firm, formHi = 0, dim = 0, btnHi = 0 }) {
 // 20–44s. Single site + form friction stamps, then pull back to interchangeable firms, then they leave.
 function Scene2() {
   const t = useT();
-  const S = 20;
+  const S = 20.0;
   // Shot 1 camera: push toward form
   const camScale = interpolate([S, S + 4, S + 9.6], [1.02, 1.08, 1.16], Easing.easeInOutQuad)(t);
   const camX = interpolate([S, S + 4, S + 9.6], [0, -60, -240], Easing.easeInOutQuad)(t);
@@ -633,7 +633,7 @@ function Scene2() {
       </Sprite>
 
       {/* SHOT 2 — interchangeable grid */}
-      <Sprite start={29.9} end={44}>
+      <Sprite start={29.9} end={41.59}>
         {({ localTime }) => {
           const drift = interpolate([0, 10], [0, -26], Easing.linear)(localTime);
           // fade firms one by one near the end ("most just leave") — local ~11.5+
@@ -663,20 +663,20 @@ function Scene2() {
 // (start/end/title may shift as scenes are refined — always read them live via
 //  window.KnomeePlayer.getScenes(), don't hardcode timings in your app.)
 const SCENES = [
-  { id: 'problem',       n: 1, title: 'The conversion problem', start: 0,  end: 20 },
-  { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 20, end: 44 },
-  { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 44, end: 48 },
-  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 48, end: 70 },
-  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 70, end: 90 },
-  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 90, end: 112 },
-  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 112, end: 125.7 },
-  { id: 'different',     n: 8, title: 'Show up different', start: 125.7, end: 134.7 },
-  { id: 'founder-2',     n: 9, title: 'Founder POV — build trust faster', start: 134.7, end: 140.7 },
-  { id: 'lifecycle',     n: 10, title: 'The lifecycle', start: 140.7, end: 156.7 },
-  { id: 'close',         n: 11, title: 'Better beginnings', start: 156.7, end: 168.7 },
-  { id: 'final',         n: 12, title: 'Making advice stronger', start: 168.7, end: 176.7 },
+  { id: 'problem',       n: 1, title: 'The conversion problem', start: 0.0,  end: 20.0 },
+  { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 20.0, end: 41.59 },
+  { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 41.59, end: 44.95 },
+  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 44.95, end: 65.26 },
+  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 65.26, end: 85.27 },
+  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 85.27, end: 107.75 },
+  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 107.75, end: 118.3 },
+  { id: 'different',     n: 8, title: 'Show up different', start: 118.3, end: 127.09 },
+  { id: 'founder-2',     n: 9, title: 'Founder POV — build trust faster', start: 127.09, end: 133.09 },
+  { id: 'lifecycle',     n: 10, title: 'The lifecycle', start: 133.09, end: 148.57 },
+  { id: 'close',         n: 11, title: 'Better beginnings', start: 148.57, end: 160.57 },
+  { id: 'final',         n: 12, title: 'Making advice stronger', start: 160.57, end: 168.57 },
 ];
-const VIDEO_DURATION = 176.7;
+const VIDEO_DURATION = 168.57;
 
 // Bridges the internal timeline to a stable global API + postMessage stream.
 // Mounted once inside <Stage>. Your embedding page uses window.KnomeePlayer
@@ -789,17 +789,17 @@ function KnomeeWordmark({ iconColor = '#2DD2B0', textColor = '#fff', height = 46
 // 44–45s. Cold world washes away; warm Knomee brand arrives. "Knomee changes the starting point."
 function Scene3() {
   const t = useT();
-  const S = 44;
+  const S = 41.59;
   const l = t - S; // local time
   // warm purple wipe sweeps in over the cold backdrop
   const wipe = interpolate([0, 1.4], [0, 140], Easing.easeInOutCubic)(l); // % across
   // icon: fade + settle scale + gentle rotation ease
-  const iconP = Easing.easeOutCubic(clamp((l - 1.0) / 0.9, 0, 1));
+  const iconP = Easing.easeOutCubic(clamp((l - 0.84) / 0.9, 0, 1));
   const iconScale = 0.7 + iconP * 0.3;
   const iconRot = (1 - iconP) * -22;
   const glow = 0.2 + 0.8 * iconP;
   // wordmark reveal
-  const wordP = Easing.easeOutCubic(clamp((l - 1.8) / 0.8, 0, 1));
+  const wordP = Easing.easeOutCubic(clamp((l - 1.51) / 0.8, 0, 1));
   // soft floating accents
   const orb = (ph, amp) => Math.sin((l + ph) * 0.7) * amp;
 
@@ -831,7 +831,7 @@ function Scene3() {
       </div>
 
       {/* caption */}
-      <Sprite start={45.5} end={48}>
+      <Sprite start={42.85} end={44.95}>
         {() => {
           const { localTime, duration } = useSprite();
           const inT = Easing.easeOutCubic(clamp(localTime / 0.5, 0, 1));
@@ -972,7 +972,7 @@ function ProgressDots({ active = 0, total = 3 }) {
 // 48–70s. A warm, guided card: reflect on Values → Goals → Vision.
 function Scene4() {
   const t = useT();
-  const S = 48;
+  const S = 44.95;
   const l = t - S;
   const s4op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
@@ -1015,9 +1015,9 @@ function Scene4() {
   // Vision typewriter
   const visionIntro = 'Dear Me,';
   const visionFull = 'You took the month in Italy. The business is in Sofia’s hands and it still feels like ours. You gave the shelter what you always meant to. You stopped waiting.';
-  const vShown = visionFull.slice(0, Math.floor(clamp((l - 15.2) / 4.6, 0, 1) * visionFull.length));
+  const vShown = visionFull.slice(0, Math.floor(clamp((l - 13.79) / 4.6, 0, 1) * visionFull.length));
   const caret = Math.floor(l * 2) % 2 === 0;
-  const sigIn = Easing.easeOutCubic(clamp((l - 20.1) / 0.6, 0, 1));
+  const sigIn = Easing.easeOutCubic(clamp((l - 18.69) / 0.6, 0, 1));
 
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: s4op, background: KDS.plum }}>
@@ -1490,7 +1490,7 @@ function KQRing({ value = 81, p = 1, size = 196 }) {
 
 function Scene6() {
   const t = useT();
-  const S = 70;
+  const S = 65.26;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
@@ -1642,12 +1642,12 @@ function Scene6() {
 // 90–108.3s.
 function Scene7() {
   const t = useT();
-  const S = 90;
+  const S = 85.27;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
-      <MarlaShot l={l} quoteStart={0.8} clipStart={0} clipEnd={22} quoteLines={[
+      <MarlaShot l={l} quoteStart={0.8} clipStart={0} clipEnd={22.45} quoteLines={[
         'Wealth managers want to improve their clients\u2019 lives.',
         'When prospects start with Knomee, advisors understand what matters, where they are, and how to help them move forward.',
         'That clarity changes everything.',
@@ -1660,7 +1660,7 @@ function Scene7() {
 // 108.3–122s. Context, emotional insight, a clear path in.
 function Scene8() {
   const t = useT();
-  const S = 112;
+  const S = 107.75;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
@@ -1670,7 +1670,7 @@ function Scene8() {
     { k: 'EMOTIONAL INSIGHT', icon: '#2DD2B0', text: 'Feels guilty enjoying what she has earned — and it stalls decisions.' },
     { k: 'A CLEAR PATH IN', icon: '#a06bf0', text: '“What would working less in the next five years actually look like for you?”' },
   ];
-  const CARD_AT = [4.5, 6.4, 8.2];
+  const CARD_AT = [4.35, 5.64, 7.26];
   const cP = (i) => Easing.easeOutCubic(clamp((l - CARD_AT[i]) / 0.6, 0, 1));
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
@@ -1712,11 +1712,11 @@ function Scene8() {
 // 122–131s. Default portfolio recedes; prepared / relevant / different stamp in.
 function Scene9() {
   const t = useT();
-  const S = 125.7;
+  const S = 118.3;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   // cold portfolio card recedes
-  const recede = Easing.easeInOutCubic(clamp((l - 2.6) / 1.0, 0, 1));
+  const recede = Easing.easeInOutCubic(clamp((l - 2.39) / 1.0, 0, 1));
   const words = [
     { w: 'Prepared.', at: 4.0, c: '#fff' },
     { w: 'Relevant.', at: 4.75, c: '#2DD2B0' },
@@ -1766,7 +1766,7 @@ function Scene9() {
 // 131–140s.
 function Scene10() {
   const t = useT();
-  const S = 134.7;
+  const S = 127.09;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   return (
@@ -1783,7 +1783,7 @@ function Scene10() {
 // 140–156s. Understanding grows across life stages and generations.
 function Scene11() {
   const t = useT();
-  const S = 140.7;
+  const S = 133.09;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const stages = [
@@ -1837,7 +1837,7 @@ function Scene11() {
 // 156–168s. Better beginnings → better everything.
 function Scene12() {
   const t = useT();
-  const S = 156.7;
+  const S = 148.57;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const lines = [
@@ -1881,7 +1881,7 @@ function Scene12() {
 // 168.7–176.7s. 4s of footage, then a 4s brand end card.
 function Scene13() {
   const t = useT();
-  const S = 168.7;
+  const S = 160.57;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   // Her last line runs to about 35.4s in the source and the trim now carries it
@@ -2105,18 +2105,18 @@ function KnomeeVideo() {
       persistKey="knomee-video" autoplay={false}>
       <PlayerBridge />
       <Soundtrack />
-      <Sprite start={0} end={20.1}><Scene1 /></Sprite>
-      <Sprite start={19.9} end={44.05}><Scene2 /></Sprite>
-      <Sprite start={43.9} end={48.1}><Scene3 /></Sprite>
-      <Sprite start={47.9} end={70.1}><Scene4 /></Sprite>
-      <Sprite start={69.9} end={90.1}><Scene6 /></Sprite>
-      <Sprite start={89.9} end={112.1}><Scene7 /></Sprite>
-      <Sprite start={111.9} end={125.8}><Scene8 /></Sprite>
-      <Sprite start={125.6} end={134.8}><Scene9 /></Sprite>
-      <Sprite start={134.6} end={140.8}><Scene10 /></Sprite>
-      <Sprite start={140.6} end={156.8}><Scene11 /></Sprite>
-      <Sprite start={156.6} end={168.8}><Scene12 /></Sprite>
-      <Sprite start={168.6} end={176.7}><Scene13 /></Sprite>
+      <Sprite start={0.0} end={20.1}><Scene1 /></Sprite>
+      <Sprite start={19.9} end={41.63}><Scene2 /></Sprite>
+      <Sprite start={41.5} end={45.03}><Scene3 /></Sprite>
+      <Sprite start={44.86} end={65.36}><Scene4 /></Sprite>
+      <Sprite start={65.21} end={85.37}><Scene6 /></Sprite>
+      <Sprite start={85.17} end={107.85}><Scene7 /></Sprite>
+      <Sprite start={107.65} end={118.33}><Scene8 /></Sprite>
+      <Sprite start={118.27} end={127.19}><Scene9 /></Sprite>
+      <Sprite start={126.99} end={133.19}><Scene10 /></Sprite>
+      <Sprite start={132.99} end={148.67}><Scene11 /></Sprite>
+      <Sprite start={148.47} end={160.67}><Scene12 /></Sprite>
+      <Sprite start={160.47} end={168.57}><Scene13 /></Sprite>
     </Stage>
   );
 }

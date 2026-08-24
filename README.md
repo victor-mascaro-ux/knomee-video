@@ -7,7 +7,7 @@ comments on it.
 | --- | --- |
 | `index.html` | the review wrapper — loads `video.html` in an iframe and drives it through `window.KnomeePlayer` |
 | `video.html` | **generated.** The film, self-contained. Don't hand-edit — see below |
-| `voiceover/knomee-soundtrack.wav` | the 179s mixed track: narration over a music bed held at a constant 7.5% |
+| `voiceover/knomee-soundtrack.wav` | **generated.** The 168s mixed track: narration over a music bed — see *Re-mixing* |
 
 ## Source
 
@@ -110,6 +110,35 @@ changes the film and not the mix, and nothing warns you — if the cut was in th
 middle, every line after it plays against the wrong picture. When the edit
 changes, the track has to be re-rendered, and the two numbers checked against
 each other.
+
+### Re-mixing
+
+```sh
+python3 -m http.server 8899 &      # the decoder fetches over http
+npm i -D playwright
+node   build/decode-audio.mjs      # mp3 -> build/pcm/*.raw  (gitignored, ~27 MB)
+python3 build/mix-soundtrack.py    # -> voiceover/knomee-soundtrack.wav
+```
+
+Nothing in this toolchain can decode an mp3 — the ffmpeg build that ships with
+Playwright has no mp3 demuxer — so the first step borrows a browser's decoder.
+It is slow and it is the only reason the second step needs a network at all.
+
+`mix-soundtrack.py` carries the whole recipe: the bed level, the +5 dB lift in
+every gap where nobody speaks, the −5 dB duck across the three windows where
+Marla speaks from the mp4, and the head and tail fades. `NFRAMES` in that file
+and `VIDEO_DURATION` in `scenes.jsx` are the same number twice — change one and
+change the other.
+
+A cue may carry a `cuts` array of `[from, to]` spans, in clip seconds, that are
+spliced out of the take. That is how a pause *inside* a line is shortened
+without re-recording. Cut only where the clip is genuinely silent; a cut across
+speech clicks.
+
+**Retiming.** Every absolute second in `scenes.jsx` — the `SCENES` manifest,
+each scene's `const S`, every `<Sprite start/end>` — is measured against this
+track. Shifting the film means shifting all of them together with the cue sheet;
+what lives inside a scene is relative to its `S` and comes along for free.
 
 ## Voice-over timeline
 

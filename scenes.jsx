@@ -607,7 +607,7 @@ function CompanyPage({ firm, formHi = 0, dim = 0, btnHi = 0 }) {
 }
 
 // ── SCENE 2 — every firm feels the same ────────────────────────────────────────
-// 20–44s. Single site + form friction stamps, then pull back to interchangeable firms, then they leave.
+// 20–41.14s. Single site + form friction stamps, then pull back to interchangeable firms, then they leave.
 function Scene2() {
   const t = useT();
   const S = 20.0;
@@ -648,15 +648,15 @@ function Scene2() {
       </Sprite>
 
       {/* SHOT 2 — interchangeable grid */}
-      <Sprite start={29.9} end={41.59}>
+      <Sprite start={29.9} end={41.14}>
         {({ localTime }) => {
           const drift = interpolate([0, 10], [0, -26], Easing.linear)(localTime);
-          // Firms leave one by one, on the line. "And most just leave" is at 38.38s
-          // absolute — local 8.48 against this sprite's 29.9 start — and runs 1.67s.
-          // The old numbers put the first card at local 11.4, i.e. 41.3s absolute,
-          // against a sprite that ends at 41.59: the last card had not begun to move
-          // before the scene cut, so the line landed over four cards sitting still.
-          const gone = (i) => interpolate([8.5 + i * 0.45, 9.3 + i * 0.45], [0, 1], Easing.easeInOutQuad)(localTime);
+          // Firms leave one by one, on the line. "And most just leave" is at 37.93s
+          // absolute — local 8.03 against this sprite's 29.9 start — and runs 1.67s.
+          // This sprite starts before the retime boundary at 33.6 so its own start
+          // did not move, but the line it is cut against did: these offsets carry
+          // the same 0.45s as everything downstream.
+          const gone = (i) => interpolate([8.05 + i * 0.45, 8.85 + i * 0.45], [0, 1], Easing.easeInOutQuad)(localTime);
           const firms = FIRMS;
           return (
             <div style={{ position: 'absolute', inset: 0 }}>
@@ -683,19 +683,19 @@ function Scene2() {
 //  window.KnomeePlayer.getScenes(), don't hardcode timings in your app.)
 const SCENES = [
   { id: 'problem',       n: 1, title: 'The conversion problem', start: 0.0,  end: 20.0 },
-  { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 20.0, end: 41.59 },
-  { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 41.59, end: 44.95 },
-  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 44.95, end: 65.26 },
-  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 65.26, end: 85.27 },
-  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 85.27, end: 108.55 },
-  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 108.55, end: 118.3 },
-  { id: 'different',     n: 8, title: 'Show up different', start: 118.3, end: 127.09 },
-  { id: 'founder-2',     n: 9, title: 'Founder POV — build trust faster', start: 127.09, end: 133.09 },
-  { id: 'lifecycle',     n: 10, title: 'The lifecycle', start: 133.09, end: 148.57 },
-  { id: 'close',         n: 11, title: 'Better beginnings', start: 148.57, end: 160.57 },
-  { id: 'final',         n: 12, title: 'Making advice stronger', start: 160.57, end: 168.57 },
+  { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 20.0, end: 41.14 },
+  { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 41.14, end: 44.5 },
+  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 44.5, end: 64.81 },
+  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 64.81, end: 84.82 },
+  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 84.82, end: 108.1 },
+  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 108.1, end: 117.85 },
+  { id: 'different',     n: 8, title: 'Show up different', start: 117.85, end: 126.64 },
+  { id: 'founder-2',     n: 9, title: 'Founder POV — build trust faster', start: 126.64, end: 132.64 },
+  { id: 'lifecycle',     n: 10, title: 'The lifecycle', start: 132.64, end: 148.12 },
+  { id: 'close',         n: 11, title: 'Better beginnings', start: 148.12, end: 160.12 },
+  { id: 'final',         n: 12, title: 'Making advice stronger', start: 160.12, end: 168.12 },
 ];
-const VIDEO_DURATION = 168.57;
+const VIDEO_DURATION = 168.12;
 
 // Bridges the internal timeline to a stable global API + postMessage stream.
 // Mounted once inside <Stage>. Your embedding page uses window.KnomeePlayer
@@ -808,7 +808,7 @@ function KnomeeWordmark({ iconColor = '#2DD2B0', textColor = '#fff', height = 46
 // 44–45s. Cold world washes away; warm Knomee brand arrives. "Knomee changes the starting point."
 function Scene3() {
   const t = useT();
-  const S = 41.59;
+  const S = 41.14;
   const l = t - S; // local time
   // warm purple wipe sweeps in over the cold backdrop
   const wipe = interpolate([0, 1.4], [0, 140], Easing.easeInOutCubic)(l); // % across
@@ -850,7 +850,7 @@ function Scene3() {
       </div>
 
       {/* caption */}
-      <Sprite start={42.85} end={44.95}>
+      <Sprite start={42.4} end={44.5}>
         {() => {
           const { localTime, duration } = useSprite();
           const inT = Easing.easeOutCubic(clamp(localTime / 0.5, 0, 1));
@@ -991,7 +991,7 @@ function ProgressDots({ active = 0, total = 3 }) {
 // 48–70s. A warm, guided card: reflect on Values → Goals → Vision.
 function Scene4() {
   const t = useT();
-  const S = 44.95;
+  const S = 44.5;
   const l = t - S;
   const s4op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
@@ -1513,7 +1513,7 @@ function KQRing({ value = 81, p = 1, size = 196 }) {
 
 function Scene6() {
   const t = useT();
-  const S = 65.26;
+  const S = 64.81;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
@@ -1523,10 +1523,10 @@ function Scene6() {
   const swap = Easing.easeInOutCubic(clamp((l - 7.6) / 0.6, 0, 1));
   // The board is up by l=0.8 and used to sit empty until l=4.1 — three and a half
   // seconds of a zeroed ring under "We turn insight into clear signals advisors
-  // can act on" (65.27–69.70), which is why that line reads as slow. There is no
+  // can act on" (64.82–69.25), which is why that line reads as slow. There is no
   // pause inside the recording to cut, so the picture is what moves instead: the
   // ring now fills under the line and the breakdown rolls into "A Knomee Quotient
-  // that shows readiness" (69.97) rather than starting on it.
+  // that shows readiness" (69.52) rather than starting on it.
   const ringP = Easing.easeOutCubic(clamp((l - 2.4) / 1.2, 0, 1));
   const brk = (i) => Easing.easeOutCubic(clamp((l - (3.4 + i * 0.4)) / 0.5, 0, 1));
   const tierP = Easing.easeOutCubic(clamp((l - 5.2) / 0.5, 0, 1));
@@ -1668,17 +1668,17 @@ function Scene6() {
 }
 
 // ── SCENE 7 — founder POV (Marla) ─────────────────────────────────────────────
-// 85.27–108.55s.
+// 84.82–108.10s.
 //
-// The take runs 0–22.45 and the scene used to end at 107.75 — 0.03s after her
-// last word — so the shot was cut off the instant she stopped, with no fade.
+// The take runs 0–22.45 and the scene used to end 0.03s after her last word,
+// so the shot was cut off the instant she stopped, with no fade.
 // The room for it was already in the mix: nothing is spoken between the end of
-// her take (107.72) and "Before sitting down for a first meeting" at 108.77.
+// her take (107.27) and "Before sitting down for a first meeting" at 108.32.
 // That 0.8s now belongs to this scene's outro instead of scene 8's intro, and
 // the shot fades over it.
 function Scene7() {
   const t = useT();
-  const S = 85.27;
+  const S = 84.82;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5, S + 22.5, S + 23.28], [0, 1, 1, 0], Easing.linear)(t);
   return (
@@ -1693,10 +1693,10 @@ function Scene7() {
 }
 
 // ── SCENE 8 — meeting prep ────────────────────────────────────────────────────
-// 108.55–118.3s. Context, emotional insight, a clear path in.
+// 108.10–117.85s. Context, emotional insight, a clear path in.
 function Scene8() {
   const t = useT();
-  const S = 108.55;
+  const S = 108.1;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
@@ -1706,8 +1706,8 @@ function Scene8() {
     { k: 'EMOTIONAL INSIGHT', icon: '#2DD2B0', text: 'Feels guilty enjoying what she has earned — and it stalls decisions.' },
     { k: 'A CLEAR PATH IN', icon: '#a06bf0', text: '“What would working less in the next five years actually look like for you?”' },
   ];
-  // Held against the cues, not the scene: "Context." 112.2, "Emotional insight."
-  // 113.45, "A clear path into the conversation." 115.17. Shifted with S.
+  // Held against the cues, not the scene: "Context." 111.75, "Emotional insight."
+  // 113.0, "A clear path into the conversation." 114.72. Shifted with S.
   const CARD_AT = [3.55, 4.84, 6.46];
   const cP = (i) => Easing.easeOutCubic(clamp((l - CARD_AT[i]) / 0.6, 0, 1));
   return (
@@ -1750,7 +1750,7 @@ function Scene8() {
 // 122–131s. Default portfolio recedes; prepared / relevant / different stamp in.
 function Scene9() {
   const t = useT();
-  const S = 118.3;
+  const S = 117.85;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   // cold portfolio card recedes
@@ -1804,7 +1804,7 @@ function Scene9() {
 // 131–140s.
 function Scene10() {
   const t = useT();
-  const S = 127.09;
+  const S = 126.64;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   return (
@@ -1821,7 +1821,7 @@ function Scene10() {
 // 140–156s. Understanding grows across life stages and generations.
 function Scene11() {
   const t = useT();
-  const S = 133.09;
+  const S = 132.64;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const stages = [
@@ -1854,7 +1854,11 @@ function Scene11() {
               const p = nodeP(i);
               return (
                 <div key={i} style={{ width: 260, textAlign: 'center', opacity: p, transform: `translateY(${(1 - p) * 20}px)`, willChange: 'transform, opacity' }}>
-                  <div style={{ width: 30, height: 30, borderRadius: '50%', margin: '18px auto 0',
+                  {/* The node is 30px of content inside a 4px border, so it draws 38px
+                      tall and its centre sits 19px below this margin. The line's centre
+                      is at y=32 (top 30, height 4), so the margin has to be 13, not 18 —
+                      at 18 the circles hung 5px low and the line crossed their tops. */}
+                  <div style={{ width: 30, height: 30, borderRadius: '50%', margin: '13px auto 0',
                     background: 'linear-gradient(135deg,#7C3AED,#2DD2B0)', border: '4px solid #190232',
                     boxShadow: '0 0 22px rgba(45,210,176,0.6)' }} />
                   <div style={{ marginTop: 22, fontFamily: DISPLAY, fontWeight: 700, fontSize: 26, color: '#fff' }}>{s.title}</div>
@@ -1872,10 +1876,10 @@ function Scene11() {
 }
 
 // ── SCENE 12 — close (kinetic type) ───────────────────────────────────────────
-// 156–168s. Better beginnings → better everything.
+// 148.12–160.12s. Better beginnings → better everything.
 function Scene12() {
   const t = useT();
-  const S = 148.57;
+  const S = 148.12;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   const lines = [
@@ -1916,10 +1920,10 @@ function Scene12() {
 }
 
 // ── SCENE 13 — final (Marla → brand end card) ─────────────────────────────────
-// 168.7–176.7s. 4s of footage, then a 4s brand end card.
+// 160.12–168.12s. 4.6s of footage, then the brand end card.
 function Scene13() {
   const t = useT();
-  const S = 160.57;
+  const S = 160.12;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   // Her last line runs to about 35.4s in the source and the trim now carries it
@@ -2144,17 +2148,17 @@ function KnomeeVideo() {
       <PlayerBridge />
       <Soundtrack />
       <Sprite start={0.0} end={20.1}><Scene1 /></Sprite>
-      <Sprite start={19.9} end={41.63}><Scene2 /></Sprite>
-      <Sprite start={41.5} end={45.03}><Scene3 /></Sprite>
-      <Sprite start={44.86} end={65.36}><Scene4 /></Sprite>
-      <Sprite start={65.21} end={85.37}><Scene6 /></Sprite>
-      <Sprite start={85.17} end={108.65}><Scene7 /></Sprite>
-      <Sprite start={108.45} end={118.33}><Scene8 /></Sprite>
-      <Sprite start={118.27} end={127.19}><Scene9 /></Sprite>
-      <Sprite start={126.99} end={133.19}><Scene10 /></Sprite>
-      <Sprite start={132.99} end={148.67}><Scene11 /></Sprite>
-      <Sprite start={148.47} end={160.67}><Scene12 /></Sprite>
-      <Sprite start={160.47} end={168.57}><Scene13 /></Sprite>
+      <Sprite start={19.9} end={41.18}><Scene2 /></Sprite>
+      <Sprite start={41.05} end={44.58}><Scene3 /></Sprite>
+      <Sprite start={44.41} end={64.91}><Scene4 /></Sprite>
+      <Sprite start={64.76} end={84.92}><Scene6 /></Sprite>
+      <Sprite start={84.72} end={108.2}><Scene7 /></Sprite>
+      <Sprite start={108} end={117.88}><Scene8 /></Sprite>
+      <Sprite start={117.82} end={126.74}><Scene9 /></Sprite>
+      <Sprite start={126.54} end={132.74}><Scene10 /></Sprite>
+      <Sprite start={132.54} end={148.22}><Scene11 /></Sprite>
+      <Sprite start={148.02} end={160.22}><Scene12 /></Sprite>
+      <Sprite start={160.02} end={168.12}><Scene13 /></Sprite>
     </Stage>
   );
 }

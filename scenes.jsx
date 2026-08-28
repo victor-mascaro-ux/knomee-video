@@ -374,8 +374,8 @@ function ColdLandingPage({ formHi = 0, dim = 0, name = 'TARNBECK WEALTH', btnHi 
           <div style={{ fontSize: 13, color: COLD.slate, marginBottom: 18 }}>Complete the form and an advisor will reach out.</div>
           <Field label="Full name" />
           <Field label="Email address" />
-          <Field label="Phone number" hi={formHi > 0.5} />
-          <Field label="Investable assets" />
+          <Field label="Phone number" />
+          <Field label="Investable assets" hi={formHi > 0.5} />
           <Field label="How did you hear about us?" />
           <div style={{ height: 44, borderRadius: 6, background: COLD.accent, color: '#fff', display: 'flex',
             alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, marginTop: 6,
@@ -395,9 +395,12 @@ function Scene1() {
   const camX = interpolate([0, 3, 16, 20], [0, -20, -230, -250], Easing.easeInOutQuad)(t);
   const camY = interpolate([0, 3, 16, 20], [0, -10, -70, -80], Easing.easeInOutQuad)(t);
 
-  // cursor path (coords in stage space)
+  // Cursor path, in stage space — the page itself is scaled and panned under it,
+  // so these are where the pointer lands on screen, not where it lands on the
+  // page. The dwell has to track the camera: "Investable assets" is centred on
+  // y=616 at t=11 and has drifted to 610 by t=13.
   const cx = interpolate([5, 8.5, 11, 13, 14.5, 16.5], [980, 1250, 1270, 1265, 1180, 1500], Easing.easeInOutCubic)(t);
-  const cy = interpolate([5, 8.5, 11, 13, 14.5, 16.5], [760, 470, 505, 505, 250, -80], Easing.easeInOutCubic)(t);
+  const cy = interpolate([5, 8.5, 11, 13, 14.5, 16.5], [760, 560, 616, 610, 250, -80], Easing.easeInOutCubic)(t);
   const curOpacity = interpolate([4.6, 5, 15.8, 16.5], [0, 1, 1, 0], Easing.linear)(t);
   const formHi = interpolate([9, 11, 14, 15], [0, 1, 1, 0], Easing.easeInOutQuad)(t);
   const dim = interpolate([15.5, 18.5], [0, 0.85], Easing.easeInOutQuad)(t);
@@ -508,8 +511,8 @@ function CompanyPage({ firm, formHi = 0, dim = 0, btnHi = 0 }) {
       <div style={{ fontSize: 12.5, color: c.sub, marginBottom: 16, fontFamily: font }}>Complete the form and an advisor will reach out.</div>
       <Field label="Full name" />
       <Field label="Email address" />
-      <Field label="Phone number" hi={formHi > 0.5} />
-      <Field label="Investable assets" />
+      <Field label="Phone number" />
+      <Field label="Investable assets" hi={formHi > 0.5} />
       <Field label="How did you hear about us?" />
       <div style={{ height: 42, borderRadius: 5, background: c.accent, color: '#fff', display: 'flex',
         alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, marginTop: 4, fontFamily: font,
@@ -615,9 +618,15 @@ function Scene2() {
   const camScale = interpolate([S, S + 4, S + 9.6], [1.02, 1.08, 1.16], Easing.easeInOutQuad)(t);
   const camX = interpolate([S, S + 4, S + 9.6], [0, -60, -240], Easing.easeInOutQuad)(t);
   const camY = interpolate([S, S + 4, S + 9.6], [0, -20, -70], Easing.easeInOutQuad)(t);
-  // cursor to the CTA button then form
+  // Cursor to the CTA button, then to the field the form wants first.
+  //
+  // The press used to land at y=690 with the button at 810–855: it was pressing
+  // 120px above the thing that lit up, on "Investable assets", and then moving
+  // to 470 — "Full name" — while the ring sat somewhere else again. It now
+  // presses the button and moves to the field that is actually highlighted.
+  // The last keyframe tracks the camera, which keeps panning until S+9.6.
   const cx = interpolate([S + 1, S + 3.6, S + 4.2, S + 6], [820, 1245, 1245, 1250], Easing.easeInOutCubic)(t);
-  const cy = interpolate([S + 1, S + 3.6, S + 4.2, S + 6], [720, 690, 690, 470], Easing.easeInOutCubic)(t);
+  const cy = interpolate([S + 1, S + 3.6, S + 4.2, S + 6, S + 9.9], [720, 832, 832, 689, 662], Easing.easeInOutCubic)(t);
   const curOp = interpolate([S + 0.6, S + 1, S + 9.4, S + 9.9], [0, 1, 1, 0], Easing.linear)(t);
   const pressed = t > S + 3.9 && t < S + 4.4;
   const btnHi = interpolate([S + 3.8, S + 4.3, S + 6], [0, 1, 0.4], Easing.easeOutQuad)(t);

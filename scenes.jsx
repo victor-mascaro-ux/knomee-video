@@ -1480,6 +1480,8 @@ const STARTERS = [
     why: 'Curiosity is a predictor of likeability.', tags: ['Demonstrate Curiosity', 'Acknowledge and Validate'] },
 ];
 const WORDS_USE = ['Security', 'Independence', 'Simplicity', 'Confidence', 'Enjoy', 'Future', 'Health', 'Family'];
+const WORDS_AVOID = ['Complex', 'Aggressive', 'Risk-Taking', 'Portfolio Optimization', 'Returns',
+  'Benchmarks', 'Products', 'Abstract Jargon', 'Obligations'];
 
 function Tag({ label }) {
   const st = TAG_STYLE[label] || { bg: '#f0edf6', fg: '#5b4d78' };
@@ -1640,7 +1642,9 @@ function Scene6() {
                     );
                   })}
                 </div>
-                <div style={{ width: 300, flexShrink: 0 }}>
+                {/* 360, not 300: two word lists have to clear the panel's 470px
+                    and "Portfolio Optimization" is a chip on its own at 300. */}
+                <div style={{ width: 360, flexShrink: 0 }}>
                   <div style={{ opacity: wordsP, transform: `translateY(${(1 - wordsP) * 14}px)`, willChange: 'transform, opacity' }}>
                     <div style={{ fontSize: 19, fontWeight: 700, color: '#2b1f47', marginBottom: 12 }}>Words to Use</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -1650,11 +1654,16 @@ function Scene6() {
                       ))}
                     </div>
                   </div>
-                  <div style={{ marginTop: 20, background: '#faf7ff', border: '1.5px solid #f0e8fc', borderRadius: 16,
-                    padding: '16px 18px', opacity: takeP, transform: `translateY(${(1 - takeP) * 14}px)`, willChange: 'transform, opacity' }}>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: '#2b1f47' }}>Advisor takeaway</div>
-                    <div style={{ fontSize: 17, color: '#4a4a58', lineHeight: 1.4, marginTop: 6 }}>
-                      A direct, purposeful communication style will likely resonate with her.
+                  {/* The pair is the point: what to reach for, and what costs you
+                      the room. A one-line "advisor takeaway" said neither. */}
+                  <div style={{ marginTop: 18, opacity: takeP, transform: `translateY(${(1 - takeP) * 14}px)`,
+                    willChange: 'transform, opacity' }}>
+                    <div style={{ fontSize: 19, fontWeight: 700, color: '#2b1f47', marginBottom: 12 }}>Words to Avoid</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {WORDS_AVOID.map((w) => (
+                        <div key={w} style={{ fontSize: 16, fontWeight: 500, color: '#6a6a78', background: '#f4f3f6',
+                          border: '1px solid #e8e6ec', padding: '7px 14px', borderRadius: 999 }}>{w}</div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -1702,7 +1711,7 @@ function Scene8() {
   const intro = Easing.easeOutCubic(clamp(l / 0.8, 0, 1));
   const scale = 0.94 + 0.06 * intro;
   const cards = [
-    { k: 'CONTEXT', icon: '#7C3AED', text: 'Retiring at 55 is her north star. Primary goal has a sub-12-month timeline.' },
+    { k: 'CONTEXT', icon: '#7C3AED', text: 'Retiring at 55 modeled by parents. Wants help buying a franchise, finding philanthropy and board work.' },
     { k: 'EMOTIONAL INSIGHT', icon: '#2DD2B0', text: 'Feels guilty enjoying what she has earned — and it stalls decisions.' },
     { k: 'A CLEAR PATH IN', icon: '#a06bf0', text: '“What would working less in the next five years actually look like for you?”' },
   ];

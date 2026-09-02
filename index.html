@@ -225,6 +225,12 @@
   }
   .cc-stage.cc-mode .cc-catcher { display: block; }
 
+  /* Recording: none of the review furniture belongs in the exported file. */
+  .cc-stage.cc-exporting .cc-rail,
+  .cc-stage.cc-exporting .cc-pin-layer,
+  .cc-stage.cc-exporting .cc-catcher,
+  .cc-stage.cc-exporting .cc-popover { display: none !important; }
+
   /* ════════ Thread popover ════════
      No avatars, no author names — timestamp + delete only. */
   .cc-popover {
@@ -366,7 +372,10 @@
     <!-- ?v= is a cache buster, and it has to be bumped by hand on every cut.
          A hard reload does not reach an iframe's own cache, so without it a
          reviewer keeps watching the previous build and reports the edit missing. -->
-    <iframe id="ccProto" src="video.html?v=29" title="Video" allow="autoplay"></iframe>
+    <!-- display-capture is the export button: getDisplayMedia is called from
+         inside the iframe, and without it in allow= the call is rejected. -->
+    <iframe id="ccProto" src="video.html?v=30" title="Video"
+            allow="autoplay; display-capture"></iframe>
     <div class="cc-catcher" id="ccCatcher"></div>
     <div class="cc-pin-layer" id="ccPinLayer"></div>
     <!-- thread popover appended here -->
@@ -429,6 +438,20 @@
   const rail     = document.getElementById('ccRail');
   const collapseBtn = document.getElementById('ccCollapse');
   const RAIL_COLLAPSED_KEY = 'knomee-cc-rail-collapsed';
+
+  // ── Export ───────────────────────────────────────────────
+  // The film's download button records the tab. Region Capture crops the
+  // stream to its canvas, so this page's chrome is normally out of the file
+  // already — but the rail overlaps the canvas's left edge, and where Region
+  // Capture is unavailable the whole tab is captured. Either way the review
+  // furniture has no business being in an export, so it goes away for the
+  // duration and the pin layer stops taking clicks.
+  window.addEventListener('message', (e) => {
+    if (!e.data || e.data.source !== 'knomee-video') return;
+    if (e.data.type === 'knomee:export-start') stage.classList.add('cc-exporting');
+    if (e.data.type === 'knomee:export-end')   stage.classList.remove('cc-exporting');
+  });
+
 
   stage.dataset.ccTheme = THEME;
 

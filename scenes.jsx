@@ -1971,11 +1971,12 @@ function Scene13() {
 }
 
 // ── Soundtrack ────────────────────────────────────────────────────────
-// One pre-mixed track carries the whole film: the Peaceful Corporate bed held at a
-// constant 7.5% under all 38 narration lines — no ducking, so the music never swells
-// (rendered offline in voiceover/knomee-soundtrack.wav). A single <audio> element plays it, and the
-// playhead is driven by that element's currentTime — so the film cannot drift from
-// the voice, and there is nothing to schedule, overlap or double up.
+// One pre-mixed track carries the whole film: the Peaceful Corporate bed under all 38
+// narration lines, lifted 5dB wherever nobody speaks and ducked 5dB under the founder's
+// shots, whose voice comes from the mp4 rather than from here. Rendered offline by
+// build/mix-soundtrack.py into voiceover/knomee-soundtrack.wav. The playhead is driven
+// by its playback position, so the film cannot drift from the voice, and there is
+// nothing to schedule, overlap or double up.
 const SOUNDTRACK = "voiceover/knomee-soundtrack.wav";
 
 // The mixed track is decoded once into a shared AudioContext rather than played through an

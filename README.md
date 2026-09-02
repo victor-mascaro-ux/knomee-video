@@ -80,6 +80,44 @@ completely normal. Rebuilding from source is the only way to be certain the two
 agree. After any re-export from Claude Design, treat the exported `.html` as
 suspect and regenerate it with the script.
 
+## Exporting a file
+
+The download button at the right of the playback bar saves the film as a video.
+It **records** rather than renders: it asks to capture this tab, plays the film
+once, and `MediaRecorder` encodes what it sees.
+
+That is not the obvious design, and the reason is the picture. The film is DOM
+inside an `<svg><foreignObject>`, its audio is a Web Audio graph with no media
+element behind it, and the founder's clip is a `<video>` portalled *on top of*
+the svg rather than inside it — because a browser will not hardware-composite
+video in a `foreignObject`. Serialising the svg, which is what the export
+scaffolding in `animations.jsx` was built for, therefore loses her shot
+completely, along with every `backdrop-filter`. Recording is the only route
+that captures what a viewer actually sees, and the browser's own h264 and aac
+encoders are the only way this page produces a real mp4 without carrying an
+encoder inside it.
+
+What follows from that:
+
+- **It runs in real time** — 2:48, and the tab has to stay in front. A
+  backgrounded tab is throttled and the capture drops frames with it.
+- **Resolution is the window.** Region Capture crops the stream to the canvas,
+  so the playback bar and the review chrome stay out of the file, but what is
+  left is the canvas at its rendered size in device pixels. On a HiDPI screen a
+  maximised window is already past 1920×1080; on a small one there is no
+  upscaling to be had. The readout shows the number before it starts.
+- **Tick "Share tab audio"** in the picker, or the file is silent. It says so
+  afterwards if you didn't.
+- **mp4 depends on the browser.** Only codec-qualified mime types are offered,
+  because a browser with no h264 encoder still answers yes to a bare
+  `video/mp4` and then writes vp9 and opus into an mp4 container — a legal file
+  that QuickTime and Premiere will not open. Where h264 is missing the export
+  falls back to WebM and says so. Chrome 130+, Edge and Safari all give mp4.
+
+Where Region Capture is unavailable (Safari, Firefox) the whole tab lands in
+the frame; the readout says that too, and `index.html` hides the comments rail
+for the duration either way.
+
 ## Running from source
 
 Serve the directory and open `Knomee Conversion Video.dc.html`. This is slower

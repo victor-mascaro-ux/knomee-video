@@ -16,8 +16,10 @@
 //
 // Stage({width,height,duration,background,fps,loop,autoplay}) — auto-scales to
 //   viewport; scrubber + play/pause + ←/→ seek + space + 0-reset; persists
-//   playhead. The canvas is an <svg><foreignObject>, export-ready: Share →
-//   Export → Video (or the PlaybackBar's download button) renders it to .mp4.
+//   playhead. The canvas is an <svg><foreignObject>. The PlaybackBar's
+//   download button exports it: it records the tab through getDisplayMedia,
+//   cropped to the canvas, and MediaRecorder writes the mp4 — see "Video
+//   export" further down for why it records rather than renders.
 //   Screenshot tools DOM-rerender (not pixel-capture) and unwrap this wrapper
 //   so captures should work — but if one comes back black, that's a capture
 //   artifact, not a render bug; trust the live preview.
@@ -565,6 +567,14 @@ function Stage({
   // with the right fonts. Sets data-om-fonts-inlined once done.
   useInlineFontsInto(canvasRef);
 
+  // The export loop reads the playhead every 200ms from outside React's render,
+  // so it needs the live values rather than the ones closed over at setup.
+  const timeRef = React.useRef(time);
+  const playingRef = React.useRef(playing);
+  timeRef.current = time;
+  playingRef.current = playing;
+  const exporter = useFilmExport({ duration, canvasRef, timeRef, playingRef, setTime, setPlaying });
+
   const ctxValue = React.useMemo(
     () => ({ time, duration, playing, setTime, setPlaying }),
     [time, duration, playing]
@@ -634,7 +644,7 @@ function Stage({
             not start audible media unhinted. Once it is running, or once anyone
             has scrubbed, the playback bar carries the state and this would only
             be in the way, so it appears at zero and nowhere else. */}
-        {!playing && time < 0.05 && (
+        {!playing && time < 0.05 && !exporter.exporting && (
           <div style={{
             position: 'absolute', inset: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -671,7 +681,8 @@ function Stage({
         />
       </div>
 
-      {/* Playback bar — stacked below canvas, never overlapping */}
+      {/* Playback bar — stacked below canvas, never overlapping. Region Capture
+          crops the recording to the canvas, so this stays out of the file. */}
       <PlaybackBar
         time={time}
         duration={duration}
@@ -679,16 +690,240 @@ function Stage({
         onPlayPause={() => setPlaying(p => !p)}
         onReset={() => { setTime(0); }}
         onSeek={(t) => setTime(t)}
+        exportStatus={exporter.status}
+        onExport={exporter.start}
+        onCancelExport={exporter.cancel}
       />
     </div>
   );
+}
+
+// ── Video export ────────────────────────────────────────────────────────────
+// The download button used to post `omelette:request-video-export` at
+// window.parent, which is the Claude Design editor and nothing else. Served
+// from anywhere but that editor it was a button that did nothing.
+//
+// This records rather than renders, and the reason is worth stating. The film
+// is DOM inside an <svg><foreignObject>, a Web Audio graph with no media
+// element behind it, and one h264 <video> portalled on top of the svg rather
+// than inside it. Serialising the svg — the route the export scaffolding in
+// this file was built for — loses the founder's shot entirely, along with every
+// backdrop-filter, and there is no second path from that tree to a canvas. So
+// the tab is captured while the film plays and the browser's own h264 and aac
+// encoders make the mp4, which is also the only way this page produces a real
+// mp4 without carrying an encoder inside it.
+//
+// What that costs, which the UI also says: it runs in real time, and the tab
+// has to stay in front, because a backgrounded tab is throttled and the capture
+// drops frames with it.
+//
+// Region Capture crops the stream to the canvas element, so the playback bar,
+// the recording readout and anything the host page draws around the iframe stay
+// out of the file. Without it (Safari, Firefox) the whole tab lands in the
+// frame, so the UI says that too.
+
+// mp4 first, most specific first: h264 high@5.1 with aac.
+//
+// Every candidate names its codecs, and bare 'video/mp4' is deliberately not on
+// the list. A browser with no h264 encoder still answers true to it and then
+// writes vp9 and opus into an mp4 container — a legal ISO file that QuickTime,
+// Premiere and most things that are not Chrome will not open. Asking for the
+// codecs is what makes the answer mean something; where it comes back no, webm
+// is the honest extension for what that browser can actually produce.
+const EXPORT_TYPES = [
+  'video/mp4;codecs="avc1.640033,mp4a.40.2"',
+  'video/mp4;codecs="avc1.4d0028,mp4a.40.2"',
+  'video/mp4;codecs="avc1,mp4a.40.2"',
+  'video/mp4;codecs=avc1',
+  // Chrome only grew mp4 recording in 130. Older builds still get a file.
+  'video/webm;codecs="vp9,opus"',
+  'video/webm;codecs="vp8,opus"',
+  'video/webm',
+];
+
+function pickExportType() {
+  if (typeof MediaRecorder === 'undefined') return null;
+  for (const t of EXPORT_TYPES) {
+    try { if (MediaRecorder.isTypeSupported(t)) return t; } catch (e) {}
+  }
+  return null;
+}
+
+const canExport = () => (
+  typeof MediaRecorder !== 'undefined' &&
+  typeof navigator !== 'undefined' &&
+  !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) &&
+  pickExportType() !== null
+);
+
+// Reports {phase, ...} through `status`: 'arming' | 'recording' | 'saving' |
+// 'done' | 'error'. Cleared by cancel(), or a few seconds after it finishes.
+function useFilmExport({ duration, canvasRef, timeRef, playingRef, setTime, setPlaying }) {
+  const [status, setStatus] = React.useState(null);
+  const jobRef = React.useRef(null);
+
+  const teardown = React.useCallback(() => {
+    const job = jobRef.current;
+    if (!job) return;
+    jobRef.current = null;
+    clearInterval(job.watch);
+    try { if (job.rec && job.rec.state !== 'inactive') job.rec.stop(); } catch (e) {}
+    if (job.stream) job.stream.getTracks().forEach((t) => { try { t.stop(); } catch (e) {} });
+    try { window.parent.postMessage({ source: 'knomee-video', type: 'knomee:export-end' }, '*'); } catch (e) {}
+  }, []);
+
+  const cancel = React.useCallback(() => {
+    const job = jobRef.current;
+    if (job) job.cancelled = true;
+    teardown();
+    setPlaying(false);
+    setStatus(null);
+  }, [teardown, setPlaying]);
+
+  const start = React.useCallback(async () => {
+    if (jobRef.current) return;
+    const mime = pickExportType();
+    if (!mime) {
+      setStatus({ phase: 'error', note: 'This browser cannot record video.' });
+      return;
+    }
+
+    // getDisplayMedia has to be the first thing the click does — anything
+    // awaited before it spends the user gesture and the call is rejected.
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        preferCurrentTab: true,
+        video: { frameRate: 30, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: { channelCount: 2, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      });
+    } catch (e) {
+      // The picker was dismissed. Not an error worth a message.
+      return;
+    }
+
+    const job = { stream, rec: null, chunks: [], watch: null, cancelled: false, cropped: false };
+    jobRef.current = job;
+    setStatus({ phase: 'arming' });
+    try { window.parent.postMessage({ source: 'knomee-video', type: 'knomee:export-start' }, '*'); } catch (e) {}
+
+    const track = stream.getVideoTracks()[0];
+    // Stopping the share from the browser's own bar ends the export.
+    if (track) track.addEventListener('ended', () => finish());
+
+    // Crop to the canvas so none of the chrome is in the file.
+    try {
+      const CT = window.CropTarget || window.RestrictionTarget;
+      if (CT && CT.fromElement && track && track.cropTo && canvasRef.current) {
+        await track.cropTo(await CT.fromElement(canvasRef.current));
+        job.cropped = true;
+      }
+    } catch (e) { job.cropped = false; }
+
+    const hasAudio = stream.getAudioTracks().length > 0;
+
+    // What the file will actually be. A cropped capture is the canvas at its
+    // rendered size in device pixels, so the answer is the window: on a HiDPI
+    // screen a maximised one is already past 1080p, on a small one it is not,
+    // and there is no upscaling to be had. Better to say the number than to
+    // promise "highest quality" and hand back 900p.
+    const dpr = window.devicePixelRatio || 1;
+    const src = job.cropped && canvasRef.current
+      ? canvasRef.current.getBoundingClientRect()
+      : { width: window.innerWidth, height: window.innerHeight };
+    const fit = Math.min(1, 1920 / (src.width * dpr), 1080 / (src.height * dpr));
+    const outW = Math.round(src.width * dpr * fit);
+    const outH = Math.round(src.height * dpr * fit);
+
+    let rec;
+    try {
+      rec = new MediaRecorder(stream, {
+        mimeType: mime,
+        videoBitsPerSecond: 24000000,
+        audioBitsPerSecond: 192000,
+      });
+    } catch (e) {
+      teardown();
+      setStatus({ phase: 'error', note: 'This browser refused to record: ' + e.message });
+      return;
+    }
+    job.rec = rec;
+
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) job.chunks.push(e.data); };
+    rec.onerror = () => {
+      teardown();
+      setStatus({ phase: 'error', note: 'Recording stopped early.' });
+    };
+    rec.onstop = () => {
+      if (job.cancelled) return;
+      // What the recorder settled on, not what was asked for.
+      const actual = rec.mimeType || mime;
+      const ext = actual.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
+      const blob = new Blob(job.chunks, { type: actual.split(';')[0] });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'knomee-conversion-intelligence.' + ext;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      setStatus({
+        phase: 'done', ext,
+        mb: Math.round(blob.size / 1e5) / 10,
+        note: !hasAudio ? 'No audio — "Share tab audio" was left unticked.'
+            : ext === 'mp4' ? null
+            : 'This browser has no h264 encoder, so the file is WebM.',
+      });
+      setTimeout(() => setStatus((s) => (s && s.phase === 'done' ? null : s)), 9000);
+    };
+
+    const finish = () => {
+      const j = jobRef.current;
+      if (!j || j.cancelled) return;
+      setStatus({ phase: 'saving' });
+      setPlaying(false);
+      teardown();
+    };
+
+    // Park on the first frame and let it settle — the founder's clip lands its
+    // trim on a media event, so starting the recorder in the same tick as the
+    // seek can catch the shot mid-load.
+    setPlaying(false);
+    setTime(0);
+    await new Promise((r) => setTimeout(r, 900));
+    if (job.cancelled) return;
+
+    rec.start(2000);
+    setPlaying(true);
+
+    let started = false;
+    job.watch = setInterval(() => {
+      const t = timeRef.current;
+      if (!started && (playingRef.current || t > 0.2)) started = true;
+      setStatus((s) => (s && s.phase === 'recording'
+        ? { ...s, t }
+        : { phase: 'recording', t, cropped: job.cropped, w: outW, h: outH }));
+      // The soundtrack owns the clock and parks the playhead on the last frame,
+      // so the film ending is playing going false at the end, not at zero.
+      if (started && (t >= duration - 0.05 || !playingRef.current)) {
+        clearInterval(job.watch);
+        job.watch = null;
+        setTimeout(finish, 600);   // let the tail frames reach the encoder
+      }
+    }, 200);
+  }, [duration, canvasRef, timeRef, playingRef, setTime, setPlaying, teardown]);
+
+  React.useEffect(() => teardown, [teardown]);
+
+  return { status, start, cancel, exporting: !!status && status.phase !== 'done' && status.phase !== 'error' };
 }
 
 // ── Playback bar ────────────────────────────────────────────────────────────
 // Play/pause, return-to-begin, scrub track, time display.
 // Uses fixed-width time fields so layout doesn't thrash.
 
-function PlaybackBar({ time, duration, playing, onPlayPause, onReset, onSeek }) {
+function PlaybackBar({ time, duration, playing, onPlayPause, onReset, onSeek,
+                       exportStatus, onExport, onCancelExport }) {
   const trackRef = React.useRef(null);
   const [dragging, setDragging] = React.useState(false);
 
@@ -736,6 +971,58 @@ function PlaybackBar({ time, duration, playing, onPlayPause, onReset, onSeek }) 
   };
 
   const mono = 'JetBrains Mono, ui-monospace, SFMono-Regular, monospace';
+
+  const shell = {
+    display: 'flex', alignItems: 'center', gap: 12,
+    padding: '8px 16px',
+    background: 'rgba(20,20,20,0.92)',
+    borderTop: '1px solid rgba(255,255,255,0.08)',
+    width: '100%',
+    maxWidth: 680,
+    alignSelf: 'center',
+    borderRadius: 8,
+    color: '#f6f4ef',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    userSelect: 'none',
+    flexShrink: 0,
+  };
+
+  // While a recording is running the bar becomes the readout, because the
+  // transport is not usable during one — seeking would seek the recording.
+  if (exportStatus) {
+    const s = exportStatus;
+    const line =
+      s.phase === 'arming'    ? 'Getting ready…'
+    : s.phase === 'recording' ? `Recording  ${fmt(s.t || 0)} / ${fmt(duration)}   ${s.w}×${s.h}`
+    : s.phase === 'saving'    ? 'Encoding…'
+    : s.phase === 'done'      ? `Saved  ${s.ext.toUpperCase()}  ·  ${s.mb} MB`
+    : s.note || 'Export failed.';
+    const hint =
+      s.phase !== 'recording' ? s.note
+      // The capture is the canvas at its rendered size, so a small window is a
+      // small file and saying it now beats finding out in three minutes.
+      : (s.w < 1900 ? 'Cancel and make the window bigger for a larger file. ' : '')
+        + (s.cropped ? 'Keep this tab in front — a background tab drops frames.'
+                     : 'Keep this tab in front. This browser cannot crop the capture, so everything on screen is in the file.');
+    const dot = s.phase === 'error' ? '#ff6b6b' : s.phase === 'done' ? '#2DD2B0' : '#ff5f57';
+    return (
+      <div data-omelette-chrome style={{ ...shell, alignItems: 'flex-start' }}>
+        <div style={{ width: 9, height: 9, borderRadius: '50%', background: dot, flexShrink: 0, marginTop: 5 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontFamily: mono, fontVariantNumeric: 'tabular-nums' }}>{line}</div>
+          {hint && <div style={{ fontSize: 11, color: 'rgba(246,244,239,0.5)', marginTop: 3 }}>{hint}</div>}
+        </div>
+        {(s.phase === 'arming' || s.phase === 'recording') && (
+          <button
+            onClick={onCancelExport}
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6,
+              color: 'rgba(246,244,239,0.75)', fontSize: 11, padding: '4px 10px', cursor: 'pointer',
+              fontFamily: 'inherit', flexShrink: 0 }}
+          >Cancel</button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div data-omelette-chrome style={{
@@ -829,10 +1116,10 @@ function PlaybackBar({ time, duration, playing, onPlayPause, onReset, onSeek }) 
         {fmt(duration)}
       </div>
 
-      {typeof VideoEncoder !== 'undefined' && (
+      {canExport() && (
         <IconButton
-          title="Export video"
-          onClick={() => window.parent.postMessage({ type: 'omelette:request-video-export' }, '*')}
+          title="Export video — records this tab while the film plays, in real time"
+          onClick={onExport}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 2v7m0 0L4 6m3 3l3-3M2 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

@@ -173,19 +173,40 @@ what `index.html` embeds.
 
 ### Fonts
 
-The film sets one family — `DISPLAY = "'Poppins', system-ui, sans-serif"` — and
-for a long time it never got it. The export inlined `@font-face` for JetBrains
-Mono and Plus Jakarta Sans, neither of which the film asks for, and for Poppins
-left two `preconnect` hints to Google Fonts with no stylesheet behind them. So
-every viewer read the film in whatever `system-ui` resolved to on their machine,
-and nothing about that looks broken on screen, which is why it lasted.
+Poppins is Knomee's, and for a long time the film never got it. The export
+inlined `@font-face` for JetBrains Mono and Plus Jakarta Sans, neither of which
+the film asks for, and for Poppins left two `preconnect` hints to Google Fonts
+with no stylesheet behind them. So every viewer read the film in whatever
+`system-ui` resolved to on their machine, and nothing about that looks broken on
+screen, which is why it lasted.
 
-`build/build-video.py` now embeds the six faces the film actually uses
-(400/500/600/700/800 and one italic) from `assets/fonts/`, as base64 inside the
-export's own `<helmet>`. Not the shell's `<head>` — the dc-runtime rewrites the
-document out of the `<x-dc>` block on boot, so a style put there survives in the
-file and does nothing in the browser. `build/check-video.py` fails if the faces
-go missing, or if a stale copy turns up in the head.
+The competitors have their own. Scenes 1 and 2 mock up five rival wealth sites
+and the line over them is that every firm feels the same — drawing them in
+Knomee's face undercut that, and made the brand look like the thing it argues
+against:
+
+| | |
+| --- | --- |
+| Knomee, everywhere else | Poppins |
+| Tarnbeck Wealth, scene 1 | Open Sans |
+| VERROWYN | Lora |
+| HALBROOK | IBM Plex Sans |
+| Quillane Wealth | Nunito Sans |
+| Merrowfield Capital | Inter |
+
+`build/build-video.py` embeds all of it from `assets/fonts/` — only the weights
+that render, 22 faces, about 400KB of woff2 — as base64 inside the export's own
+`<helmet>`. Not the shell's `<head>`: the dc-runtime rewrites the document out
+of the `<x-dc>` block on boot, so a style put there survives in the file and
+does nothing in the browser.
+
+Two traps in that, both hit once already. The `<x-dc>` block is an escaped
+string, so the rules carry no quote anywhere — which is fine, because CSS reads
+a run of identifiers as one family name. But an identifier cannot begin with a
+digit, so a family like *Source Sans 3* makes the whole declaration invalid and
+the page falls back silently. The build rejects a name it cannot write unquoted,
+and `build/check-video.py` fails if any family the film declares is missing from
+`video.html`.
 
 ## Audio
 

@@ -30,7 +30,6 @@ How it fits together:
 
 import argparse
 import http.server
-import os
 import pathlib
 import re
 import shutil
@@ -109,6 +108,10 @@ class CORS(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
+    def handle_error(self, *a):
+        # The browser drops connections as it moves on; that is not news.
+        pass
+
 
 def serve(directory: pathlib.Path, port: int) -> socketserver.TCPServer:
     handler = lambda *a, **kw: CORS(*a, directory=str(directory), **kw)  # noqa: E731
@@ -150,6 +153,8 @@ def main() -> None:
         film_srv, frame_srv = serve(ROOT, FILM_PORT), serve(work, FRAME_PORT)
         try:
             silent = work / "video.mp4"
+            if not (ROOT / "node_modules" / "playwright").is_dir():
+                sys.exit("no playwright — run `npm install playwright` in the repo root")
             subprocess.run(["node", str(ROOT / "build" / "render-film.mjs"),
                             "--from", "0", "--to", str(end), "--fps", str(args.fps),
                             "--crf", args.crf, "--out", str(silent), "--ffmpeg", ff,

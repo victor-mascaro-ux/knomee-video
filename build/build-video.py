@@ -44,26 +44,52 @@ MANIFEST_RE = r'(<script type="__bundler/manifest">)(.*?)(</script>)'
 # The app entry is the only manifest bundle that defines the embed bridge.
 APP_MARKER = b"KnomeePlayer"
 
-# ── Poppins ──────────────────────────────────────────────────────────────────
-# The film sets one family and one only: DISPLAY = "'Poppins', system-ui,
-# sans-serif". The export inlined @font-face for JetBrains Mono and Plus Jakarta
-# Sans — neither of which the film asks for — and for Poppins left behind two
-# preconnect hints to fonts.googleapis.com and no stylesheet to go with them.
-# So Poppins never arrived, anywhere, and every viewer has been reading the film
-# in whatever system-ui resolves to on their machine.
+# ── Fonts ────────────────────────────────────────────────────────────────────
+# Poppins is Knomee's. The export inlined @font-face for JetBrains Mono and Plus
+# Jakarta Sans — neither of which the film asks for — and for Poppins left
+# behind two preconnect hints to fonts.googleapis.com and no stylesheet to go
+# with them. So Poppins never arrived, anywhere, and every viewer read the film
+# in whatever system-ui resolved to on their machine.
 #
-# The faces are carried in the file rather than fetched, so this cannot come
-# back: video.html now needs no network at all. Only the weights the film
-# actually uses are included (400/500/600/700/800 and one italic) — the whole
-# set would be six times the size for faces nothing renders.
+# The other five are the competitors'. Scene 1 and scene 2 mock up five rival
+# wealth sites and the line over them is that every firm feels the same; drawing
+# them in Knomee's own typeface undercut that, and made the brand look like the
+# thing it is arguing against. Each mock now has a face of its own, none of them
+# Poppins, all of them the sort of thing that category actually ships.
+#
+# Everything is carried in the file rather than fetched, so this cannot come
+# back: video.html needs no network at all. Only the weights that render are
+# included — the mocks use 400/600/700, and the cold page 800 as well.
 FONT_DIR = ROOT / "assets" / "fonts"
 FONT_FACES = [
-    ("normal", 400, "poppins-latin-400-normal.woff2"),
-    ("normal", 500, "poppins-latin-500-normal.woff2"),
-    ("normal", 600, "poppins-latin-600-normal.woff2"),
-    ("normal", 700, "poppins-latin-700-normal.woff2"),
-    ("normal", 800, "poppins-latin-800-normal.woff2"),
-    ("italic", 400, "poppins-latin-400-italic.woff2"),
+    # Knomee
+    ("Poppins", "normal", 400, "poppins-latin-400-normal.woff2"),
+    ("Poppins", "normal", 500, "poppins-latin-500-normal.woff2"),
+    ("Poppins", "normal", 600, "poppins-latin-600-normal.woff2"),
+    ("Poppins", "normal", 700, "poppins-latin-700-normal.woff2"),
+    ("Poppins", "normal", 800, "poppins-latin-800-normal.woff2"),
+    ("Poppins", "italic", 400, "poppins-latin-400-italic.woff2"),
+    # Tarnbeck Wealth — scene 1's cold landing page
+    ("Open Sans", "normal", 400, "open-sans-latin-400-normal.woff2"),
+    ("Open Sans", "normal", 600, "open-sans-latin-600-normal.woff2"),
+    ("Open Sans", "normal", 700, "open-sans-latin-700-normal.woff2"),
+    ("Open Sans", "normal", 800, "open-sans-latin-800-normal.woff2"),
+    # VERROWYN — the private-bank serif
+    ("Lora", "normal", 400, "lora-latin-400-normal.woff2"),
+    ("Lora", "normal", 600, "lora-latin-600-normal.woff2"),
+    ("Lora", "normal", 700, "lora-latin-700-normal.woff2"),
+    # HALBROOK — institutional
+    ("IBM Plex Sans", "normal", 400, "ibm-plex-sans-latin-400-normal.woff2"),
+    ("IBM Plex Sans", "normal", 600, "ibm-plex-sans-latin-600-normal.woff2"),
+    ("IBM Plex Sans", "normal", 700, "ibm-plex-sans-latin-700-normal.woff2"),
+    # Quillane Wealth — family office
+    ("Nunito Sans", "normal", 400, "nunito-sans-latin-400-normal.woff2"),
+    ("Nunito Sans", "normal", 600, "nunito-sans-latin-600-normal.woff2"),
+    ("Nunito Sans", "normal", 700, "nunito-sans-latin-700-normal.woff2"),
+    # Merrowfield Capital — the modern one
+    ("Inter", "normal", 400, "inter-latin-400-normal.woff2"),
+    ("Inter", "normal", 600, "inter-latin-600-normal.woff2"),
+    ("Inter", "normal", 700, "inter-latin-700-normal.woff2"),
 ]
 # The faces go in the export's own <helmet>, beside the @font-face the export
 # wrote for JetBrains Mono, and not in the shell's <head>. The dc-runtime
@@ -81,16 +107,35 @@ HELMET = "<helmet>"
 FONT_STYLE_RE = r'<style id="?knomee-poppins"?>.*?</style>\n?'
 
 
+# A family name with spaces needs no quotes here: CSS reads a run of identifiers
+# as one name, so `font-family:IBM Plex Sans` is valid and matches a
+# `'IBM Plex Sans'` in the film. That matters, because a quote is the one
+# character these rules cannot carry.
+#
+# An identifier cannot start with a digit, though, which quietly rules out a
+# family like "Source Sans 3": the bare `3` makes the whole declaration invalid
+# and the page falls back to system-ui with nothing said. Rejected here rather
+# than found later on screen.
+IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
+
+
 def poppins_style() -> str:
     rules = []
-    for style, weight, name in FONT_FACES:
+    for family, style, weight, name in FONT_FACES:
         path = FONT_DIR / name
         if not path.exists():
-            sys.exit(f"missing {path.relative_to(ROOT)} — the film would fall back to system-ui")
+            sys.exit(f"missing {path.relative_to(ROOT)} — that page would fall back to system-ui")
+        if not all(IDENTIFIER.match(word) for word in family.split(" ")):
+            sys.exit(
+                f"font family {family!r} cannot be written unquoted — every word "
+                f"has to be a CSS identifier, and one here is not. Pick another "
+                f"family, or alias it to a name that is."
+            )
         data = base64.b64encode(path.read_bytes()).decode()
         rules.append(
-            "@font-face{font-family:Poppins;font-style:%s;font-weight:%d;"
-            "font-display:block;src:url(data:font/woff2;base64,%s)}" % (style, weight, data)
+            "@font-face{font-family:%s;font-style:%s;font-weight:%d;"
+            "font-display:block;src:url(data:font/woff2;base64,%s)}"
+            % (family, style, weight, data)
         )
     return "<style id=knomee-poppins>" + "".join(rules) + "</style>"
 
@@ -164,7 +209,8 @@ def main() -> None:
     VIDEO.write_text(rebuilt, encoding="utf-8")
     print(f"app bundle {was:,} -> {len(bundle):,} bytes")
     print(f"video.html {len(html):,} -> {len(rebuilt):,} chars")
-    print(f"poppins    {len(FONT_FACES)} faces embedded")
+    families = len({f[0] for f in FONT_FACES})
+    print(f"fonts      {len(FONT_FACES)} faces, {families} families embedded")
 
 
 if __name__ == "__main__":

@@ -44,6 +44,56 @@ MANIFEST_RE = r'(<script type="__bundler/manifest">)(.*?)(</script>)'
 # The app entry is the only manifest bundle that defines the embed bridge.
 APP_MARKER = b"KnomeePlayer"
 
+# ── Poppins ──────────────────────────────────────────────────────────────────
+# The film sets one family and one only: DISPLAY = "'Poppins', system-ui,
+# sans-serif". The export inlined @font-face for JetBrains Mono and Plus Jakarta
+# Sans — neither of which the film asks for — and for Poppins left behind two
+# preconnect hints to fonts.googleapis.com and no stylesheet to go with them.
+# So Poppins never arrived, anywhere, and every viewer has been reading the film
+# in whatever system-ui resolves to on their machine.
+#
+# The faces are carried in the file rather than fetched, so this cannot come
+# back: video.html now needs no network at all. Only the weights the film
+# actually uses are included (400/500/600/700/800 and one italic) — the whole
+# set would be six times the size for faces nothing renders.
+FONT_DIR = ROOT / "assets" / "fonts"
+FONT_FACES = [
+    ("normal", 400, "poppins-latin-400-normal.woff2"),
+    ("normal", 500, "poppins-latin-500-normal.woff2"),
+    ("normal", 600, "poppins-latin-600-normal.woff2"),
+    ("normal", 700, "poppins-latin-700-normal.woff2"),
+    ("normal", 800, "poppins-latin-800-normal.woff2"),
+    ("italic", 400, "poppins-latin-400-italic.woff2"),
+]
+# The faces go in the export's own <helmet>, beside the @font-face the export
+# wrote for JetBrains Mono, and not in the shell's <head>. The dc-runtime
+# rewrites the document out of the <x-dc> block on boot, so anything in the
+# shell head is gone by the time the film paints — a style put there survives in
+# the file and does nothing in the browser, which is the worst of both.
+#
+# The <x-dc> block is an escaped string, so the rules carry no quote, newline or
+# backslash anywhere: unquoted family name, unquoted url(), no format() hint.
+# They then read the same however the surrounding text is escaped. Dropping
+# format() costs nothing — it is optional, and every target sniffs woff2.
+HELMET = "<helmet>"
+# Matches the quoted form an earlier version of this script wrote too, so a
+# rebuild cleans that one out instead of stacking a second copy beside it.
+FONT_STYLE_RE = r'<style id="?knomee-poppins"?>.*?</style>\n?'
+
+
+def poppins_style() -> str:
+    rules = []
+    for style, weight, name in FONT_FACES:
+        path = FONT_DIR / name
+        if not path.exists():
+            sys.exit(f"missing {path.relative_to(ROOT)} — the film would fall back to system-ui")
+        data = base64.b64encode(path.read_bytes()).decode()
+        rules.append(
+            "@font-face{font-family:Poppins;font-style:%s;font-weight:%d;"
+            "font-display:block;src:url(data:font/woff2;base64,%s)}" % (style, weight, data)
+        )
+    return "<style id=knomee-poppins>" + "".join(rules) + "</style>"
+
 
 def build_app_bundle() -> bytes:
     animations = ANIMATIONS.read_text(encoding="utf-8")
@@ -100,6 +150,13 @@ def main() -> None:
     }
 
     rebuilt = html[: match.start(2)] + json.dumps(manifest) + html[match.end(2) :]
+
+    # Drop any block a previous run left, so rebuilds stay idempotent.
+    rebuilt = re.sub(FONT_STYLE_RE, "", rebuilt, flags=re.S)
+    if HELMET not in rebuilt:
+        sys.exit("video.html: no <helmet> to put the fonts in — is this still an export?")
+    rebuilt = rebuilt.replace(HELMET, HELMET + poppins_style(), 1)
+
     if rebuilt == html:
         print("video.html already up to date")
         return
@@ -107,6 +164,7 @@ def main() -> None:
     VIDEO.write_text(rebuilt, encoding="utf-8")
     print(f"app bundle {was:,} -> {len(bundle):,} bytes")
     print(f"video.html {len(html):,} -> {len(rebuilt):,} chars")
+    print(f"poppins    {len(FONT_FACES)} faces embedded")
 
 
 if __name__ == "__main__":

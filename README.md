@@ -125,8 +125,24 @@ to load than `video.html` — it fetches React and Babel from unpkg at runtime
 and transpiles the JSX in the browser — but it picks up source edits on
 refresh, with no build step.
 
-`video.html` is the one to review against: it needs the network only for
-Google Fonts, and it's what `index.html` embeds.
+`video.html` is the one to review against: it needs no network at all, and it's
+what `index.html` embeds.
+
+### Fonts
+
+The film sets one family — `DISPLAY = "'Poppins', system-ui, sans-serif"` — and
+for a long time it never got it. The export inlined `@font-face` for JetBrains
+Mono and Plus Jakarta Sans, neither of which the film asks for, and for Poppins
+left two `preconnect` hints to Google Fonts with no stylesheet behind them. So
+every viewer read the film in whatever `system-ui` resolved to on their machine,
+and nothing about that looks broken on screen, which is why it lasted.
+
+`build/build-video.py` now embeds the six faces the film actually uses
+(400/500/600/700/800 and one italic) from `assets/fonts/`, as base64 inside the
+export's own `<helmet>`. Not the shell's `<head>` — the dc-runtime rewrites the
+document out of the `<x-dc>` block on boot, so a style put there survives in the
+file and does nothing in the browser. `build/check-video.py` fails if the faces
+go missing, or if a stale copy turns up in the head.
 
 ## Audio
 

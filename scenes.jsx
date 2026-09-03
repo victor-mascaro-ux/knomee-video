@@ -412,6 +412,10 @@ function Scene1() {
   const floatX = Math.sin(t * 0.5) * 8;
   const floatY = Math.cos(t * 0.42) * 6;
   const tilt = Math.sin(t * 0.35) * 0.5;
+  // The settle stays, the fade does not. This is frame zero of the film: it is
+  // what the player is parked on behind the play button, and it is the poster
+  // frame of anything exported. Fading the page up from nothing over 0.7s meant
+  // both of those were a blank white screen.
   const intro = Easing.easeOutCubic(clamp(t / 0.7, 0, 1));
 
   return (
@@ -421,8 +425,8 @@ function Scene1() {
         background: 'radial-gradient(1300px 820px at 50% 30%, #ffffff 0%, #e9edf3 58%, #dde3ec 100%)' }} />
       {/* browser on stage */}
       <div style={{ position: 'absolute', left: '50%', top: '50%',
-        transform: `translate(-50%,-50%) translate(${camX + shakeX + floatX}px, ${camY + shakeY + floatY}px) rotate(${tilt}deg) scale(${camScale * (0.97 + 0.03 * intro)})`,
-        opacity: intro, willChange: 'transform, opacity' }}>
+        transform: `translate(-50%,-50%) translate(${camX + shakeX + floatX}px, ${camY + shakeY + floatY}px) rotate(${tilt}deg) scale(${camScale * (0.985 + 0.015 * intro)})`,
+        willChange: 'transform' }}>
         <PageShatter t={t} start={16.4}>
           <BrowserFrame url="tarnbeckwealth.com">
             <ColdLandingPage formHi={formHi} dim={dim} />

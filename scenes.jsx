@@ -23,9 +23,21 @@ const COLD = {
   accent: '#3d566e',
 };
 const DISPLAY = "'Poppins', system-ui, sans-serif";
-const SERIF = DISPLAY;   // Sedan retired — the film is Poppins throughout
-const GENERIC = DISPLAY;
+const SERIF = DISPLAY;   // Sedan retired — Knomee is Poppins throughout
 const MONO = DISPLAY;
+
+// The competitors' type. Scenes 1 and 2 mock up five rival wealth sites and the
+// line over them is that every firm feels the same — drawing them in Knomee's
+// own face undercut that, and made the brand look like the thing it argues
+// against. None of these is Poppins, and each is the sort of face that category
+// actually ships: the private-bank serif, the institutional grotesque, the
+// humanist family-office sans, the modern one, and for the cold page in scene 1
+// the most unremarkable sans on the web.
+const GENERIC   = "'Open Sans', system-ui, sans-serif";        // Tarnbeck Wealth
+const RIVAL_SERIF  = "'Lora', Georgia, serif";                 // VERROWYN
+const RIVAL_INST   = "'IBM Plex Sans', system-ui, sans-serif"; // HALBROOK
+const RIVAL_WARM   = "'Nunito Sans', system-ui, sans-serif";   // Quillane Wealth
+const RIVAL_MODERN = "'Inter', system-ui, sans-serif";         // Merrowfield Capital
 
 // Exact Knomee Design System tokens (hand-matched for the timeline)
 const KDS = {
@@ -477,16 +489,16 @@ function FirmCard({ firm, scale = 0.315, dim = 0, delay = 0 }) {
 const FIRMS = [
   { id: 'verrowyn',  name: 'VERROWYN',           url: 'verrowynprivate.com',    variant: 'serif-centered',
     theme: { bg: '#f3f1ec', card: '#fff', ink: '#1f2a24', sub: '#6a7269', line: '#e0ddd3', accent: '#2f5d4a', field: '#f7f6f1' },
-    font: DISPLAY, tag: 'PRIVATE WEALTH', heroA: 'Wealth,', heroB: 'quietly stewarded.', mark: 'square' },
+    font: RIVAL_SERIF, tag: 'PRIVATE WEALTH', heroA: 'Wealth,', heroB: 'quietly stewarded.', mark: 'square' },
   { id: 'halbrook',  name: 'HALBROOK',           url: 'halbrook-partners.com', variant: 'photo-left',
     theme: { bg: '#0f1c2e', card: '#16283f', ink: '#eaf1f9', sub: '#93a6bd', line: '#25384f', accent: '#3f7cc4', field: '#1c3149' },
-    font: DISPLAY, tag: 'INSTITUTIONAL ADVISORY', heroA: 'Capital with', heroB: 'conviction.', mark: 'circle', dark: true },
+    font: RIVAL_INST, tag: 'INSTITUTIONAL ADVISORY', heroA: 'Capital with', heroB: 'conviction.', mark: 'circle', dark: true },
   { id: 'quillane', name: 'Quillane Wealth',    url: 'quillanewealth.co',          variant: 'split-warm',
     theme: { bg: '#faf6f0', card: '#fff', ink: '#3a2318', sub: '#8a7161', line: '#ece2d6', accent: '#a8632c', field: '#f6efe6' },
-    font: DISPLAY, tag: 'FAMILY OFFICE', heroA: 'A steady hand', heroB: 'for what you build.', mark: 'diamond' },
+    font: RIVAL_WARM, tag: 'FAMILY OFFICE', heroA: 'A steady hand', heroB: 'for what you build.', mark: 'diamond' },
   { id: 'merrowfield',name: 'Merrowfield Capital',url: 'merrowfieldcapital.io',        variant: 'minimal-mono',
     theme: { bg: '#eef1f0', card: '#fff', ink: '#1a2b2b', sub: '#5e7373', line: '#dbe4e2', accent: '#0d8f8f', field: '#f2f6f5' },
-    font: DISPLAY, tag: 'MODERN PORTFOLIO MGMT', heroA: 'Invest with', heroB: 'clarity.', mark: 'pill' },
+    font: RIVAL_MODERN, tag: 'MODERN PORTFOLIO MGMT', heroA: 'Invest with', heroB: 'clarity.', mark: 'pill' },
 ];
 
 function firmMark(shape, color) {
@@ -499,7 +511,10 @@ function firmMark(shape, color) {
 
 // One competitor company page. Layout + palette driven by `firm`.
 function CompanyPage({ firm, formHi = 0, dim = 0, btnHi = 0 }) {
-  const { theme: c, font, variant } = firm;
+  // `dark` is on the firm, not on firm.theme: reading it off `c` came back
+  // undefined every time, so Halbrook's nav painted #fff behind ink of #eaf1f9
+  // and the company name in the top bar was white on white.
+  const { theme: c, font, variant, dark } = firm;
   const Field = ({ label, hi }) => (
     <div style={{ marginBottom: 12 }}>
       <div style={{ fontSize: 11.5, color: c.sub, marginBottom: 5, fontFamily: font }}>{label}</div>
@@ -509,7 +524,7 @@ function CompanyPage({ firm, formHi = 0, dim = 0, btnHi = 0 }) {
   );
   const Form = ({ compact }) => (
     <div style={{ width: compact ? 340 : 380, background: c.card, borderRadius: 12, border: `1px solid ${c.line}`,
-      boxShadow: c.dark ? '0 20px 50px rgba(0,0,0,0.35)' : '0 20px 50px rgba(38,49,63,0.12)', padding: 24,
+      boxShadow: dark ? '0 20px 50px rgba(0,0,0,0.35)' : '0 20px 50px rgba(38,49,63,0.12)', padding: 24,
       outline: formHi > 0 ? `2px solid ${c.accent}${Math.round(formHi * 120).toString(16).padStart(2, '0')}` : 'none' }}>
       <div style={{ fontSize: 19, fontWeight: 700, color: c.ink, marginBottom: 3, fontFamily: font }}>Get started</div>
       <div style={{ fontSize: 12.5, color: c.sub, marginBottom: 16, fontFamily: font }}>Complete the form and an advisor will reach out.</div>
@@ -524,7 +539,7 @@ function CompanyPage({ firm, formHi = 0, dim = 0, btnHi = 0 }) {
     </div>
   );
   const Nav = () => (
-    <div style={{ height: 60, background: c.dark ? c.card : '#fff', borderBottom: `1px solid ${c.line}`, display: 'flex',
+    <div style={{ height: 60, background: dark ? c.card : '#fff', borderBottom: `1px solid ${c.line}`, display: 'flex',
       alignItems: 'center', padding: '0 38px', justifyContent: 'space-between' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
         <div style={firmMark(firm.mark, c.accent)} />

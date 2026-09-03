@@ -80,11 +80,54 @@ completely normal. Rebuilding from source is the only way to be certain the two
 agree. After any re-export from Claude Design, treat the exported `.html` as
 suspect and regenerate it with the script.
 
-## Exporting a file
+## Rendering a master
+
+```sh
+pip install imageio-ffmpeg
+npm  install playwright
+python3 build/render-film.py          # -> knomee-conversion-intelligence.mp4
+python3 build/render-film.py --to 3   # same pipeline, three seconds of it
+```
+
+A true 1920×1080 h264 file with sound, stepped frame by frame rather than
+recorded. Takes 25–50 minutes: a browser screenshot per frame is the floor, and
+there are five thousand of them.
+
+Use this for anything that leaves the building. The download button in the
+player (below) records the tab in real time, which is all a web page can do —
+its resolution is whoever's window and it drops frames if the tab is
+backgrounded. This has neither problem.
+
+**ffmpeg has to be a real build.** The one that ships with Playwright is
+configured `--disable-everything` and carries VP8 and PNG only; it runs happily
+and produces nothing usable. `imageio-ffmpeg` gives a static build with
+libx264 and AAC, and the script refuses to start without them.
+
+Three things the script does that are worth knowing:
+
+- **The founder's clip is pre-extracted to jpegs.** Headless Chromium has no
+  h264 decoder, so it plays black. Each frame is painted as the `<video>`
+  element's own background rather than composited afterwards, which leaves the
+  browser doing the work — the corner radius, every ancestor fade and the name
+  plate over the top come out right without any of it being reimplemented.
+- **The window is 1180px tall, not 1080.** The Stage fits itself to the viewport
+  minus 44px for the playback bar, so at exactly 1080 it settles at scale 0.96
+  and the founder's clip — which is portalled onto a layer beside the svg rather
+  than into it — lands off the canvas.
+- **Where the founder speaks is read out of `scenes.jsx`,** not repeated in the
+  script: each shot's clip range comes off the `MarlaShot`, its place in the
+  film from the enclosing scene's `const S`. Retiming the film moves her voice
+  with it.
+
+It also refuses to render if the film is not painting in Poppins, rather than
+spending the hour and handing back a fallback face.
+
+## Exporting from the player
 
 The download button at the right of the playback bar saves the film as a video.
 It **records** rather than renders: it asks to capture this tab, plays the film
-once, and `MediaRecorder` encodes what it sees.
+once, and `MediaRecorder` encodes what it sees. It is the convenient one, not
+the good one — for a master, use `build/render-film.py` above.
 
 That is not the obvious design, and the reason is the picture. The film is DOM
 inside an `<svg><foreignObject>`, its audio is a Web Audio graph with no media
@@ -130,19 +173,40 @@ what `index.html` embeds.
 
 ### Fonts
 
-The film sets one family — `DISPLAY = "'Poppins', system-ui, sans-serif"` — and
-for a long time it never got it. The export inlined `@font-face` for JetBrains
-Mono and Plus Jakarta Sans, neither of which the film asks for, and for Poppins
-left two `preconnect` hints to Google Fonts with no stylesheet behind them. So
-every viewer read the film in whatever `system-ui` resolved to on their machine,
-and nothing about that looks broken on screen, which is why it lasted.
+Poppins is Knomee's, and for a long time the film never got it. The export
+inlined `@font-face` for JetBrains Mono and Plus Jakarta Sans, neither of which
+the film asks for, and for Poppins left two `preconnect` hints to Google Fonts
+with no stylesheet behind them. So every viewer read the film in whatever
+`system-ui` resolved to on their machine, and nothing about that looks broken on
+screen, which is why it lasted.
 
-`build/build-video.py` now embeds the six faces the film actually uses
-(400/500/600/700/800 and one italic) from `assets/fonts/`, as base64 inside the
-export's own `<helmet>`. Not the shell's `<head>` — the dc-runtime rewrites the
-document out of the `<x-dc>` block on boot, so a style put there survives in the
-file and does nothing in the browser. `build/check-video.py` fails if the faces
-go missing, or if a stale copy turns up in the head.
+The competitors have their own. Scenes 1 and 2 mock up five rival wealth sites
+and the line over them is that every firm feels the same — drawing them in
+Knomee's face undercut that, and made the brand look like the thing it argues
+against:
+
+| | |
+| --- | --- |
+| Knomee, everywhere else | Poppins |
+| Tarnbeck Wealth, scene 1 | Open Sans |
+| VERROWYN | Lora |
+| HALBROOK | IBM Plex Sans |
+| Quillane Wealth | Nunito Sans |
+| Merrowfield Capital | Inter |
+
+`build/build-video.py` embeds all of it from `assets/fonts/` — only the weights
+that render, 22 faces, about 400KB of woff2 — as base64 inside the export's own
+`<helmet>`. Not the shell's `<head>`: the dc-runtime rewrites the document out
+of the `<x-dc>` block on boot, so a style put there survives in the file and
+does nothing in the browser.
+
+Two traps in that, both hit once already. The `<x-dc>` block is an escaped
+string, so the rules carry no quote anywhere — which is fine, because CSS reads
+a run of identifiers as one family name. But an identifier cannot begin with a
+digit, so a family like *Source Sans 3* makes the whole declaration invalid and
+the page falls back silently. The build rejects a name it cannot write unquoted,
+and `build/check-video.py` fails if any family the film declares is missing from
+`video.html`.
 
 ## Audio
 

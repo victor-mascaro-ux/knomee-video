@@ -77,35 +77,35 @@ def main() -> None:
                         f"against the current cut"
                     )
 
-    # The film asks for exactly one family, and for a long time it never got it:
-    # the export left preconnect hints to Google Fonts and no stylesheet, so
-    # every viewer read the film in whatever system-ui resolved to. Nothing about
-    # that looks broken on screen, which is why it lasted. build-video.py now
-    # embeds the faces; this is the guard that they are still in there.
-    family = re.search(r'const DISPLAY = "\'([^\']+)\'', source)
+    # Every family the film declares has to be in video.html. For a long time
+    # none of them were: the export left preconnect hints to Google Fonts and no
+    # stylesheet, so viewers read the film in whatever system-ui resolved to.
+    # Nothing about that looks broken on screen, which is why it lasted.
     video = (ROOT / "video.html").read_text(encoding="utf-8")
-    if not family:
-        problems.append("DISPLAY font family not found in scenes.jsx")
-    else:
-        name = family.group(1)
+    families = re.findall(r"^const [A-Z_]+ *= *\"'([^']+)'", source, re.M)
+    if not families:
+        problems.append("no font families found in scenes.jsx — has the declaration style changed?")
+    print()
+    for name in sorted(set(families)):
         faces = video.count(f"@font-face{{font-family:{name};")
-        blobs = video.count("src:url(data:font/woff2;base64,")
-        print(f"\n{name}: {faces} faces embedded in video.html, {blobs} carrying a file")
-        if faces == 0:
+        print(f"  {'ok  ' if faces else 'GONE'}  {name}: {faces} faces in video.html")
+        if not faces:
             problems.append(
-                f"video.html has no embedded {name} — the film would fall back "
+                f"video.html has no embedded {name} — that text would fall back "
                 f"to system-ui. Run build/build-video.py"
             )
-        elif blobs < faces:
-            problems.append(f"{faces - blobs} {name} face(s) have no font data")
-        # A stale copy in the shell head is dead weight: the dc-runtime rewrites
-        # the document, so only the one inside <helmet> ever applies.
-        head_marker = video.find('<style id="knomee-poppins">')
-        if head_marker != -1:
-            problems.append(
-                "a knomee-poppins style is sitting in the shell <head>, where the "
-                "dc-runtime discards it. Re-run build/build-video.py"
-            )
+    blobs = video.count("src:url(data:font/woff2;base64,")
+    total = sum(video.count(f"@font-face{{font-family:{n};") for n in set(families))
+    if blobs < total:
+        problems.append(f"{total - blobs} face(s) declared with no font data")
+
+    # A stale copy in the shell head is dead weight: the dc-runtime rewrites the
+    # document, so only the one inside <helmet> ever applies.
+    if '<style id="knomee-poppins">' in video:
+        problems.append(
+            "a knomee-poppins style is sitting in the shell <head>, where the "
+            "dc-runtime discards it. Re-run build/build-video.py"
+        )
 
     if problems:
         print("\nFAILED")

@@ -80,11 +80,54 @@ completely normal. Rebuilding from source is the only way to be certain the two
 agree. After any re-export from Claude Design, treat the exported `.html` as
 suspect and regenerate it with the script.
 
-## Exporting a file
+## Rendering a master
+
+```sh
+pip install imageio-ffmpeg
+npm  install playwright
+python3 build/render-film.py          # -> knomee-conversion-intelligence.mp4
+python3 build/render-film.py --to 3   # same pipeline, three seconds of it
+```
+
+A true 1920×1080 h264 file with sound, stepped frame by frame rather than
+recorded. Takes 25–50 minutes: a browser screenshot per frame is the floor, and
+there are five thousand of them.
+
+Use this for anything that leaves the building. The download button in the
+player (below) records the tab in real time, which is all a web page can do —
+its resolution is whoever's window and it drops frames if the tab is
+backgrounded. This has neither problem.
+
+**ffmpeg has to be a real build.** The one that ships with Playwright is
+configured `--disable-everything` and carries VP8 and PNG only; it runs happily
+and produces nothing usable. `imageio-ffmpeg` gives a static build with
+libx264 and AAC, and the script refuses to start without them.
+
+Three things the script does that are worth knowing:
+
+- **The founder's clip is pre-extracted to jpegs.** Headless Chromium has no
+  h264 decoder, so it plays black. Each frame is painted as the `<video>`
+  element's own background rather than composited afterwards, which leaves the
+  browser doing the work — the corner radius, every ancestor fade and the name
+  plate over the top come out right without any of it being reimplemented.
+- **The window is 1180px tall, not 1080.** The Stage fits itself to the viewport
+  minus 44px for the playback bar, so at exactly 1080 it settles at scale 0.96
+  and the founder's clip — which is portalled onto a layer beside the svg rather
+  than into it — lands off the canvas.
+- **Where the founder speaks is read out of `scenes.jsx`,** not repeated in the
+  script: each shot's clip range comes off the `MarlaShot`, its place in the
+  film from the enclosing scene's `const S`. Retiming the film moves her voice
+  with it.
+
+It also refuses to render if the film is not painting in Poppins, rather than
+spending the hour and handing back a fallback face.
+
+## Exporting from the player
 
 The download button at the right of the playback bar saves the film as a video.
 It **records** rather than renders: it asks to capture this tab, plays the film
-once, and `MediaRecorder` encodes what it sees.
+once, and `MediaRecorder` encodes what it sees. It is the convenient one, not
+the good one — for a master, use `build/render-film.py` above.
 
 That is not the obvious design, and the reason is the picture. The film is DOM
 inside an `<svg><foreignObject>`, its audio is a Web Audio graph with no media

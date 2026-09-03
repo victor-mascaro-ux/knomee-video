@@ -8,6 +8,7 @@ comments on it.
 | `index.html` | the review wrapper — loads `video.html` in an iframe and drives it through `window.KnomeePlayer` |
 | `video.html` | **generated.** The film, self-contained. Don't hand-edit — see below |
 | `voiceover/knomee-soundtrack.wav` | **generated.** The 168s mixed track: narration over a music bed — see *Re-mixing* |
+| `knomee-conversion-intelligence.mp4` | **generated.** The rendered master — 2:48, 1920×1080 h264 + aac. See *Rendering a master* |
 
 ## Source
 

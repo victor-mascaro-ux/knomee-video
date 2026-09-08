@@ -5,10 +5,47 @@ comments on it.
 
 | | |
 | --- | --- |
-| `index.html` | the review wrapper — loads `video.html` in an iframe and drives it through `window.KnomeePlayer` |
-| `video.html` | **generated.** The film, self-contained. Don't hand-edit — see below |
-| `voiceover/knomee-soundtrack.wav` | **generated.** The 168s mixed track: narration over a music bed — see *Re-mixing* |
-| `knomee-conversion-intelligence.mp4` | **generated.** The rendered master — 2:48, 1920×1080 h264 + aac. See *Rendering a master* |
+| `index.html` | the review wrapper — loads `video.html` in an iframe and drives it through `window.KnomeePlayer`. Comments are hidden until you press **C**; **C** or **Esc** puts them away |
+| `video.html` | **generated.** The current 90s cut, self-contained. Don't hand-edit — see below |
+| `voiceover/knomee-soundtrack-90.wav` | **generated.** The 90s track. Music bed only for now — see *Voice-over* |
+| `original.html` | the original 2:48 cut, kept playable. A frozen export: it is **not** rebuilt from the sources and must not be edited |
+| `voiceover/knomee-soundtrack.wav` | the original 168s mix, narration over the bed. Belongs to `original.html` |
+| `knomee-conversion-intelligence.mp4` | the rendered master of the **original** cut — 2:48, 1920×1080 h264 + aac. See *Rendering a master* |
+
+## Two cuts
+
+The film was re-cut to 90 seconds against a tightened script. Both cuts are live:
+
+| | |
+| --- | --- |
+| `/` or `/index.html` | the 90s cut, with the comment overlay |
+| `/video.html` | the 90s cut on its own |
+| `/original.html` | the original 2:48 cut on its own |
+
+`original.html` is a frozen artefact. It is the export as it stood at the tag
+`original-168s-cut`, it carries its own copy of the old app bundle, and
+`build/build-video.py` does not touch it — only `video.html` is regenerated.
+Everything else it needs (`assets/`, its soundtrack) lives at the same paths it
+always did, which is why it sits at the repo root rather than in a subfolder.
+
+To recover any other part of the original:
+
+```sh
+git show original-168s-cut:scenes.jsx > original-scenes.jsx
+```
+
+## Voice-over
+
+The 90s cut has **no narration yet**. The 42 takes in `voiceover/vo-cues.js` are
+the previous script's words, so they are not played: `build/mix-soundtrack.py`
+has `USE_VO = False` and lays down the music bed alone, and temporary subtitles
+in `scenes.jsx` (`SUBS`) carry the script meanwhile.
+
+`voiceover/RECORDING-SHEET.md` is generated from those cues and is the spec for
+recording — every line with the exact window it has to land in.
+
+Once the new takes exist: put them in `vo-cues.js`, flip `USE_VO = True`, re-run
+the mixer, and delete `SUBS`/`Subtitles` from `scenes.jsx`.
 
 ## Source
 

@@ -27,7 +27,7 @@ import numpy as np, os, re, sys, wave
 SR      = 44100
 ROOT    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PCM     = os.path.join(ROOT, 'build/pcm')
-OUT     = os.path.join(ROOT, 'voiceover/knomee-soundtrack.wav')
+OUT     = os.path.join(ROOT, 'voiceover/knomee-soundtrack-90.wav')
 
 BASE    = 0.075
 LIFT    = 1.7778    # +5 dB where nobody is speaking

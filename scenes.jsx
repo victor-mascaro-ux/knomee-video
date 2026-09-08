@@ -2030,7 +2030,10 @@ function Scene13() {
 // build/mix-soundtrack.py into voiceover/knomee-soundtrack.wav. The playhead is driven
 // by its playback position, so the film cannot drift from the voice, and there is
 // nothing to schedule, overlap or double up.
-const SOUNDTRACK = "voiceover/knomee-soundtrack.wav";
+// The 90s cut has its own track. voiceover/knomee-soundtrack.wav stays the
+// original 168s mix so original.html — the untouched export of the first cut —
+// keeps finding the audio it was built against.
+const SOUNDTRACK = "voiceover/knomee-soundtrack-90.wav";
 
 // The mixed track is decoded once into a shared AudioContext rather than played through an
 // <audio> element: the element reported duration=Infinity for this file and stalled after

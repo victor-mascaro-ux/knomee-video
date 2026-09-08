@@ -663,11 +663,15 @@
     if (player) {
       renderPins();
       const now = !!player.playing;
-      if (wasPlaying === true && now === false && !commentMode) setMode(true);
-      // Pressing play is a decision to carry on watching, so comment mode
-      // stands down with it. Without this it stayed armed over a running film
-      // and the catcher swallowed every click.
-      if (wasPlaying === false && now === true && commentMode) setMode(false);
+      // "Started" matters: the film is parked and paused on frame one before
+      // anyone has watched anything, and opening the overlay over the opening
+      // frame is exactly what we do not want.
+      const started = (player.time || 0) > 0.05;
+      if (wasPlaying === true && now === false && started && !overlayOpen()) setOverlay(true);
+      // Pressing play is a decision to carry on watching, so the overlay stands
+      // down with it. Without this it stayed armed over a running film and the
+      // catcher swallowed every click.
+      if (wasPlaying === false && now === true && overlayOpen()) setOverlay(false);
       wasPlaying = now;
     }
   }, 150);
@@ -1056,7 +1060,7 @@
     else closeThread();
   }
 
-  closeModeBtn.addEventListener('click', (e) => { e.stopPropagation(); setMode(false); });
+  closeModeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeOverlayAndResume(); });
 
   function setRailCollapsed(on) {
     rail.classList.toggle('cc-collapsed', on);
@@ -1076,6 +1080,23 @@
   function setRailHidden(on) {
     rail.classList.toggle('cc-hidden', on);
     if (!on) setRailCollapsed(false);
+  }
+
+  // The tray and the comment cursor are one thing to the person using them, so
+  // they open and close together and every path goes through here. Leaving
+  // setMode() and setRailHidden() to be called separately is what let a pause
+  // arm the cursor while the tray stayed hidden.
+  const overlayOpen = () => !railHidden();
+  function setOverlay(on) {
+    if (on) { setRailHidden(false); setMode(true); }   // setMode pauses the film
+    else { setMode(false); setRailHidden(true); }
+  }
+  // Closing by hand also hands the film back; the watcher below only reacts to
+  // the player, so it will not do this for us.
+  function closeOverlayAndResume() {
+    setOverlay(false);
+    const p = getPlayer();
+    if (p && typeof p.play === 'function') p.play();
   }
 
   // drop a pin
@@ -1145,17 +1166,9 @@
     }
     e.preventDefault();
     e.stopPropagation();
-    // Toggle: C opens the tray and comment mode together, C again puts both
-    // away and hands the film back.
-    if (railHidden()) {
-      setRailHidden(false);
-      setMode(true);
-    } else {
-      setMode(false);
-      setRailHidden(true);
-      const player = getPlayer();
-      if (player && typeof player.play === 'function') player.play();
-    }
+    // Toggle. Opening pauses the film (setMode does it); closing resumes it.
+    if (overlayOpen()) closeOverlayAndResume();
+    else setOverlay(true);
   }, true);
 
   document.addEventListener('keydown', (e) => {
@@ -1163,11 +1176,8 @@
     if (!activeId && !commentMode && railHidden()) return;
     e.preventDefault();
     e.stopPropagation();
-    if (commentMode) setMode(false);   // setMode(false) also closes the open thread
-    else closeThread();                // a card opened from the rail, mode off
-    setRailHidden(true);               // full retreat: the rail goes away
-    const player = getPlayer();        // resume the video (no-op for static prototypes)
-    if (player && typeof player.play === 'function') player.play();
+    closeThread();                     // drop any open card or half-written pin
+    closeOverlayAndResume();
   }, true);
 
   // ── Clear all ────────────────────────────────────────────

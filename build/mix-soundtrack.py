@@ -27,7 +27,7 @@ import numpy as np, os, re, sys, wave
 SR      = 44100
 ROOT    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PCM     = os.path.join(ROOT, 'build/pcm')
-OUT     = os.path.join(ROOT, 'voiceover/knomee-soundtrack.wav')
+OUT     = os.path.join(ROOT, 'voiceover/knomee-soundtrack-90.wav')
 
 BASE    = 0.075
 LIFT    = 1.7778    # +5 dB where nobody is speaking
@@ -36,8 +36,15 @@ RAMP    = 0.4
 GAPMIN  = 1.2
 FADEI   = 2.5
 FADEO   = 4.0
-MARLA   = [(84.82, 107.27), (126.64, 132.64), (160.12, 165.00)]
-NFRAMES = 7414136   # 168.121s — must match VIDEO_DURATION in scenes.jsx
+MARLA   = [(82.00, 86.70)]          # only the closing shot survives the re-cut
+NFRAMES = 3969000   # 90.000s — must match VIDEO_DURATION in scenes.jsx
+
+# The narration is being re-recorded from scratch against Marla's tightened
+# script, so the 42 takes in vo-cues.js are the wrong words and must not play.
+# Until the new takes exist this mixes the bed alone: the film still has a clock
+# to run on and temporary subtitles carry the script. Set this back to True once
+# vo-cues.js holds the new cue sheet.
+USE_VO  = False
 
 
 def raw(p):
@@ -89,10 +96,15 @@ def ramp_to(env, a, b, value):
 
 def build(cs, n):
     env = np.ones(n)
-    spans = sorted((c['at'], c['at'] + c['len']) for c in cs)
-    gaps = ([(0.0, spans[0][0])]
-            + [(spans[i][1], spans[i + 1][0]) for i in range(len(spans) - 1)]
-            + [(spans[-1][1], n / SR)])
+    if cs:
+        spans = sorted((c['at'], c['at'] + c['len']) for c in cs)
+        gaps = ([(0.0, spans[0][0])]
+                + [(spans[i][1], spans[i + 1][0]) for i in range(len(spans) - 1)]
+                + [(spans[-1][1], n / SR)])
+    else:
+        # Bed-only mix: nobody speaks except Marla, so the whole film is one gap
+        # and the lift applies everywhere her shot does not.
+        gaps = [(0.0, n / SR)]
     for a, b in gaps:
         if b - a < GAPMIN:
             continue
@@ -123,7 +135,7 @@ def build(cs, n):
 
 
 if __name__ == '__main__':
-    mix = build(cues(), NFRAMES)
+    mix = build(cues() if USE_VO else [], NFRAMES)
     peak = float(np.abs(mix).max())
     print(f'{NFRAMES} frames = {NFRAMES / SR:.3f}s   peak {peak:.3f}')
     if peak >= 0.99:

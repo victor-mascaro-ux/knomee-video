@@ -56,6 +56,33 @@ function tierTint(t) { return { 1: 'rgba(8,99,117,0.12)', 2: 'rgba(107,161,172,0
 // ── Small helpers ─────────────────────────────────────────────────────────────
 function useT() { return useTime(); }
 
+// ── Re-cut clock ────────────────────────────────────────────────
+// The film was re-cut from 168.12s to 90s against Marla's tightened script.
+// Rather than rewrite every keyframe array AND every nested <Sprite> window in
+// every scene, each scene is mounted inside a remapped timeline and keeps its
+// original internal timing untouched: `s0` is the second the scene used to
+// start at, `at` is where it starts now, and `rate` is how much faster it runs
+// to fit its new slot.
+//
+// It has to be the context and not just a local `t`. Scenes carry nested
+// <Sprite start={19.9} end={30.15}> windows in absolute film seconds, and those
+// read the timeline directly — remapping only the scene's own `t` left Scene 2
+// mounting a page whose every child sprite was out of range, i.e. blank.
+// Overriding the context moves interpolate() maths, nested Sprites and
+// useSprite together.
+//
+// rate === 1 means original speed, which is what Scene13 needs: Marla's clip is
+// a real video and speeding its clock would desync her voice from her mouth.
+//
+// Where a scene now reads as rushed the fix is to drop beats and re-choreograph
+// it, not to nudge the rate.
+function SceneClock({ s0, at, rate, children }) {
+  const tl = useTimeline();
+  const time = s0 + (tl.time - at) * rate;
+  const value = React.useMemo(() => ({ ...tl, time }), [tl, time]);
+  return <TimelineContext.Provider value={value}>{children}</TimelineContext.Provider>;
+}
+
 // Placeholder box the user will swap for a real asset
 function Placeholder({ label, w, h, tone = 'cold', style }) {
   const pal = tone === 'cold'
@@ -710,20 +737,18 @@ function Scene2() {
 // (start/end/title may shift as scenes are refined — always read them live via
 //  window.KnomeePlayer.getScenes(), don't hardcode timings in your app.)
 const SCENES = [
-  { id: 'problem',       n: 1, title: 'The conversion problem', start: 0.0,  end: 20.0 },
-  { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 20.0, end: 41.14 },
-  { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 41.14, end: 44.5 },
-  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 44.5, end: 64.81 },
-  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 64.81, end: 84.82 },
-  { id: 'founder-1',     n: 6, title: 'Founder POV — clarity changes everything', start: 84.82, end: 108.1 },
-  { id: 'meeting-prep',  n: 7, title: 'Meeting prep', start: 108.1, end: 117.85 },
-  { id: 'different',     n: 8, title: 'Show up different', start: 117.85, end: 126.64 },
-  { id: 'founder-2',     n: 9, title: 'Founder POV — build trust faster', start: 126.64, end: 132.64 },
-  { id: 'lifecycle',     n: 10, title: 'The lifecycle', start: 132.64, end: 148.12 },
-  { id: 'close',         n: 11, title: 'Better beginnings', start: 148.12, end: 160.12 },
-  { id: 'final',         n: 12, title: 'Making advice stronger', start: 160.12, end: 168.12 },
+  { id: 'problem',       n: 1, title: 'The conversion problem', start: 0.0,  end: 8.0 },
+  { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 8.0, end: 16.9 },
+  { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 16.9, end: 20.6 },
+  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 20.6, end: 38.0 },
+  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 38.0, end: 51.2 },
+  { id: 'meeting-prep',  n: 6, title: 'Meeting prep', start: 51.2, end: 60.1 },
+  { id: 'different',     n: 7, title: 'Show up different', start: 60.1, end: 67.0 },
+  { id: 'lifecycle',     n: 8, title: 'The lifecycle', start: 67.0, end: 73.5 },
+  { id: 'close',         n: 9, title: 'Better beginnings', start: 73.5, end: 82.0 },
+  { id: 'final',         n: 10, title: 'Making advice stronger', start: 82.0, end: 90.0 },
 ];
-const VIDEO_DURATION = 168.12;
+const VIDEO_DURATION = 90.0;
 
 // Bridges the internal timeline to a stable global API + postMessage stream.
 // Mounted once inside <Stage>. Your embedding page uses window.KnomeePlayer
@@ -1792,18 +1817,22 @@ function Scene9() {
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   // cold portfolio card recedes
   const recede = Easing.easeInOutCubic(clamp((l - 2.39) / 1.0, 0, 1));
+  // One word per clause of the line this scene now carries: "Prospects feel
+  // understood. Advisors stand out. And firms have a better opportunity to turn
+  // interest into relationships." The old trio (Prepared/Relevant/Different)
+  // was the old script's words and no longer matches what is being said.
   const words = [
-    { w: 'Prepared.', at: 4.0, c: '#fff' },
-    { w: 'Relevant.', at: 4.75, c: '#2DD2B0' },
-    { w: 'Different.', at: 5.45, c: '#a06bf0' },
+    { w: 'Understood.', at: 4.0, c: '#fff' },
+    { w: 'Distinct.', at: 4.75, c: '#2DD2B0' },
+    { w: 'Chosen.', at: 5.45, c: '#a06bf0' },
   ];
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
       <WarmField l={l} />
       {/* the generic portfolio, defaulted to — dims + slides away */}
       <div style={{ position: 'absolute', left: '50%', top: '50%',
-        transform: `translate(-50%,-50%) translate(${-360 - recede * 260}px, -20px)`,
-        opacity: (1 - recede) * 0.9, filter: `grayscale(${0.3 + recede * 0.5})`, willChange: 'transform, opacity' }}>
+        transform: `translate(-50%,-50%) translate(${-360 - recede * 110}px, -20px)`,
+        opacity: 0.9 - recede * 0.68, filter: `grayscale(${0.3 + recede * 0.65})`, willChange: 'transform, opacity' }}>
         <div style={{ width: 380, background: '#fff', borderRadius: 24, padding: 32, fontFamily: DISPLAY,
           boxShadow: '0 30px 80px rgba(0,0,0,0.4)' }}>
           <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.12em', color: '#8895a6', marginBottom: 20 }}>STANDARD ALLOCATION</div>
@@ -1934,6 +1963,11 @@ function Scene12() {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {/* building list */}
         <div style={{ opacity: listFade, position: 'absolute', display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'center' }}>
+          {/* The list reads as a claim from nowhere without this. The mark says
+              whose doing it is, and it is already the closing panel's language. */}
+          <KnomeeIcon color="#2DD2B0" size={64}
+            style={{ display: 'block', margin: '0 auto 26px', opacity: lineP(0),
+                     transform: `translateY(${(1 - lineP(0)) * 18}px)` }} />
           {lines.map((ln, i) => {
             const p = lineP(i);
             return (
@@ -1996,7 +2030,10 @@ function Scene13() {
 // build/mix-soundtrack.py into voiceover/knomee-soundtrack.wav. The playhead is driven
 // by its playback position, so the film cannot drift from the voice, and there is
 // nothing to schedule, overlap or double up.
-const SOUNDTRACK = "voiceover/knomee-soundtrack.wav";
+// The 90s cut has its own track. voiceover/knomee-soundtrack.wav stays the
+// original 168s mix so original.html — the untouched export of the first cut —
+// keeps finding the audio it was built against.
+const SOUNDTRACK = "voiceover/knomee-soundtrack-90.wav";
 
 // The mixed track is decoded once into a shared AudioContext rather than played through an
 // <audio> element: the element reported duration=Infinity for this file and stalled after
@@ -2174,6 +2211,77 @@ function Soundtrack({ muted = false, volume = 1 }) {
   );
 }
 
+// ── Temporary subtitles ─────────────────────────────────────────────────────
+// The narration is being re-recorded, so nothing in vo-cues.js (the old script)
+// is used by this cut. Until the new VO exists these lines carry the film, and
+// they double as the recording spec: in/out is the exact window each line has
+// to land in. Text is Marla's tightened script verbatim, split only where a
+// line is too long to sit on screen at once.
+//
+// The `tone` field is left on each cue but is no longer read: the subtitles
+// carry their own scrim, so they read the same over Scene 1's white page and
+// over the dark scenes without needing to be told which is which.
+const SUBS = [
+  { n: 1,  in: 0.80,  out: 4.00,  tone: 'light', text: "Most wealth firms don't have a problem attracting prospects." },
+  { n: 2,  in: 4.25,  out: 7.60,  tone: 'light', text: "They have a problem turning them into clients." },
+  { n: 3,  in: 8.40,  out: 12.60, tone: 'dark',  text: "Too often, every wealth firm feels the same at first touch —" },
+  { n: 4,  in: 12.75, out: 16.60, tone: 'dark',  text: "asking prospects for information before helping them think about what matters to them." },
+  { n: 5,  in: 17.30, out: 19.20, tone: 'dark',  text: "That's where Knomee comes in." },
+  { n: 6,  in: 19.40, out: 22.60, tone: 'dark',  text: "A behavioral intelligence platform built for financial services." },
+  { n: 7,  in: 22.80, out: 30.40, tone: 'dark',  text: "Before the first meeting, Knomee guides prospects through an experience designed to help them clarify what they want their wealth to make possible —" },
+  { n: 8,  in: 30.60, out: 33.60, tone: 'dark',  text: "from family and security to freedom, purpose, and adventure." },
+  // Has to be off screen by 38.00. It is about the prospect's experience, and
+  // at 38.00 the picture cuts to the advisor's dashboard.
+  { n: 9,  in: 33.80, out: 38.00, tone: 'dark',  text: "So instead of feeling like intake, the experience delivers value from the start." },
+  // Scene 6 shows readiness first (38.00-43.01) then the playbook. The script's
+  // three-part reveal is split across that cut so each clause lands on the
+  // screen that actually shows it — read 10, 11 and 12 as one sentence.
+  { n: 10, in: 38.40, out: 42.90, tone: 'dark',  text: "Grounded in behavioral science, Knomee turns that reflection into actionable insight for advisors —" },
+  { n: 11, in: 43.20, out: 47.10, tone: 'dark',  text: "revealing what motivates each prospect, how ready they are to act," },
+  { n: 12, in: 47.30, out: 50.90, tone: 'dark',  text: "and how to start a conversation that matters." },
+  { n: 13, in: 51.90, out: 56.20, tone: 'dark',  text: "Advisors walk into the first meeting with context they wouldn't otherwise have —" },
+  { n: 14, in: 56.40, out: 60.00, tone: 'dark',  text: "ready to make the conversation more personal and relevant from the start." },
+  { n: 15, in: 60.60, out: 66.60, tone: 'dark',  text: "Prospects feel understood. Advisors stand out. And firms have a better opportunity to turn interest into relationships." },
+  { n: 16, in: 67.30, out: 73.00, tone: 'dark',  text: "As those relationships grow, Knomee helps advisors stay connected to what matters as clients' lives and priorities evolve." },
+  { n: 17, in: 74.00, out: 78.20, tone: 'dark',  text: "Because the human side of wealth management is what matters most." },
+  // 82.0-86.7 is Marla's on-camera line, which comes from the mp4 and wants no
+  // narration over it. The closing line lands after she finishes.
+  { n: 18, in: 87.00, out: 89.50, tone: 'dark',  text: "Knomee helps you make more of it." }
+];
+
+// Deliberately not the film's <Caption>. Caption is a 52px statement card, and
+// at that size the longer script lines stack four deep and cover the product
+// UI underneath — which is the part of this film worth looking at. These are
+// working subtitles: small, bottom-anchored, on a scrim so they stay readable
+// over both the white product cards and the dark scenes, and out of the way.
+// They come out when the recorded narration goes in.
+function Subtitle({ text }) {
+  const { localTime, duration } = useSprite();
+  const inT = Easing.easeOutCubic(clamp(localTime / 0.28, 0, 1));
+  const outStart = duration - 0.24;
+  const outT = localTime > outStart ? Easing.easeInCubic(clamp((localTime - outStart) / 0.24, 0, 1)) : 0;
+  const opacity = inT * (1 - outT);
+  return (
+    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 64, display: 'flex',
+      justifyContent: 'center', opacity, pointerEvents: 'none' }}>
+      <div style={{ maxWidth: 1280, textAlign: 'center', fontFamily: DISPLAY, fontWeight: 500,
+        fontSize: 36, lineHeight: 1.32, letterSpacing: '-0.2px', color: '#fff',
+        background: 'rgba(10,4,22,0.72)', borderRadius: 10, padding: '14px 28px',
+        boxShadow: '0 6px 30px rgba(0,0,0,0.35)' }}>
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function Subtitles() {
+  return SUBS.map((s) => (
+    <Sprite key={s.n} start={s.in} end={s.out}>
+      <Subtitle text={s.text} />
+    </Sprite>
+  ));
+}
+
 // ── Root ────────────────────────────────────────────────────────────────────
 // autoplay is off on purpose. A browser will not let audible media start before
 // the page is interacted with, so autoplaying only ever produced a film running
@@ -2185,20 +2293,19 @@ function KnomeeVideo() {
       persistKey="knomee-video" autoplay={false}>
       <PlayerBridge />
       <Soundtrack />
-      <Sprite start={0.0} end={20.1}><Scene1 /></Sprite>
-      <Sprite start={19.9} end={41.18}><Scene2 /></Sprite>
-      <Sprite start={41.05} end={44.58}><Scene3 /></Sprite>
-      <Sprite start={44.41} end={64.91}><Scene4 /></Sprite>
-      <Sprite start={64.76} end={84.92}><Scene6 /></Sprite>
-      <Sprite start={84.72} end={108.2}><Scene7 /></Sprite>
-      <Sprite start={108} end={117.88}><Scene8 /></Sprite>
-      <Sprite start={117.82} end={126.74}><Scene9 /></Sprite>
-      <Sprite start={126.54} end={132.74}><Scene10 /></Sprite>
-      <Sprite start={132.54} end={148.22}><Scene11 /></Sprite>
-      <Sprite start={148.02} end={160.22}><Scene12 /></Sprite>
-      <Sprite start={160.02} end={168.12}><Scene13 /></Sprite>
+      <Sprite start={0.0} end={8.05}><SceneClock s0={0.00} at={0.00} rate={2.5000}><Scene1 /></SceneClock></Sprite>
+      <Sprite start={7.95} end={16.95}><SceneClock s0={20.00} at={8.00} rate={2.3753}><Scene2 /></SceneClock></Sprite>
+      <Sprite start={16.85} end={20.65}><SceneClock s0={41.14} at={16.90} rate={0.9081}><Scene3 /></SceneClock></Sprite>
+      <Sprite start={20.55} end={38.05}><SceneClock s0={44.50} at={20.60} rate={1.1672}><Scene4 /></SceneClock></Sprite>
+      <Sprite start={37.95} end={51.25}><SceneClock s0={64.81} at={38.00} rate={1.5159}><Scene6 /></SceneClock></Sprite>
+      <Sprite start={51.15} end={60.15}><SceneClock s0={108.10} at={51.20} rate={1.0955}><Scene8 /></SceneClock></Sprite>
+      <Sprite start={60.05} end={67.05}><SceneClock s0={117.85} at={60.10} rate={1.2739}><Scene9 /></SceneClock></Sprite>
+      <Sprite start={66.95} end={73.55}><SceneClock s0={132.64} at={67.00} rate={2.3815}><Scene11 /></SceneClock></Sprite>
+      <Sprite start={73.45} end={82.05}><SceneClock s0={148.12} at={73.50} rate={1.4118}><Scene12 /></SceneClock></Sprite>
+      <Sprite start={81.95} end={90.0}><SceneClock s0={160.12} at={82.00} rate={1.0000}><Scene13 /></SceneClock></Sprite>
+      <Subtitles />
     </Stage>
   );
 }
 
-Object.assign(window, { MarlaFrame, Tag, KQRing, KnomeeWord, KnomeeWordmark, KnomeeIcon, KnomeeVideo, Soundtrack, Scene1, Scene2, Scene3, Scene4, Scene6, Scene7, Scene8, Scene9, Scene10, Scene11, Scene12, Scene13, MarlaShot, WarmField, Chip, ProgressDots, QuotientRing, PROSPECTS, PlayerBridge, SCENES, KnomeeIcon, KnomeeWordmark, StampLabel, FirmCard, CompanyPage, FIRMS, BRAND, COLD, Placeholder, Cursor, Caption, BrowserFrame, ColdLandingPage });
+Object.assign(window, { MarlaFrame, Tag, KQRing, KnomeeWord, KnomeeWordmark, KnomeeIcon, KnomeeVideo, Soundtrack, Scene1, Scene2, Scene3, Scene4, Scene6, Scene7, Scene8, Scene9, Scene10, Scene11, Scene12, Scene13, MarlaShot, WarmField, Chip, ProgressDots, QuotientRing, PROSPECTS, PlayerBridge, SCENES, KnomeeIcon, KnomeeWordmark, StampLabel, FirmCard, CompanyPage, FIRMS, BRAND, COLD, Placeholder, Cursor, Caption, BrowserFrame, ColdLandingPage, Subtitles, Subtitle, SUBS, SceneClock });

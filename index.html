@@ -659,6 +659,7 @@
   let wasPlaying = null;
   setInterval(() => {
     updateCatcherBounds();
+    bindProtoShortcuts();
     const player = getPlayer();
     if (player) {
       renderPins();
@@ -1079,17 +1080,27 @@
   const railHidden = () => rail.classList.contains('cc-hidden');
   function setRailHidden(on) {
     rail.classList.toggle('cc-hidden', on);
-    if (!on) setRailCollapsed(false);
   }
 
   // The tray and the comment cursor are one thing to the person using them, so
   // they open and close together and every path goes through here. Leaving
   // setMode() and setRailHidden() to be called separately is what let a pause
   // arm the cursor while the tray stayed hidden.
+  // Three states, not two. Closed is gone entirely; open is the slim collapsed
+  // tab, which is enough to say comments exist without covering the frame; the
+  // chevron expands that to the full rail when you actually want to read them.
+  // Opening straight to the full rail put 322px over the film every time
+  // someone paused it.
   const overlayOpen = () => !railHidden();
   function setOverlay(on) {
-    if (on) { setRailHidden(false); setMode(true); }   // setMode pauses the film
-    else { setMode(false); setRailHidden(true); }
+    if (on) {
+      setRailHidden(false);
+      setRailCollapsed(true);
+      setMode(true);                                   // setMode pauses the film
+    } else {
+      setMode(false);
+      setRailHidden(true);
+    }
   }
   // Closing by hand also hands the film back; the watcher below only reacts to
   // the player, so it will not do this for us.
@@ -1155,7 +1166,7 @@
   // while a field or contenteditable has focus, and skip it whenever a
   // modifier is held so Ctrl/Cmd+C still copies. F2 carries no such risk and
   // works regardless.
-  document.addEventListener('keydown', (e) => {
+  function onShortcutKey(e) {
     const isF2 = e.key === 'F2';
     const isC  = (e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey;
     if (!isF2 && !isC) return;
@@ -1169,16 +1180,40 @@
     // Toggle. Opening pauses the film (setMode does it); closing resumes it.
     if (overlayOpen()) closeOverlayAndResume();
     else setOverlay(true);
-  }, true);
+  }
 
-  document.addEventListener('keydown', (e) => {
+  function onEscapeKey(e) {
     if (e.key !== 'Escape') return;
     if (!activeId && !commentMode && railHidden()) return;
     e.preventDefault();
     e.stopPropagation();
     closeThread();                     // drop any open card or half-written pin
     closeOverlayAndResume();
-  }, true);
+  }
+
+  // The film runs in an iframe. Click it to play or pause and focus moves into
+  // *its* document, so a keydown never reaches this one and C silently stops
+  // working — until you click the rail, which hands focus back. That is the
+  // "only works after I open and close it once" behaviour.
+  //
+  // Same origin, so bind the same handlers on both documents and the keys work
+  // wherever focus happens to be. Flagged so the retry below is idempotent.
+  function bindShortcuts(doc) {
+    if (!doc || doc.__ccKeysBound) return false;
+    doc.__ccKeysBound = true;
+    doc.addEventListener('keydown', onShortcutKey, true);
+    doc.addEventListener('keydown', onEscapeKey, true);
+    return true;
+  }
+  bindShortcuts(document);
+  function bindProtoShortcuts() {
+    try { return bindShortcuts(proto.contentDocument); }
+    catch (e) { return false; }   // not ready, or cross-origin
+  }
+  bindProtoShortcuts();
+  // The iframe may not have a document yet, and it gets a fresh one on every
+  // reload, so keep trying: bindShortcuts no-ops once a document is bound.
+  proto.addEventListener('load', bindProtoShortcuts);
 
   // ── Clear all ────────────────────────────────────────────
   clearBtn.addEventListener('click', (e) => {

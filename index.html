@@ -96,8 +96,9 @@
      header). There is deliberately NO full-width overlay top bar — that
      used to sit over the prototype's header and tint it. The rail is the
      only left-edge chrome, so the rest of the prototype header keeps its
-     real color. It defaults to the slim collapsed tab (see init) so it
-     never covers the prototype until you expand it. */
+     real color. It is fully hidden until you ask for it with C, so the film
+     plays clean — collapsing to the slim tab is a separate, lesser state that
+     the in-rail chevron still uses. */
   .cc-rail {
     position: absolute; top: 0; left: 0; bottom: 0; width: 322px; z-index: 55;
     display: flex; flex-direction: column; overflow: hidden;
@@ -132,6 +133,9 @@
   /* ── Collapsed rail: a slim tab showing just the K chip, count and the
      expand chevron. Lets you tuck the column away to see more of the
      prototype while staying in comment mode (pins stay live). ── */
+  /* display:none rather than width:0 — a zero-width rail still traps clicks
+     along the left edge of the film. */
+  .cc-rail.cc-hidden { display: none; }
   .cc-rail.cc-collapsed { width: 50px; }
   .cc-rail.cc-collapsed .cc-rail-head { padding: 12px 6px; }
   .cc-rail.cc-collapsed .cc-rail-head-row { flex-direction: column; gap: 12px; }
@@ -403,7 +407,7 @@
   </aside>
 
   <!-- 6. esc pill -->
-  <div class="cc-esc cc-chrome">Press <b>Esc</b> to exit comment mode</div>
+  <div class="cc-esc cc-chrome">Press <b>C</b> or <b>Esc</b> to close comments</div>
 
 </div>
 
@@ -1065,6 +1069,15 @@
     setRailCollapsed(!rail.classList.contains('cc-collapsed'));
   });
 
+  // Hiding is the outer state: the rail is gone entirely and the film plays
+  // clean. Showing it always opens it fully expanded — you asked for the
+  // comments, so a slim tab you then have to click is a wasted step.
+  const railHidden = () => rail.classList.contains('cc-hidden');
+  function setRailHidden(on) {
+    rail.classList.toggle('cc-hidden', on);
+    if (!on) setRailCollapsed(false);
+  }
+
   // drop a pin
   catcher.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -1132,18 +1145,27 @@
     }
     e.preventDefault();
     e.stopPropagation();
-    if (!commentMode) setMode(true);
+    // Toggle: C opens the tray and comment mode together, C again puts both
+    // away and hands the film back.
+    if (railHidden()) {
+      setRailHidden(false);
+      setMode(true);
+    } else {
+      setMode(false);
+      setRailHidden(true);
+      const player = getPlayer();
+      if (player && typeof player.play === 'function') player.play();
+    }
   }, true);
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    const menuOpen = !rail.classList.contains('cc-collapsed');
-    if (!activeId && !commentMode && !menuOpen) return;
+    if (!activeId && !commentMode && railHidden()) return;
     e.preventDefault();
     e.stopPropagation();
     if (commentMode) setMode(false);   // setMode(false) also closes the open thread
     else closeThread();                // a card opened from the rail, mode off
-    setRailCollapsed(true);            // full retreat: back to the slim tab
+    setRailHidden(true);               // full retreat: the rail goes away
     const player = getPlayer();        // resume the video (no-op for static prototypes)
     if (player && typeof player.play === 'function') player.play();
   }, true);
@@ -1189,8 +1211,11 @@
   // The menu is persistent, so default it to the slim collapsed tab — it
   // stays reachable at all times without covering the prototype. Only an
   // explicit '0' (the reviewer expanded it before) keeps it open on load.
-  try { setRailCollapsed(localStorage.getItem(RAIL_COLLAPSED_KEY) !== '0'); }
-  catch (e) { setRailCollapsed(true); }
+  // Always start hidden. This is a film first: nothing should sit over it
+  // until someone presses C, and a remembered "expanded" from a previous visit
+  // would put the rail back over the opening frame.
+  setRailCollapsed(false);
+  setRailHidden(true);
   loadLocalFallback();
   renderAll();
   initSync();

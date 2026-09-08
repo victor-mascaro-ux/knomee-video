@@ -740,12 +740,12 @@ const SCENES = [
   { id: 'problem',       n: 1, title: 'The conversion problem', start: 0.0,  end: 8.0 },
   { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 8.0, end: 16.9 },
   { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 16.9, end: 20.6 },
-  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 20.6, end: 36.5 },
-  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 36.5, end: 52.0 },
-  { id: 'meeting-prep',  n: 6, title: 'Meeting prep', start: 52.0, end: 61.4 },
-  { id: 'different',     n: 7, title: 'Show up different', start: 61.4, end: 68.3 },
-  { id: 'lifecycle',     n: 8, title: 'The lifecycle', start: 68.3, end: 76.0 },
-  { id: 'close',         n: 9, title: 'Better beginnings', start: 76.0, end: 82.0 },
+  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 20.6, end: 38.0 },
+  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 38.0, end: 51.2 },
+  { id: 'meeting-prep',  n: 6, title: 'Meeting prep', start: 51.2, end: 60.1 },
+  { id: 'different',     n: 7, title: 'Show up different', start: 60.1, end: 67.0 },
+  { id: 'lifecycle',     n: 8, title: 'The lifecycle', start: 67.0, end: 73.5 },
+  { id: 'close',         n: 9, title: 'Better beginnings', start: 73.5, end: 82.0 },
   { id: 'final',         n: 10, title: 'Making advice stronger', start: 82.0, end: 90.0 },
 ];
 const VIDEO_DURATION = 90.0;
@@ -1817,18 +1817,22 @@ function Scene9() {
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   // cold portfolio card recedes
   const recede = Easing.easeInOutCubic(clamp((l - 2.39) / 1.0, 0, 1));
+  // One word per clause of the line this scene now carries: "Prospects feel
+  // understood. Advisors stand out. And firms have a better opportunity to turn
+  // interest into relationships." The old trio (Prepared/Relevant/Different)
+  // was the old script's words and no longer matches what is being said.
   const words = [
-    { w: 'Prepared.', at: 4.0, c: '#fff' },
-    { w: 'Relevant.', at: 4.75, c: '#2DD2B0' },
-    { w: 'Different.', at: 5.45, c: '#a06bf0' },
+    { w: 'Understood.', at: 4.0, c: '#fff' },
+    { w: 'Distinct.', at: 4.75, c: '#2DD2B0' },
+    { w: 'Chosen.', at: 5.45, c: '#a06bf0' },
   ];
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
       <WarmField l={l} />
       {/* the generic portfolio, defaulted to — dims + slides away */}
       <div style={{ position: 'absolute', left: '50%', top: '50%',
-        transform: `translate(-50%,-50%) translate(${-360 - recede * 260}px, -20px)`,
-        opacity: (1 - recede) * 0.9, filter: `grayscale(${0.3 + recede * 0.5})`, willChange: 'transform, opacity' }}>
+        transform: `translate(-50%,-50%) translate(${-360 - recede * 110}px, -20px)`,
+        opacity: 0.9 - recede * 0.68, filter: `grayscale(${0.3 + recede * 0.65})`, willChange: 'transform, opacity' }}>
         <div style={{ width: 380, background: '#fff', borderRadius: 24, padding: 32, fontFamily: DISPLAY,
           boxShadow: '0 30px 80px rgba(0,0,0,0.4)' }}>
           <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.12em', color: '#8895a6', marginBottom: 20 }}>STANDARD ALLOCATION</div>
@@ -1959,6 +1963,11 @@ function Scene12() {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {/* building list */}
         <div style={{ opacity: listFade, position: 'absolute', display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'center' }}>
+          {/* The list reads as a claim from nowhere without this. The mark says
+              whose doing it is, and it is already the closing panel's language. */}
+          <KnomeeIcon color="#2DD2B0" size={64}
+            style={{ display: 'block', margin: '0 auto 26px', opacity: lineP(0),
+                     transform: `translateY(${(1 - lineP(0)) * 18}px)` }} />
           {lines.map((ln, i) => {
             const p = lineP(i);
             return (
@@ -2216,19 +2225,25 @@ const SUBS = [
   { n: 4,  in: 12.75, out: 16.60, tone: 'dark',  text: "asking prospects for information before helping them think about what matters to them." },
   { n: 5,  in: 17.30, out: 19.20, tone: 'dark',  text: "That's where Knomee comes in." },
   { n: 6,  in: 19.40, out: 22.60, tone: 'dark',  text: "A behavioral intelligence platform built for financial services." },
-  { n: 7,  in: 23.30, out: 31.60, tone: 'dark',  text: "Before the first meeting, Knomee guides prospects through an experience designed to help them clarify what they want their wealth to make possible —" },
-  { n: 8,  in: 31.75, out: 35.10, tone: 'dark',  text: "from family and security to freedom, purpose, and adventure." },
-  { n: 9,  in: 35.30, out: 39.90, tone: 'dark',  text: "So instead of feeling like intake, the experience delivers value from the start." },
-  { n: 10, in: 40.60, out: 45.60, tone: 'dark',  text: "Grounded in behavioral science, Knomee turns that reflection into actionable insight for advisors —" },
-  { n: 11, in: 45.75, out: 52.40, tone: 'dark',  text: "revealing what motivates each prospect, how ready they are to act, and how to start a conversation that matters." },
-  { n: 12, in: 52.80, out: 57.10, tone: 'dark',  text: "Advisors walk into the first meeting with context they wouldn't otherwise have —" },
-  { n: 13, in: 57.25, out: 61.20, tone: 'dark',  text: "ready to make the conversation more personal and relevant from the start." },
-  { n: 14, in: 61.90, out: 67.90, tone: 'dark',  text: "Prospects feel understood. Advisors stand out. And firms have a better opportunity to turn interest into relationships." },
-  { n: 15, in: 68.80, out: 75.60, tone: 'dark',  text: "As those relationships grow, Knomee helps advisors stay connected to what matters as clients' lives and priorities evolve." },
-  { n: 16, in: 76.50, out: 80.50, tone: 'dark',  text: "Because the human side of wealth management is what matters most." },
+  { n: 7,  in: 22.80, out: 30.40, tone: 'dark',  text: "Before the first meeting, Knomee guides prospects through an experience designed to help them clarify what they want their wealth to make possible —" },
+  { n: 8,  in: 30.60, out: 33.60, tone: 'dark',  text: "from family and security to freedom, purpose, and adventure." },
+  // Has to be off screen by 38.00. It is about the prospect's experience, and
+  // at 38.00 the picture cuts to the advisor's dashboard.
+  { n: 9,  in: 33.80, out: 38.00, tone: 'dark',  text: "So instead of feeling like intake, the experience delivers value from the start." },
+  // Scene 6 shows readiness first (38.00-43.01) then the playbook. The script's
+  // three-part reveal is split across that cut so each clause lands on the
+  // screen that actually shows it — read 10, 11 and 12 as one sentence.
+  { n: 10, in: 38.40, out: 42.90, tone: 'dark',  text: "Grounded in behavioral science, Knomee turns that reflection into actionable insight for advisors —" },
+  { n: 11, in: 43.20, out: 47.10, tone: 'dark',  text: "revealing what motivates each prospect, how ready they are to act," },
+  { n: 12, in: 47.30, out: 50.90, tone: 'dark',  text: "and how to start a conversation that matters." },
+  { n: 13, in: 51.90, out: 56.20, tone: 'dark',  text: "Advisors walk into the first meeting with context they wouldn't otherwise have —" },
+  { n: 14, in: 56.40, out: 60.00, tone: 'dark',  text: "ready to make the conversation more personal and relevant from the start." },
+  { n: 15, in: 60.60, out: 66.60, tone: 'dark',  text: "Prospects feel understood. Advisors stand out. And firms have a better opportunity to turn interest into relationships." },
+  { n: 16, in: 67.30, out: 73.00, tone: 'dark',  text: "As those relationships grow, Knomee helps advisors stay connected to what matters as clients' lives and priorities evolve." },
+  { n: 17, in: 74.00, out: 78.20, tone: 'dark',  text: "Because the human side of wealth management is what matters most." },
   // 82.0-86.7 is Marla's on-camera line, which comes from the mp4 and wants no
   // narration over it. The closing line lands after she finishes.
-  { n: 17, in: 87.00, out: 89.50, tone: 'dark',  text: "Knomee helps you make more of it." }
+  { n: 18, in: 87.00, out: 89.50, tone: 'dark',  text: "Knomee helps you make more of it." }
 ];
 
 // Deliberately not the film's <Caption>. Caption is a 52px statement card, and
@@ -2278,12 +2293,12 @@ function KnomeeVideo() {
       <Sprite start={0.0} end={8.05}><SceneClock s0={0.00} at={0.00} rate={2.5000}><Scene1 /></SceneClock></Sprite>
       <Sprite start={7.95} end={16.95}><SceneClock s0={20.00} at={8.00} rate={2.3753}><Scene2 /></SceneClock></Sprite>
       <Sprite start={16.85} end={20.65}><SceneClock s0={41.14} at={16.90} rate={0.9081}><Scene3 /></SceneClock></Sprite>
-      <Sprite start={20.55} end={36.55}><SceneClock s0={44.50} at={20.60} rate={1.2774}><Scene4 /></SceneClock></Sprite>
-      <Sprite start={36.45} end={52.05}><SceneClock s0={64.81} at={36.50} rate={1.2910}><Scene6 /></SceneClock></Sprite>
-      <Sprite start={51.95} end={61.45}><SceneClock s0={108.10} at={52.00} rate={1.0372}><Scene8 /></SceneClock></Sprite>
-      <Sprite start={61.35} end={68.35}><SceneClock s0={117.85} at={61.40} rate={1.2739}><Scene9 /></SceneClock></Sprite>
-      <Sprite start={68.25} end={76.05}><SceneClock s0={132.64} at={68.30} rate={2.0104}><Scene11 /></SceneClock></Sprite>
-      <Sprite start={75.95} end={82.05}><SceneClock s0={148.12} at={76.00} rate={2.0000}><Scene12 /></SceneClock></Sprite>
+      <Sprite start={20.55} end={38.05}><SceneClock s0={44.50} at={20.60} rate={1.1672}><Scene4 /></SceneClock></Sprite>
+      <Sprite start={37.95} end={51.25}><SceneClock s0={64.81} at={38.00} rate={1.5159}><Scene6 /></SceneClock></Sprite>
+      <Sprite start={51.15} end={60.15}><SceneClock s0={108.10} at={51.20} rate={1.0955}><Scene8 /></SceneClock></Sprite>
+      <Sprite start={60.05} end={67.05}><SceneClock s0={117.85} at={60.10} rate={1.2739}><Scene9 /></SceneClock></Sprite>
+      <Sprite start={66.95} end={73.55}><SceneClock s0={132.64} at={67.00} rate={2.3815}><Scene11 /></SceneClock></Sprite>
+      <Sprite start={73.45} end={82.05}><SceneClock s0={148.12} at={73.50} rate={1.4118}><Scene12 /></SceneClock></Sprite>
       <Sprite start={81.95} end={90.0}><SceneClock s0={160.12} at={82.00} rate={1.0000}><Scene13 /></SceneClock></Sprite>
       <Subtitles />
     </Stage>

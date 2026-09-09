@@ -744,15 +744,15 @@ function Scene2() {
 // (start/end/title may shift as scenes are refined — always read them live via
 //  window.KnomeePlayer.getScenes(), don't hardcode timings in your app.)
 const SCENES = [
-  { id: 'problem',       n: 1, title: 'The conversion problem', start: 0.0,  end: 6.05 },
-  { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 6.05, end: 14.5 },
-  { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 14.5, end: 16.67 },
-  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 16.67, end: 39.1 },
-  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 39.1, end: 52.31 },
-  { id: 'meeting-prep',  n: 6, title: 'Meeting prep', start: 52.31, end: 61.22 },
-  { id: 'different',     n: 7, title: 'Show up different', start: 61.22, end: 70.17 },
-  { id: 'lifecycle',     n: 8, title: 'The lifecycle', start: 70.17, end: 78.06 },
-  { id: 'close',         n: 9, title: 'Better beginnings', start: 78.06, end: 82.0 },
+  { id: 'problem',       n: 1, title: 'The conversion problem', start: 0.0,  end: 6.53 },
+  { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 6.53, end: 15.08 },
+  { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 15.08, end: 17.19 },
+  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 17.19, end: 39.49 },
+  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 39.49, end: 52.66 },
+  { id: 'meeting-prep',  n: 6, title: 'Meeting prep', start: 52.66, end: 61.49 },
+  { id: 'different',     n: 7, title: 'Show up different', start: 61.49, end: 70.24 },
+  { id: 'lifecycle',     n: 8, title: 'The lifecycle', start: 70.24, end: 78.07 },
+  { id: 'close',         n: 9, title: 'Better beginnings', start: 78.07, end: 82.0 },
   { id: 'final',         n: 10, title: 'Making advice stronger', start: 82.0, end: 90.0 },
 ];
 const VIDEO_DURATION = 90.0;
@@ -2231,15 +2231,15 @@ function KnomeeVideo() {
       persistKey="knomee-video" autoplay={false}>
       <PlayerBridge />
       <Soundtrack />
-      <Sprite start={0} end={6.1}><SceneClock s0={6.00} at={0.00} rate={2.3140}><Scene1 /></SceneClock></Sprite>
-      <Sprite start={6} end={14.55}><SceneClock s0={20.00} at={6.05} rate={2.5018}><Scene2 /></SceneClock></Sprite>
-      <Sprite start={14.45} end={16.72}><SceneClock s0={41.14} at={14.50} rate={1.5484}><Scene3 /></SceneClock></Sprite>
-      <Sprite start={16.62} end={39.15}><SceneClock s0={44.50} at={16.67} rate={0.9055}><Scene4 /></SceneClock></Sprite>
-      <Sprite start={39.05} end={52.36}><SceneClock s0={64.81} at={39.10} rate={1.5148}><Scene6 /></SceneClock></Sprite>
-      <Sprite start={52.26} end={61.27}><SceneClock s0={108.10} at={52.31} rate={1.0943}><Scene8 /></SceneClock></Sprite>
-      <Sprite start={61.17} end={70.22}><SceneClock s0={117.85} at={61.22} rate={0.9821}><Scene9 /></SceneClock></Sprite>
-      <Sprite start={70.12} end={78.11}><SceneClock s0={132.64} at={70.17} rate={1.9620}><Scene11 /></SceneClock></Sprite>
-      <Sprite start={78.01} end={82.05}><SceneClock s0={148.12} at={78.06} rate={1.3959}><Scene12 /></SceneClock></Sprite>
+      <Sprite start={0} end={6.58}><SceneClock s0={6.00} at={0.00} rate={2.1440}><Scene1 /></SceneClock></Sprite>
+      <Sprite start={6.48} end={15.13}><SceneClock s0={20.00} at={6.53} rate={2.4725}><Scene2 /></SceneClock></Sprite>
+      <Sprite start={15.03} end={17.24}><SceneClock s0={41.14} at={15.08} rate={1.5924}><Scene3 /></SceneClock></Sprite>
+      <Sprite start={17.14} end={39.54}><SceneClock s0={44.50} at={17.19} rate={0.9108}><Scene4 /></SceneClock></Sprite>
+      <Sprite start={39.44} end={52.71}><SceneClock s0={64.81} at={39.49} rate={1.5194}><Scene6 /></SceneClock></Sprite>
+      <Sprite start={52.61} end={61.54}><SceneClock s0={108.10} at={52.66} rate={1.1042}><Scene8 /></SceneClock></Sprite>
+      <Sprite start={61.44} end={70.29}><SceneClock s0={117.85} at={61.49} rate={1.0046}><Scene9 /></SceneClock></Sprite>
+      <Sprite start={70.19} end={78.12}><SceneClock s0={132.64} at={70.24} rate={1.9770}><Scene11 /></SceneClock></Sprite>
+      <Sprite start={78.02} end={82.05}><SceneClock s0={148.12} at={78.07} rate={1.3995}><Scene12 /></SceneClock></Sprite>
       <Sprite start={81.95} end={90}><SceneClock s0={160.12} at={82.00} rate={1.0000}><Scene13 /></SceneClock></Sprite>
     </Stage>
   );

@@ -39,12 +39,9 @@ FADEO   = 4.0
 MARLA   = [(82.00, 86.70)]          # only the closing shot survives the re-cut
 NFRAMES = 3969000   # 90.000s — must match VIDEO_DURATION in scenes.jsx
 
-# The narration is being re-recorded from scratch against Marla's tightened
-# script, so the 42 takes in vo-cues.js are the wrong words and must not play.
-# Until the new takes exist this mixes the bed alone: the film still has a clock
-# to run on and temporary subtitles carry the script. Set this back to True once
-# vo-cues.js holds the new cue sheet.
-USE_VO  = False
+# Take 3 is recorded and vo-cues.js holds it, so the narration is back in the mix
+# and the temporary subtitles are gone from scenes.jsx.
+USE_VO  = True
 
 
 def raw(p):

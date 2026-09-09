@@ -1,46 +1,31 @@
-// Voice-over cue sheet — new take (ElevenLabs_Untitled_project, 42 clips, one line each).
+// Voice-over cue sheet — take 3, recorded against Lena Cheng's tightened script.
+// 19 clips, one line each, read from voiceover/RECORDING-SHEET.md. The sheet had 18
+// lines; line 15 was recorded as two takes, which is why there are 19 here.
+//
 // at = playhead second the clip fires, off = seek into the mp3, len = seconds to play.
-// Clips are tightly trimmed, so off is just a lead-in shave and len runs to the end of speech.
-// The Behavioral Intelligence beat was cut from the edit, so clips 25–28 of the take are
-// cut too — they are not part of the film and are not shipped.
+// off shaves the lead-in silence ElevenLabs pads each clip with; len runs to the end of
+// speech plus a little ring-out. Raw files total 88.9s; trimmed speech is 75.8s.
+//
+// The previous 42-clip take is the old script and is superseded. Its files are still in
+// uploads/ElevenLabs_Untitled_project/ but nothing references them.
 window.KNOMEE_VO = [
-  { "n": 1,  "src": "uploads/ElevenLabs_Untitled_project/1_Chapter_1.mp3",  "at": 1.5,   "off": 0,    "len": 2.83, "text": "Most wealth firms don't have a pipeline problem." },
-  { "n": 2,  "src": "uploads/ElevenLabs_Untitled_project/2_Chapter_1.mp3",  "at": 4.9,   "off": 0.05, "len": 1.55, "text": "They have a conversion problem." },
-  { "n": 3,  "src": "uploads/ElevenLabs_Untitled_project/3_Chapter_1.mp3",  "at": 6.9,   "off": 0.07, "len": 1.32, "text": "You have target lists." },
-  { "n": 4,  "src": "uploads/ElevenLabs_Untitled_project/4_Chapter_1.mp3",  "at": 8.47,   "off": 0.08, "len": 1.81, "text": "But you're not converting new clients." },
-  { "n": 5,  "src": "uploads/ElevenLabs_Untitled_project/5_Chapter_1.mp3",  "at": 10.87,  "off": 0.06, "len": 4.84, "text": "You start with what you offer — before understanding what wealth means to them." },
-  { "n": 6,  "src": "uploads/ElevenLabs_Untitled_project/6_Chapter_1.mp3",  "at": 16.87,  "off": 0.08, "len": 1.76, "text": "And that's where momentum breaks." },
-  { "n": 7,  "src": "uploads/ElevenLabs_Untitled_project/7_Chapter_1.mp3",  "at": 20.4,  "off": 0.07, "len": 3.17, "text": "At first touch, every wealth firm feels the same." },
-  { "n": 8,  "src": "uploads/ElevenLabs_Untitled_project/8_Chapter_1.mp3",  "at": 23.7,  "off": 0.05, "len": 1.84, "text": "A click leads to a form." },
-  { "n": 9,  "src": "uploads/ElevenLabs_Untitled_project/9_Chapter_1.mp3",  "at": 25.6,  "off": 0.06, "len": 0.75, "text": "Questions." },
-  { "n": 10, "src": "uploads/ElevenLabs_Untitled_project/10_Chapter_1.mp3", "at": 26.5,  "off": 0,    "len": 1.20, "text": "Data requests." },
-  { "n": 11, "src": "uploads/ElevenLabs_Untitled_project/11_Chapter_1.mp3", "at": 27.8,  "off": 0.02, "len": 0.76, "text": "No signal." },
-  { "n": 12, "src": "uploads/ElevenLabs_Untitled_project/12_Chapter_1.mp3", "at": 28.7,  "off": 0.02, "len": 1.31, "text": "No differentiation." },
-  { "n": 13, "src": "uploads/ElevenLabs_Untitled_project/13_Chapter_1.mp3", "at": 30.30,  "off": 0,    "len": 2.59, "text": "No way to know if you're right for them.", "cuts": [[0.96,1.06],[1.72,1.78]] },
-  { "n": 14, "src": "uploads/ElevenLabs_Untitled_project/14_Chapter_1.mp3", "at": 33.15,  "off": 0.02, "len": 1.09, "text": "So they hesitate." },
-  { "n": 15, "src": "uploads/ElevenLabs_Untitled_project/15_Chapter_1.mp3", "at": 34.59,  "off": 0.09, "len": 2.99, "text": "They compare — but everything looks interchangeable." },
-  { "n": 16, "src": "uploads/ElevenLabs_Untitled_project/16_Chapter_1.mp3", "at": 37.93,  "off": 0.07, "len": 1.67, "text": "And most just leave." },
-  { "n": 17, "src": "uploads/17_Chapter_1.mp3", "at": 44.83,  "off": 0.08, "len": 4.10, "text": "Instead of asking for information — Knomee creates value immediately." },
-  { "n": 18, "src": "uploads/ElevenLabs_Untitled_project/18_Chapter_1.mp3", "at": 49.28,  "off": 0.06, "len": 4.18, "text": "A guided experience to reflect on what truly matters." },
-  { "n": 19, "src": "uploads/ElevenLabs_Untitled_project/19_Chapter_1.mp3", "at": 53.68,  "off": 0.10, "len": 0.88, "text": "Their goals." },
-  { "n": 20, "src": "uploads/ElevenLabs_Untitled_project/20_Chapter_1.mp3", "at": 54.78,  "off": 0.08, "len": 1.06, "text": "Their values." },
-  { "n": 21, "src": "uploads/ElevenLabs_Untitled_project/21_Chapter_1.mp3", "at": 55.98,  "off": 0.09, "len": 0.81, "text": "Their vision." },
-  { "n": 22, "src": "uploads/ElevenLabs_Untitled_project/22_Chapter_1.mp3", "at": 56.98,  "off": 0.06, "len": 1.78, "text": "It doesn't feel like intake." },
-  { "n": 23, "src": "uploads/ElevenLabs_Untitled_project/23_Chapter_1.mp3", "at": 59.48,  "off": 0.07, "len": 1.18, "text": "It feels personal." },
-  { "n": 24, "src": "uploads/ElevenLabs_Untitled_project/24_Chapter_1.mp3", "at": 61.68,  "off": 0.06, "len": 2.78, "text": "Like someone is finally asking the right questions." },
-  { "n": 29, "src": "uploads/ElevenLabs_Untitled_project/29_Chapter_1.mp3", "at": 64.82,  "off": 0.06, "len": 4.53, "text": "We turn insight into clear signals advisors can act on." },
-  { "n": 30, "src": "uploads/ElevenLabs_Untitled_project/30_Chapter_1.mp3", "at": 69.52,  "off": 0.06, "len": 2.51, "text": "A Knomee Quotient that shows readiness." },
-  { "n": 31, "src": "uploads/ElevenLabs_Untitled_project/31_Chapter_1.mp3", "at": 72.22,  "off": 0.04, "len": 3.47, "text": "Conversation starters grounded in what matters to them." },
-  { "n": 32, "src": "uploads/ElevenLabs_Untitled_project/32_Chapter_1.mp3", "at": 76.02,  "off": 0.05, "len": 2.78, "text": "Powered by leading behavioral science research." },
-  { "n": 33, "src": "uploads/ElevenLabs_Untitled_project/33_Chapter_1.mp3", "at": 78.92,  "off": 0.03, "len": 5.85, "text": "So advisors don't have to guess who is truly interested in working together, or what moves them forward." },
-  { "n": 34, "src": "uploads/ElevenLabs_Untitled_project/34_Chapter_1.mp3", "at": 108.32, "off": 0.07, "len": 3.13, "text": "Before sitting down for a first meeting, advisors have:" },
-  { "n": 35, "src": "uploads/ElevenLabs_Untitled_project/35_Chapter_1.mp3", "at": 111.75,   "off": 0.04, "len": 0.95, "text": "Context." },
-  { "n": 36, "src": "uploads/ElevenLabs_Untitled_project/36_Chapter_1.mp3", "at": 113, "off": 0.03, "len": 1.42, "text": "Emotional insight." },
-  { "n": 37, "src": "uploads/ElevenLabs_Untitled_project/37_Chapter_1.mp3", "at": 114.72, "off": 0.06, "len": 2.22, "text": "A clear path into the conversation." },
-  { "n": 38, "src": "uploads/ElevenLabs_Untitled_project/38_Chapter_1.mp3", "at": 117.94, "off": 0.04, "len": 2.94, "text": "So instead of leading with you and what you sell —" },
-  { "n": 39, "src": "uploads/ElevenLabs_Untitled_project/39_Chapter_1.mp3", "at": 121.14, "off": 0,    "len": 3.55, "text": "Show up prepared, relevant, different." },
-  { "n": 40, "src": "uploads/ElevenLabs_Untitled_project/40_Chapter_1.mp3", "at": 132.94, "off": 0.08, "len": 3.03, "text": "And it doesn't stop at the first interaction." },
-  { "n": 41, "src": "uploads/ElevenLabs_Untitled_project/41_Chapter_1.mp3", "at": 136.24, "off": 0.06, "len": 3.53, "text": "Knomee translates deep understanding over time —" },
-  { "n": 42, "src": "uploads/ElevenLabs_Untitled_project/42_Chapter_1.mp3", "at": 140.12,   "off": 0.01, "len": 7.44, "text": "So firms engage, adapt, and grow relationships as clients evolve across life stages and generations." }
+  { "n": 1, "src": "uploads/vo-take-3/1_Chapter_1.mp3", "at": 0.40, "off": 0.00, "len": 3.14, "text": "Most wealth firms don't have a problem attracting prospects." },
+  { "n": 2, "src": "uploads/vo-take-3/2_Chapter_1.mp3", "at": 3.70, "off": 0.08, "len": 2.22, "text": "They have a problem turning them into clients." },
+  { "n": 3, "src": "uploads/vo-take-3/3_Chapter_1.mp3", "at": 6.21, "off": 0.04, "len": 3.98, "text": "Too often, every wealth firm feels the same at first touch —" },
+  { "n": 4, "src": "uploads/vo-take-3/4_Chapter_1.mp3", "at": 10.31, "off": 0.04, "len": 4.10, "text": "asking prospects for information before helping them think about what matters to them." },
+  { "n": 5, "src": "uploads/vo-take-3/5_Chapter_1.mp3", "at": 14.80, "off": 0.00, "len": 1.78, "text": "That's where Knomee comes in." },
+  { "n": 6, "src": "uploads/vo-take-3/6_Chapter_1.mp3", "at": 16.97, "off": 0.04, "len": 4.02, "text": "A behavioral intelligence platform built for financial services." },
+  { "n": 7, "src": "uploads/vo-take-3/7_Chapter_1.mp3", "at": 21.11, "off": 0.04, "len": 7.96, "text": "Before the first meeting, Knomee guides prospects through an experience designed to help them clarify what they want their wealth to make possible —" },
+  { "n": 8, "src": "uploads/vo-take-3/8_Chapter_1.mp3", "at": 29.19, "off": 0.04, "len": 4.70, "text": "from family and security to freedom, purpose, and adventure." },
+  { "n": 9, "src": "uploads/vo-take-3/9_Chapter_1.mp3", "at": 34.01, "off": 0.02, "len": 5.00, "text": "So instead of feeling like intake, the experience delivers value from the start." },
+  { "n": 10, "src": "uploads/vo-take-3/10_Chapter_1.mp3", "at": 39.40, "off": 0.04, "len": 6.38, "text": "Grounded in behavioral science, Knomee turns that reflection into actionable insight for advisors —" },
+  { "n": 11, "src": "uploads/vo-take-3/11_Chapter_1.mp3", "at": 45.90, "off": 0.00, "len": 3.90, "text": "revealing what motivates each prospect, how ready they are to act," },
+  { "n": 12, "src": "uploads/vo-take-3/12_Chapter_1.mp3", "at": 49.94, "off": 0.06, "len": 2.28, "text": "and how to start a conversation that matters." },
+  { "n": 13, "src": "uploads/vo-take-3/13_Chapter_1.mp3", "at": 52.61, "off": 0.04, "len": 4.66, "text": "Advisors walk into the first meeting with context they wouldn't otherwise have —" },
+  { "n": 14, "src": "uploads/vo-take-3/14_Chapter_1.mp3", "at": 57.39, "off": 0.00, "len": 3.70, "text": "ready to make the conversation more personal and relevant from the start." },
+  { "n": 15, "src": "uploads/vo-take-3/15_Chapter_1.mp3", "at": 61.52, "off": 0.04, "len": 4.38, "text": "Prospects feel understood. Advisors stand out." },
+  { "n": 16, "src": "uploads/vo-take-3/16_Chapter_1.mp3", "at": 66.02, "off": 0.06, "len": 4.06, "text": "And firms have a better opportunity to turn interest into relationships." },
+  { "n": 17, "src": "uploads/vo-take-3/17_Chapter_1.mp3", "at": 70.47, "off": 0.02, "len": 7.50, "text": "As those relationships grow, Knomee helps advisors stay connected to what matters as clients' lives and priorities evolve." },
+  { "n": 18, "src": "uploads/vo-take-3/18_Chapter_1.mp3", "at": 78.16, "off": 0.06, "len": 3.22, "text": "Because the human side of wealth management is what matters most." },
+  { "n": 19, "src": "uploads/vo-take-3/19_Chapter_1.mp3", "at": 87.00, "off": 0.02, "len": 1.78, "text": "Knomee helps you make more of it." }
 ];
-

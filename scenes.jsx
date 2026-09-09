@@ -1817,14 +1817,15 @@ function Scene9() {
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
   // cold portfolio card recedes
   const recede = Easing.easeInOutCubic(clamp((l - 2.39) / 1.0, 0, 1));
-  // One word per clause of the line this scene now carries: "Prospects feel
-  // understood. Advisors stand out. And firms have a better opportunity to turn
-  // interest into relationships." The old trio (Prepared/Relevant/Different)
-  // was the old script's words and no longer matches what is being said.
+  // Restored at Victor's request. Note these do not echo the line the scene now
+  // carries — they were written for the old VO's "Show up prepared, relevant,
+  // different", which is not in Lena's script. The subtitle underneath reads
+  // "Prospects feel understood. Advisors stand out. And firms have a better
+  // opportunity to turn interest into relationships."
   const words = [
-    { w: 'Understood.', at: 4.0, c: '#fff' },
-    { w: 'Distinct.', at: 4.75, c: '#2DD2B0' },
-    { w: 'Chosen.', at: 5.45, c: '#a06bf0' },
+    { w: 'Prepared.', at: 4.0, c: '#fff' },
+    { w: 'Relevant.', at: 4.75, c: '#2DD2B0' },
+    { w: 'Different.', at: 5.45, c: '#a06bf0' },
   ];
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>

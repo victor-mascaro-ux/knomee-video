@@ -744,16 +744,16 @@ function Scene2() {
 // (start/end/title may shift as scenes are refined — always read them live via
 //  window.KnomeePlayer.getScenes(), don't hardcode timings in your app.)
 const SCENES = [
-  { id: 'problem',       n: 1, title: 'The conversion problem', start: 0.0,  end: 6.53 },
-  { id: 'sameness',      n: 2, title: 'Every firm feels the same', start: 6.53, end: 15.08 },
-  { id: 'transition',    n: 3, title: 'Knomee changes the starting point', start: 15.08, end: 17.19 },
-  { id: 'value',         n: 4, title: 'Knomee creates value immediately', start: 17.19, end: 39.49 },
-  { id: 'signals',       n: 5, title: 'Signals advisors can act on', start: 39.49, end: 52.66 },
-  { id: 'meeting-prep',  n: 6, title: 'Meeting prep', start: 52.66, end: 61.49 },
-  { id: 'different',     n: 7, title: 'Show up different', start: 61.49, end: 70.24 },
-  { id: 'lifecycle',     n: 8, title: 'The lifecycle', start: 70.24, end: 78.07 },
-  { id: 'close',         n: 9, title: 'Better beginnings', start: 78.07, end: 82.0 },
-  { id: 'final',         n: 10, title: 'Making advice stronger', start: 82.0, end: 90.0 },
+  { id: 'problem',        n: 1, title: 'The conversion problem', start: 0, end: 6.58 },
+  { id: 'sameness',       n: 2, title: 'Every firm feels the same', start: 6.58, end: 15.06 },
+  { id: 'transition',     n: 3, title: 'Knomee changes the starting point', start: 15.06, end: 17.05 },
+  { id: 'value',          n: 4, title: 'Knomee creates value immediately', start: 17.05, end: 40.31 },
+  { id: 'signals',        n: 5, title: 'Signals advisors can act on', start: 40.31, end: 53.39 },
+  { id: 'meeting-prep',   n: 6, title: 'Meeting prep', start: 53.39, end: 62.01 },
+  { id: 'different',      n: 7, title: 'Show up different', start: 62.01, end: 70.81 },
+  { id: 'lifecycle',      n: 8, title: 'The lifecycle', start: 70.81, end: 78.56 },
+  { id: 'close',          n: 9, title: 'Better beginnings', start: 78.56, end: 82 },
+  { id: 'final',          n: 10, title: 'Making advice stronger', start: 82, end: 90 },
 ];
 const VIDEO_DURATION = 90.0;
 
@@ -1789,7 +1789,7 @@ function Scene8() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 30 }}>
             <KnomeeIcon color="#2DD2B0" size={40} />
             <div>
-              <div style={{ fontSize: 15, color: '#9a8bbd', fontWeight: 600, letterSpacing: '0.02em' }}>Preparing for the first meeting</div>
+              <div style={{ fontSize: 15, color: '#9a8bbd', fontWeight: 600, letterSpacing: '0.02em' }}>Preparing for the meeting</div>
               <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', color: '#1b1230' }}>Sarah Mitchell</div>
             </div>
           </div>
@@ -2231,15 +2231,15 @@ function KnomeeVideo() {
       persistKey="knomee-video" autoplay={false}>
       <PlayerBridge />
       <Soundtrack />
-      <Sprite start={0} end={6.58}><SceneClock s0={6.00} at={0.00} rate={2.1440}><Scene1 /></SceneClock></Sprite>
-      <Sprite start={6.48} end={15.13}><SceneClock s0={20.00} at={6.53} rate={2.4725}><Scene2 /></SceneClock></Sprite>
-      <Sprite start={15.03} end={17.24}><SceneClock s0={41.14} at={15.08} rate={1.5924}><Scene3 /></SceneClock></Sprite>
-      <Sprite start={17.14} end={39.54}><SceneClock s0={44.50} at={17.19} rate={0.9108}><Scene4 /></SceneClock></Sprite>
-      <Sprite start={39.44} end={52.71}><SceneClock s0={64.81} at={39.49} rate={1.5194}><Scene6 /></SceneClock></Sprite>
-      <Sprite start={52.61} end={61.54}><SceneClock s0={108.10} at={52.66} rate={1.1042}><Scene8 /></SceneClock></Sprite>
-      <Sprite start={61.44} end={70.29}><SceneClock s0={117.85} at={61.49} rate={1.0046}><Scene9 /></SceneClock></Sprite>
-      <Sprite start={70.19} end={78.12}><SceneClock s0={132.64} at={70.24} rate={1.9770}><Scene11 /></SceneClock></Sprite>
-      <Sprite start={78.02} end={82.05}><SceneClock s0={148.12} at={78.07} rate={1.3995}><Scene12 /></SceneClock></Sprite>
+      <Sprite start={0} end={6.63}><SceneClock s0={6.00} at={0.00} rate={2.1261}><Scene1 /></SceneClock></Sprite>
+      <Sprite start={6.53} end={15.11}><SceneClock s0={20.00} at={6.58} rate={2.4935}><Scene2 /></SceneClock></Sprite>
+      <Sprite start={15.01} end={17.1}><SceneClock s0={41.14} at={15.06} rate={1.6878}><Scene3 /></SceneClock></Sprite>
+      <Sprite start={17} end={40.36}><SceneClock s0={44.50} at={17.05} rate={0.8734}><Scene4 /></SceneClock></Sprite>
+      <Sprite start={40.26} end={53.44}><SceneClock s0={64.81} at={40.31} rate={1.5293}><Scene6 /></SceneClock></Sprite>
+      <Sprite start={53.34} end={62.06}><SceneClock s0={108.10} at={53.39} rate={1.1309}><Scene8 /></SceneClock></Sprite>
+      <Sprite start={61.96} end={70.86}><SceneClock s0={117.85} at={62.01} rate={0.9991}><Scene9 /></SceneClock></Sprite>
+      <Sprite start={70.76} end={78.61}><SceneClock s0={132.64} at={70.81} rate={1.9975}><Scene11 /></SceneClock></Sprite>
+      <Sprite start={78.51} end={82.05}><SceneClock s0={148.12} at={78.56} rate={1.5999}><Scene12 /></SceneClock></Sprite>
       <Sprite start={81.95} end={90}><SceneClock s0={160.12} at={82.00} rate={1.0000}><Scene13 /></SceneClock></Sprite>
     </Stage>
   );

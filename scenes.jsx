@@ -744,16 +744,16 @@ function Scene2() {
 // (start/end/title may shift as scenes are refined — always read them live via
 //  window.KnomeePlayer.getScenes(), don't hardcode timings in your app.)
 const SCENES = [
-  { id: 'problem',        n: 1, title: 'The conversion problem', start: 0, end: 6.58 },
-  { id: 'sameness',       n: 2, title: 'Every firm feels the same', start: 6.58, end: 15.06 },
-  { id: 'transition',     n: 3, title: 'Knomee changes the starting point', start: 15.06, end: 17.05 },
-  { id: 'value',          n: 4, title: 'Knomee creates value immediately', start: 17.05, end: 40.31 },
-  { id: 'signals',        n: 5, title: 'Signals advisors can act on', start: 40.31, end: 53.39 },
-  { id: 'meeting-prep',   n: 6, title: 'Meeting prep', start: 53.39, end: 62.01 },
-  { id: 'different',      n: 7, title: 'Show up different', start: 62.01, end: 70.81 },
-  { id: 'lifecycle',      n: 8, title: 'The lifecycle', start: 70.81, end: 78.56 },
-  { id: 'close',          n: 9, title: 'Better beginnings', start: 78.56, end: 82 },
-  { id: 'final',          n: 10, title: 'Making advice stronger', start: 82, end: 90 },
+  { id: 'problem',        n: 1, title: 'The conversion problem', start: 0, end: 7.28 },
+  { id: 'sameness',       n: 2, title: 'Every firm feels the same', start: 7.28, end: 15.76 },
+  { id: 'transition',     n: 3, title: 'Knomee changes the starting point', start: 15.76, end: 17.75 },
+  { id: 'value',          n: 4, title: 'Knomee creates value immediately', start: 17.75, end: 41.91 },
+  { id: 'signals',        n: 5, title: 'Signals advisors can act on', start: 41.91, end: 54.99 },
+  { id: 'meeting-prep',   n: 6, title: 'Meeting prep', start: 54.99, end: 63.61 },
+  { id: 'different',      n: 7, title: 'Show up different', start: 63.61, end: 73.11 },
+  { id: 'lifecycle',      n: 8, title: 'The lifecycle', start: 73.11, end: 80.86 },
+  { id: 'close',          n: 9, title: 'Better beginnings', start: 80.86, end: 86.4 },
+  { id: 'final',          n: 10, title: 'Making advice stronger', start: 86.4, end: 90 },
 ];
 const VIDEO_DURATION = 90.0;
 
@@ -1829,6 +1829,10 @@ function Scene9() {
   // different", which is not in Lena's script. The subtitle underneath reads
   // "Prospects feel understood. Advisors stand out. And firms have a better
   // opportunity to turn interest into relationships."
+  // Marla's number, landing just after "Different." on the beat that carries
+  // "a better opportunity to turn interest into relationships". It is a pilot
+  // figure, so it is labelled as one on screen rather than stated flat.
+  const statP = Easing.easeOutCubic(clamp((l - 5.9) / 0.7, 0, 1));
   const words = [
     { w: 'Prepared.', at: 4.0, c: '#fff' },
     { w: 'Relevant.', at: 4.75, c: '#2DD2B0' },
@@ -1869,6 +1873,11 @@ function Scene9() {
               textShadow: '0 8px 40px rgba(12,4,30,0.5)', willChange: 'transform, opacity' }}>{x.w}</div>
           );
         })}
+        <div style={{ marginTop: 26, opacity: statP, transform: `translateY(${(1 - statP) * 14}px)`,
+          borderTop: '1px solid rgba(255,255,255,0.18)', paddingTop: 18, willChange: 'transform, opacity' }}>
+          <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 52, color: '#2DD2B0', letterSpacing: '-0.02em', lineHeight: 1 }}>30% faster</div>
+          <div style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: 21, color: 'rgba(255,255,255,0.72)', marginTop: 8 }}>conversion in early pilots</div>
+        </div>
       </div>
     </div>
   );
@@ -2005,20 +2014,12 @@ function Scene13() {
   const S = 160.12;
   const l = t - S;
   const op = interpolate([S - 0.1, S + 0.5], [0, 1], Easing.linear)(t);
-  // Her last line runs to about 35.4s in the source and the trim now carries it
-  // to 35.6, so the shot has to hold past l = 4.6 or the final word is clipped.
-  // The hand-off moves back to match; the end card still gets a little over 3s.
-  const marlaFade = 1 - Easing.easeInOutCubic(clamp((l - 4.7) / 0.7, 0, 1));
-  const endP = Easing.easeOutCubic(clamp((l - 5.1) / 0.8, 0, 1));
+  // The founder shot that opened this scene is cut. Her clip and its quote lines
+  // are still in MarlaShot, and Scene7 and Scene10 still hold the other two, so
+  // any of them can come back without being rebuilt.
+  const endP = Easing.easeOutCubic(clamp((l - 0.25) / 0.8, 0, 1));
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op }}>
-      <div style={{ position: 'absolute', inset: 0, opacity: marlaFade }}>
-        <MarlaShot l={l} quoteStart={0.8} clipStart={31} clipEnd={35.6} quoteLines={[
-          'We\u2019re not replacing the human side of advice.',
-          'We\u2019re making it stronger.',
-        ]} />
-      </div>
-      {/* brand end card */}
       <div style={{ position: 'absolute', inset: 0, opacity: endP, pointerEvents: 'none' }}>
         <WarmField l={l} />
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
@@ -2231,16 +2232,16 @@ function KnomeeVideo() {
       persistKey="knomee-video" autoplay={false}>
       <PlayerBridge />
       <Soundtrack />
-      <Sprite start={0} end={6.63}><SceneClock s0={6.00} at={0.00} rate={2.1261}><Scene1 /></SceneClock></Sprite>
-      <Sprite start={6.53} end={15.11}><SceneClock s0={20.00} at={6.58} rate={2.4935}><Scene2 /></SceneClock></Sprite>
-      <Sprite start={15.01} end={17.1}><SceneClock s0={41.14} at={15.06} rate={1.6878}><Scene3 /></SceneClock></Sprite>
-      <Sprite start={17} end={40.36}><SceneClock s0={44.50} at={17.05} rate={0.8734}><Scene4 /></SceneClock></Sprite>
-      <Sprite start={40.26} end={53.44}><SceneClock s0={64.81} at={40.31} rate={1.5293}><Scene6 /></SceneClock></Sprite>
-      <Sprite start={53.34} end={62.06}><SceneClock s0={108.10} at={53.39} rate={1.1309}><Scene8 /></SceneClock></Sprite>
-      <Sprite start={61.96} end={70.86}><SceneClock s0={117.85} at={62.01} rate={0.9991}><Scene9 /></SceneClock></Sprite>
-      <Sprite start={70.76} end={78.61}><SceneClock s0={132.64} at={70.81} rate={1.9975}><Scene11 /></SceneClock></Sprite>
-      <Sprite start={78.51} end={82.05}><SceneClock s0={148.12} at={78.56} rate={1.5999}><Scene12 /></SceneClock></Sprite>
-      <Sprite start={81.95} end={90}><SceneClock s0={160.12} at={82.00} rate={1.0000}><Scene13 /></SceneClock></Sprite>
+      <Sprite start={0} end={7.33}><SceneClock s0={6.00} at={0.00} rate={1.9231}><Scene1 /></SceneClock></Sprite>
+      <Sprite start={7.23} end={15.81}><SceneClock s0={20.00} at={7.28} rate={2.4929}><Scene2 /></SceneClock></Sprite>
+      <Sprite start={15.71} end={17.8}><SceneClock s0={41.14} at={15.76} rate={1.6884}><Scene3 /></SceneClock></Sprite>
+      <Sprite start={17.7} end={41.96}><SceneClock s0={44.50} at={17.75} rate={0.8406}><Scene4 /></SceneClock></Sprite>
+      <Sprite start={41.86} end={55.04}><SceneClock s0={64.81} at={41.91} rate={1.5298}><Scene6 /></SceneClock></Sprite>
+      <Sprite start={54.94} end={63.66}><SceneClock s0={108.10} at={54.99} rate={1.1311}><Scene8 /></SceneClock></Sprite>
+      <Sprite start={63.56} end={73.16}><SceneClock s0={117.85} at={63.61} rate={0.9253}><Scene9 /></SceneClock></Sprite>
+      <Sprite start={73.06} end={80.91}><SceneClock s0={132.64} at={73.11} rate={1.9974}><Scene11 /></SceneClock></Sprite>
+      <Sprite start={80.81} end={86.45}><SceneClock s0={148.12} at={80.86} rate={0.9928}><Scene12 /></SceneClock></Sprite>
+      <Sprite start={86.35} end={90}><SceneClock s0={160.12} at={86.40} rate={1.0000}><Scene13 /></SceneClock></Sprite>
     </Stage>
   );
 }

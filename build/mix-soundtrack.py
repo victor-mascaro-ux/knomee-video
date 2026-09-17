@@ -36,7 +36,7 @@ RAMP    = 0.4
 GAPMIN  = 1.2
 FADEI   = 2.5
 FADEO   = 4.0
-MARLA   = [(82.00, 86.70)]          # only the closing shot survives the re-cut
+MARLA   = []                        # the founder shots are all cut; nothing to duck under
 NFRAMES = 3969000   # 90.000s — must match VIDEO_DURATION in scenes.jsx
 
 # Take 3 is recorded and vo-cues.js holds it, so the narration is back in the mix

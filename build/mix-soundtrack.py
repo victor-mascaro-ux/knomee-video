@@ -35,7 +35,7 @@ DUCK    = 0.5623    # -5 dB under Marla
 RAMP    = 0.4
 GAPMIN  = 1.2
 FADEI   = 2.5
-FADEO   = 4.0
+FADEO   = 0.0      # no tail fade: the end card holds and the track just stops
 MARLA   = []                        # the founder shots are all cut; nothing to duck under
 NFRAMES = 3969000   # 90.000s — must match VIDEO_DURATION in scenes.jsx
 
@@ -126,8 +126,10 @@ def build(cs, n):
         m = min(len(seg), n - a)
         out[a:a + m] += seg[:m]
     fi, fo = int(FADEI * SR), int(FADEO * SR)
-    out[:fi] *= np.linspace(0, 1, fi)
-    out[-fo:] *= np.linspace(1, 0, fo)
+    if fi:
+        out[:fi] *= np.linspace(0, 1, fi)
+    if fo:                      # out[-0:] is the whole array, not an empty tail
+        out[-fo:] *= np.linspace(1, 0, fo)
     return out
 
 

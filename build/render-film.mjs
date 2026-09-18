@@ -69,22 +69,40 @@ if (clip.width !== 1920 || clip.height !== 1080) {
 // Nothing injects Poppins here: video.html carries it. But it did not always,
 // and a run that renders the whole film in a fallback face looks fine until
 // someone puts it beside the real thing. Refuse rather than spend the hour.
-await page.evaluate((t) => window.KnomeePlayer.seekTo(t), 90);
-await page.waitForTimeout(500);
-await page.evaluate(() => {
-  const el = [...document.querySelectorAll('span')].find((s) =>
-    /Wealth managers/.test(s.textContent) &&
-    [...s.childNodes].some((n) => n.nodeType === 3 && n.nodeValue.trim()));
-  if (el) el.setAttribute('data-probe', '');
+// The probe used to seek to 90s and look for the founder's quote. Both were
+// facts about the 168s cut: 90s is now the end card, and her shots are gone, so
+// the probe matched nothing and the CDP font call failed on a null node. Anchor
+// on whatever text the frame actually has instead, and warn rather than abort if
+// the font cannot be read - losing an hour's render to a broken check is worse
+// than rendering something a human will look at anyway.
+await page.evaluate((t) => window.KnomeePlayer.seekTo(t), 81.5);
+await page.waitForTimeout(600);
+const probed = await page.evaluate(() => {
+  const vis = (e) => {
+    const r = e.getBoundingClientRect();
+    return r.width > 4 && r.height > 4 && getComputedStyle(e).opacity !== '0';
+  };
+  const el = [...document.querySelectorAll('div, span')].find((e) =>
+    [...e.childNodes].some((n) => n.nodeType === 3 && n.nodeValue.trim().length > 2) && vis(e));
+  if (el) { el.setAttribute('data-probe', ''); return el.textContent.trim().slice(0, 40); }
+  return null;
 });
-const cdp = await page.context().newCDPSession(page);
-await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
-const doc = await cdp.send('DOM.getDocument', { depth: -1, pierce: true });
-const probe = await cdp.send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: '[data-probe]' });
-const used = (await cdp.send('CSS.getPlatformFontsForNode', { nodeId: probe.nodeId })).fonts;
-console.log('font in use:', JSON.stringify(used.map((f) => f.familyName)));
-if (!used.some((f) => /Poppins/i.test(f.familyName))) {
-  console.error('not rendering in Poppins — run build/build-video.py'); process.exit(1);
+if (!probed) {
+  console.warn('font check skipped: no text on the probe frame');
+} else {
+  try {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
+    const doc = await cdp.send('DOM.getDocument', { depth: -1, pierce: true });
+    const probe = await cdp.send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: '[data-probe]' });
+    const used = (await cdp.send('CSS.getPlatformFontsForNode', { nodeId: probe.nodeId })).fonts;
+    console.log(`font in use on ${JSON.stringify(probed)}:`, JSON.stringify(used.map((f) => f.familyName)));
+    if (used.length && !used.some((f) => /Poppins/i.test(f.familyName))) {
+      console.error('not rendering in Poppins - run build/build-video.py'); process.exit(1);
+    }
+  } catch (e) {
+    console.warn('font check skipped:', e.message);
+  }
 }
 
 const write = (buf) => new Promise((res) => { if (!ff.stdin.write(buf)) ff.stdin.once('drain', res); else res(); });

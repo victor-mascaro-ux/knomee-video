@@ -87,16 +87,25 @@ def read_cut() -> dict:
 
     # Each founder shot is a MarlaShot inside a scene; its clip range is on the
     # shot and its place in the film is the enclosing scene's S.
+    #
+    # Only scenes actually mounted in the Stage count. Scene7, Scene10 and the
+    # shot that used to open Scene13 are still defined in the file so they can be
+    # brought back, and scanning the whole source would mix the founder's audio
+    # into a film that no longer shows her.
+    mounted = set(re.findall(r"<(Scene\d+) />", src))
+    funcs = [(m.start(), m.group(1)) for m in re.finditer(r"function (Scene\d+)\(\) \{", src)]
     starts = [(m.start(), float(m.group(1))) for m in re.finditer(r"const S = ([\d.]+);", src)]
     shots = []
     for m in re.finditer(r"clipStart=\{([\d.]+)\}\s+clipEnd=\{([\d.]+)\}", src):
-        before = [s for s in starts if s[0] < m.start()]
+        owner = [f for f in funcs if f[0] < m.start()]
+        if owner and max(owner, key=lambda f: f[0])[1] not in mounted:
+            continue
+        before = [x for x in starts if x[0] < m.start()]
         if not before:
             sys.exit("scenes.jsx: a MarlaShot appears before any scene's const S")
-        at = max(before, key=lambda s: s[0])[1]
+        at = max(before, key=lambda x: x[0])[1]
         shots.append((at, float(m.group(1)), float(m.group(2))))
-    if not shots:
-        sys.exit("scenes.jsx: no MarlaShot clip ranges found")
+    # No founder shots is a legitimate cut now, not a parse failure.
     return dict(duration=duration, soundtrack=soundtrack, marla=marla, shots=shots)
 
 
@@ -143,12 +152,13 @@ def main() -> None:
     try:
         frames = work / "marla"
         frames.mkdir()
-        print("extracting the founder's clip...")
-        subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-i", str(ROOT / cut["marla"]),
-                        "-vf", "fps=30,scale=620:392:flags=lanczos", "-q:v", "2",
-                        str(frames / "f_%05d.jpg")], check=True)
+        if cut["shots"]:
+            print("extracting the founder's clip...")
+            subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-i", str(ROOT / cut["marla"]),
+                            "-vf", "fps=30,scale=620:392:flags=lanczos", "-q:v", "2",
+                            str(frames / "f_%05d.jpg")], check=True)
         n_clip = len(list(frames.glob("*.jpg")))
-        print(f"  {n_clip} frames")
+        print(f"  founder frames: {n_clip}")
 
         film_srv, frame_srv = serve(ROOT, FILM_PORT), serve(work, FRAME_PORT)
         try:
@@ -166,17 +176,23 @@ def main() -> None:
 
         print("building the audio...")
         audio = work / "audio.wav"
-        chains, mixes = [], ["[0:a]"]
-        chains.append(f"[1:a]asplit={len(cut['shots'])}" + "".join(f"[s{i}]" for i in range(len(cut["shots"]))))
-        for i, (at, a, b) in enumerate(cut["shots"]):
-            chains.append(f"[s{i}]atrim={a}:{b},asetpts=PTS-STARTPTS,adelay={round(at * 1000)}[m{i}]")
-            mixes.append(f"[m{i}]")
-        chains.append("".join(mixes) + f"amix=inputs={len(mixes)}:duration=first:normalize=0,"
-                                       f"alimiter=limit=0.98[a]")
-        subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-y",
-                        "-i", str(ROOT / cut["soundtrack"]), "-i", str(ROOT / cut["marla"]),
-                        "-filter_complex", ";".join(chains), "-map", "[a]",
-                        "-c:a", "pcm_s16le", "-ar", "44100", "-ac", "1", str(audio)], check=True)
+        if not cut["shots"]:
+            # Nothing to mix in: the soundtrack already is the whole audio.
+            subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-y",
+                            "-i", str(ROOT / cut["soundtrack"]),
+                            "-c:a", "pcm_s16le", "-ar", "44100", "-ac", "1", str(audio)], check=True)
+        else:
+            chains, mixes = [], ["[0:a]"]
+            chains.append(f"[1:a]asplit={len(cut['shots'])}" + "".join(f"[s{i}]" for i in range(len(cut["shots"]))))
+            for i, (at, x, y) in enumerate(cut["shots"]):
+                chains.append(f"[s{i}]atrim={x}:{y},asetpts=PTS-STARTPTS,adelay={round(at * 1000)}[m{i}]")
+                mixes.append(f"[m{i}]")
+            chains.append("".join(mixes) + f"amix=inputs={len(mixes)}:duration=first:normalize=0,"
+                                           f"alimiter=limit=0.98[a]")
+            subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-y",
+                            "-i", str(ROOT / cut["soundtrack"]), "-i", str(ROOT / cut["marla"]),
+                            "-filter_complex", ";".join(chains), "-map", "[a]",
+                            "-c:a", "pcm_s16le", "-ar", "44100", "-ac", "1", str(audio)], check=True)
 
         print("muxing...")
         out = pathlib.Path(args.out).resolve()

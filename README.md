@@ -10,7 +10,9 @@ comments on it.
 | `voiceover/knomee-soundtrack-90.wav` | **generated.** The 90s track: take-3 narration over the bed — see *Voice-over* |
 | `original.html` | the original 2:48 cut, kept playable. A frozen export: it is **not** rebuilt from the sources and must not be edited |
 | `voiceover/knomee-soundtrack.wav` | the original 168s mix, narration over the bed. Belongs to `original.html` |
-| `knomee-conversion-intelligence.mp4` | the rendered master of the **original** cut — 2:48, 1920×1080 h264 + aac. See *Rendering a master* |
+| `knomee-conversion-intelligence-90s.mp4` | **generated.** The rendered master of the current cut — 1:30, 1920×1080 h264 + aac. See *Rendering a master* |
+| `knomee-thumbnail.png` | the video thumbnail — 2560×1440, built from the meeting-prep frame at 62.6s |
+| `knomee-conversion-intelligence.mp4` | the rendered master of the **original** 2:48 cut, kept alongside the new one |
 
 ## Two cuts
 
